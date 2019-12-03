@@ -1,0 +1,11 @@
+prefix=/home/miguel/Desktop/Mestrado/RED/red-daq-light-multi-decoders-MC-integration/install
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: red-daq
+Version: 0
+Description: ReD DAQ software
+Requires: 
+Libs: -L${libdir} -lred-daq -L/usr/lib/x86_64-linux-gnu -lmysqlclient -lpthread -lz -lm -lrt -latomic -lssl -lcrypto -ldl -L/home/miguel/Desktop/Mestrado/ROOT/root/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTDataFrame -pthread -lm -ldl -rdynamic -lSpectrum 
+Cflags: -I${includedir}  -I/home/miguel/Desktop/Mestrado/ROOT/root/include -pthread -std=c++11 -m64 -I/usr/include/mysql

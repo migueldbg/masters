@@ -1,0 +1,8 @@
+772	ph1	766	channelmapping_Na  -x (ok)
+853	ph2	855	channelmapping_Na  -x
+857	ph1	856	channelmapping_Na  -x 
+860	ph2	856	channelmapping_Na  -x
+954	ph2	950	channelmapping_Na  -a 80000
+955	ph2	950	channelmapping_Na  -a 80000
+963	ph2	958	channelmapping_Na  -a 100000 (ok)
+964	ph2	958	channelmapping_Na  -a 100000 (ok)

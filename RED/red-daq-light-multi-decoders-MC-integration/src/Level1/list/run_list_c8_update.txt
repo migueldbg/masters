@@ -1,0 +1,4 @@
+1093    ph2     1087    channelmapping_Na
+1095    ph2     1094    channelmapping_Na
+1096    ph2     1094    channelmapping_Na
+1097    ph2     1094    channelmapping_Na

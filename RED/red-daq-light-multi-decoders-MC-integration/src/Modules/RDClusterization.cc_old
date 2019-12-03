@@ -1,0 +1,35 @@
+#include "RDClusterization.hh"
+
+using namespace std;
+
+RDClusterization::RDClusterization(const vector<double> *wf, int start, 
+				   int n_samp, double thr, 
+				   int pre_cl, int post_cl) 
+{
+  for (int i = start; i < n_samp; i++) {
+    int r = 0;
+    
+    if (wf->at(i) < thr) {
+      for (int j = i; j < n_samp; j = j + post_cl) {
+	r++;
+ 
+	if (wf->at(j) >= thr) {
+	  r--;   
+	  break;
+	}
+      } 
+             
+      stime_.push_back(i);
+      rp_.push_back(r);
+      str_.push_back(i - pre_cl);
+      
+      if(i + r*post_cl >= n_samp) 
+	stp_.push_back(n_samp - 1);
+      else 
+	stp_.push_back(i + r*post_cl);   
+    
+      i +=  r*post_cl;   
+    }
+  }
+}
+

@@ -1,4 +1,13 @@
-RUN 1220 - ELECTRON RECOIL PEAK FIT RESULTS
+|   __   \
+|  |  |  |
+|  |__|  |
+|   __   /
+|  |  |  \
+|  |  |  |
+|__|  |__| UN 1220.
+
+
+################ ELECTRON RECOIL PEAK FIT RESULTS (S1 < 2000) ##################
 
 MONTE CARLO SIMULATION:
 EXT PARAMETER                                   STEP         FIRST
@@ -13,3 +22,19 @@ NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE
 1  Constant     3.74557e+03   2.32297e+01   3.72751e-01   1.87941e-06
 2  Mean         2.61949e-01   9.01352e-05   1.75210e-06  -4.43856e-01
 3  Sigma        1.75648e-02   7.32502e-05   1.99934e-05  -1.32127e-02
+
+################# NUCLEAR RECOIL PEAK FIT RESULTS (S1 < 2000)###################
+
+MONTE CARLO SIMULATION:
+EXT PARAMETER                                   STEP         FIRST
+NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE
+1  Constant     6.62905e+02   1.23708e+01   9.53195e-02  -2.06047e-06
+2  Mean         5.28088e-01   1.40644e-04   1.29301e-06   6.63842e-01
+3  Sigma        8.97912e-03   1.12807e-04   2.60671e-05   2.21970e-02
+
+ACQUIRED DATA
+EXT PARAMETER                                   STEP         FIRST
+NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE
+ 1  Constant     2.43102e+02   5.91118e+00   1.11323e-02  -5.49999e-05
+ 2  Mean         5.45352e-01   6.73706e-04   9.19043e-07  -3.66107e-01
+ 3  Sigma        1.66143e-02   4.82378e-04   1.36472e-05  -9.56983e-02

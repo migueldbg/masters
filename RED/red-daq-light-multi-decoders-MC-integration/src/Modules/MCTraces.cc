@@ -134,7 +134,7 @@ void MCTraces::SetRecoilEnergy()
     // For DD gun energy distribution
     if (RecoilType==0)
     {
-        RecoilEnergy = rnd->Exp(1525);
+        RecoilEnergy = rnd->Exp(1525);  //Exp() returns an exponential deviate: exp(-t/tau)
         while (RecoilEnergy<RecoilEnergy_min || RecoilEnergy>RecoilEnergy_max)
             RecoilEnergy = rnd->Exp(1525);
     }
@@ -145,7 +145,7 @@ void MCTraces::SetRecoilEnergy()
             RecoilEnergy = rnd->Exp(1525);
     }
   }
-  else  
+  else
     RecoilEnergy = rnd->Uniform(RecoilEnergy_min, RecoilEnergy_max);
 
   p_s1 = tp_s1[RecoilType]->Eval(RecoilEnergy);

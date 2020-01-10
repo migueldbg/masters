@@ -6,7 +6,7 @@
 
 TTree *tree_reco;
 
-void GetChargeDistribution(int run, bool isMC = true)
+void GetChargeDistribution(int run, bool isMC = false)
 {
     // Cheks wether the root file already exists.
     /*if (gSystem -> AccessPathName(Form("hist_%d.root", run))){

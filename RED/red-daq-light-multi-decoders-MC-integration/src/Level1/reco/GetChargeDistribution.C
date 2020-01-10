@@ -24,5 +24,5 @@ void GetChargeDistribution(int run, bool isMC = true)
     tree_reco ->SetMarkerSize(0.5);
 
     tree_reco -> Draw("clusters[0].charge >> charge_distribution", "clusters[0].f90 > 0 && clusters[0].f90 < 1");
-
+    TH1F *charge_dist = (TH1F*)gDirectory -> Get("charge_distribution");
 }

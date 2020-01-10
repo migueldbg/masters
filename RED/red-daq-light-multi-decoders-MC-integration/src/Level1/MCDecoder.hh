@@ -11,9 +11,9 @@
 class MCTraces;
 
 class MCDecoder : public VDecoder
-{  
+{
 public:
-    MCDecoder(std::string configfile, int evts=100000);
+    MCDecoder(std::string configfile, int evts=500000);
     ~MCDecoder();
 
     //file management

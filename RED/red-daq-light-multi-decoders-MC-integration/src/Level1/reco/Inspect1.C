@@ -5,11 +5,11 @@ TTree *t;
 TCut cutall;
 TCut cutFits="";
 
-void Load(int run, bool isMC=false, bool isERonly=false, bool isNRonly=false, bool ph2=true, bool s2Fit=false, bool speFit=false)
+void Load(int run, bool isMC=false, int ERorNR=0, bool ph2=true, bool s2Fit=false, bool speFit=false)
 {
     //SetStyle();
     //--- Clustering tree
-    TFile *f=new TFile(Form("run_%d%s.root",run, (isMC)?"MC":"", (isERonly)?"ER":"", (isNRonly)?"NR":""));
+    TFile *f=new TFile(Form("run_%d%s.root",run, (isMC)?"MC":"", (ERorNR = 1)?"ER":"", (ERorNR = 2)?"NR":""));
     f->GetObject("reco",t);
     t->SetMarkerStyle(20);
     t->SetMarkerSize(0.5);

@@ -5,11 +5,11 @@ TTree *t;
 TCut cutall;
 TCut cutFits="";
 
-void Load(int run, bool isMC=false, bool ph2=true, bool s2Fit=false, bool speFit=false)
+void Load(int run, bool isMC=false, bool isERonly=false, bool isNRonly=false, bool ph2=true, bool s2Fit=false, bool speFit=false)
 {
     //SetStyle();
     //--- Clustering tree
-    TFile *f=new TFile(Form("run_%d%s.root",run, (isMC)?"MC":""));
+    TFile *f=new TFile(Form("run_%d%s.root",run, (isMC)?"MC":"", (isERonly)?"ER":"", (isNRonly)?"NR":""));
     f->GetObject("reco",t);
     t->SetMarkerStyle(20);
     t->SetMarkerSize(0.5);
@@ -17,13 +17,13 @@ void Load(int run, bool isMC=false, bool ph2=true, bool s2Fit=false, bool speFit
     t->SetAlias("s1", "clusters[0].charge");
     t->SetAlias("s1_top", "clusters[0].tot_charge_top");
     t->SetAlias("s1_bot", "clusters[0].tot_charge_bottom");
-    t->SetAlias("tba1", "(s1_top-s1_bot)/s1");    
+    t->SetAlias("tba1", "(s1_top-s1_bot)/s1");
     t->SetAlias("ratio", "s2/s1");
     t->SetAlias("nc", "number_of_clusters");
-    t->SetAlias("f1", "clusters[0].f90");    
-    t->SetAlias("f90", "f90_tot");    
-    t->SetAlias("r1", "clusters[0].rep");    
-    
+    t->SetAlias("f1", "clusters[0].f90");
+    t->SetAlias("f90", "f90_tot");
+    t->SetAlias("r1", "clusters[0].rep");
+
     if (ph2)
     {
         t->SetAlias("s2", "clusters[1].charge");
@@ -36,7 +36,7 @@ void Load(int run, bool isMC=false, bool ph2=true, bool s2Fit=false, bool speFit
         t->SetAlias("t2", "clusters[1].start_time");
         t->SetAlias("tdrift", "(t2-t1)*2.0/1000.0");
     }
-    
+
     if (s2Fit)
     {
         t->SetAlias("nfits", "nfits");
@@ -51,10 +51,10 @@ void Load(int run, bool isMC=false, bool ph2=true, bool s2Fit=false, bool speFit
         t->SetAlias("t0", "fits.par[0][6]");
         t->SetAlias("e_p", "fits.epar[0][2]");
         t->SetAlias("e_T", "fits.epar[0][3]");
-        t->SetAlias("e_sigma", "fits.epar[0][4]");  
-        t->SetAlias("e_t0", "fits.epar[0][6]");        
+        t->SetAlias("e_sigma", "fits.epar[0][4]");
+        t->SetAlias("e_t0", "fits.epar[0][6]");
     }
-    
+
     else if (speFit)
     {
         t->SetAlias("nfits", "nfits");
@@ -67,9 +67,9 @@ void Load(int run, bool isMC=false, bool ph2=true, bool s2Fit=false, bool speFit
         t->SetAlias("sigma", "fits.par[0][3]");
         t->SetAlias("e_tau", "fits.epar[0][1]");
         t->SetAlias("e_p", "fits.epar[0][2]");
-        t->SetAlias("e_sigma", "fits.epar[0][4]");     
+        t->SetAlias("e_sigma", "fits.epar[0][4]");
     }
-    
+
     if (ph2)
         cutall = "nc==2 && f1>0.2 && f2<0.2 && r1==1 && r2==1 && s1>200 && s1<1000";
     else

@@ -6,17 +6,20 @@
 
 TTree *tree_reco;
 
-void GetChargeDistribution(int run, bool isMC = false)
+void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
 {
     // Cheks wether the root file already exists.
-    /*if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
-      std::cout << "The " << Form("hist_%d.root", run) << " file does not exist. Creating it:" << std::endl;
+    if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
+      std::cout << "The " << Form("hist_%d.root", run) << " file does not exist. Creating it..." << std::endl;
       TFile *hist_file = new TFile (Form("hist_%d.root", run), "CREATE");
 
     } else {
       std::cout << "Opening the " << Form("hist_%d.root", run) << " file." << std::endl;
       TFile *hist_file = new TFile (Form("hist_%d.root", run), "UPDATE");
-    }*/
+    }
+
+    // Might need to change the placemente of the code abover. Or just find a way to change the currenct directory, so that the histogram is saved in the
+    // correct file ("hist_%d.root").
 
     TFile *run_file = new TFile(Form("run_%d%s.root",run, (isMC)?"MC":""));
     run_file -> GetObject("reco", tree_reco);

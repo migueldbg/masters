@@ -36,7 +36,7 @@ private:
     double RecoilEnergy;     /* Recoil Energy in keV => rnd->Uniform(RecoilEnergy_min, RecoilEnergy_max) */
     double RecoilEnergy_min; /* Minimum Recoil Energy in keV */
     double RecoilEnergy_max; /* Maximum Recoil Energy in keV */
-    int    RecoilType;       /* Recoil Type: 0=>ER/1=>NE */
+    int    RecoilType;       /* Recoil Type: 0=>ER/1=>NR */
     int    SourceType;       /* Source Type: 0 if gamma or beta, 1 if neutron*/
     int    nsamples;
     int    tdrift_sa;        /* drift time in samples => rnd->Integer(tdrift_max_sa-tdrift_min_sa+1) + tdrift_min_sa */

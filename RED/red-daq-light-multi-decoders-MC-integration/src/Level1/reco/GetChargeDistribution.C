@@ -14,8 +14,10 @@ void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
       TFile *hist_file = new TFile (Form("hist_%d.root", run), "CREATE");
 
     } else {
-      std::cout << "Opening the " << Form("hist_%d.root", run) << " file." << std::endl;
-      TFile *hist_file = new TFile (Form("hist_%d.root", run), "UPDATE");
+        std::cout << "Opening the " << Form("hist_%d.root", run) << " file." << std::endl;
+        TFile *hist_file = new TFile (Form("hist_%d.root", run), "UPDATE");
+
+        if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
     }
 
     // Might need to change the placemente of the code abover. Or just find a way to change the currenct directory, so that the histogram is saved in the

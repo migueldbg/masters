@@ -25,4 +25,8 @@ void GetChargeDistribution(int run, bool isMC = false)
 
     tree_reco -> Draw("clusters[0].charge >> charge_distribution", "clusters[0].f90 > 0 && clusters[0].f90 < 1");
     TH1F *charge_dist = (TH1F*)gDirectory -> Get("charge_distribution");
+
+    // Might add some way to rename the created histogram depending on the original root file. Maybe adding the possibility of adding MC, ER and NR to the end.
+    // Maybe just add the possibility of the user himself changing the name? It opens the possibility of less cosistency though.
+    // Now must save the created histogram
 }

@@ -25,7 +25,8 @@ void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
     charge_dist -> SetName(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
     charge_dist -> SetTitle("Charge Distribution; Charge (in PE)");
 
-    /*run_file -> Close();
+  // Remove the histogram from the current directory so that there isn't an extra copy in it.
+  charge_dist -> SetDirectory(0);
 
     // Cheks wether the root file already exists.
     if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
@@ -40,5 +41,6 @@ void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
     }
 
     charge_dist -> Write(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));*/
+  delete charge_dist;
   gROOT->SetBatch(kFALSE);
 }

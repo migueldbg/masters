@@ -41,6 +41,7 @@ void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
   }
 
   charge_dist -> Write(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""), TObject::kOverwrite);
+  hist_file -> Close();
   delete charge_dist;
 
   gROOT->SetBatch(kFALSE);

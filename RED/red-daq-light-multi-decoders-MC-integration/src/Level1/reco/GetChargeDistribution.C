@@ -18,10 +18,10 @@ void GetChargeDistribution(int run, int max_charge = 30000, bool isMC = false, i
   run_file  -> GetObject("reco", tree_reco);
   tree_reco -> SetMarkerStyle(20);
   tree_reco -> SetMarkerSize(0.5);
-  tree_reco -> Draw("clusters[0].charge >> charge_dist", "clusters[0].f90 > 0 && clusters[0].f90 < 1");
+  tree_reco -> Draw("clusters[0].charge >> charge_dist", Form("clusters[0].f90 >= 0 && clusters[0].f90 <= 1 && clusters[0].charge >= 0 && clusters[0].charge <= %d", max_charge));
 
   TH1F *charge_dist = (TH1F*)gDirectory -> Get("charge_dist");
-  charge_dist -> SetName(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
+  charge_dist -> SetName(Form("charge_distribution%s%s%s", (isMC)?"_MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
   charge_dist -> SetTitle("Charge Distribution; Charge (in PE)");
 
   // Remove the histogram from the current directory so that there isn't an extra copy in it.
@@ -38,7 +38,7 @@ void GetChargeDistribution(int run, int max_charge = 30000, bool isMC = false, i
   TFile *hist_file = new TFile(Form("hist_%d.root", run), "UPDATE");
   if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
 
-  charge_dist -> Write(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""), TObject::kOverwrite);
+  charge_dist -> Write(Form("charge_distribution%s%s%s", (isMC)?"_MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""), TObject::kOverwrite);
   hist_file -> Close();
 
   std::cout << "Charge histogram generated." << std::endl;

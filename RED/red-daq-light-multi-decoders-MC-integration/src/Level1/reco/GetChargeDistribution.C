@@ -7,8 +7,7 @@
 #include <TSystem.h>
 #include <TTree.h>
 
-
-void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
+void GetChargeDistribution(int run, int max_charge = 30000, bool isMC = false, int ERorNR = 0)
 {
   // This line is simply to make it so that the canvas generated isn't show. The last line reverts this operation.
   gROOT->SetBatch(kTRUE);

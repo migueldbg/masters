@@ -10,6 +10,8 @@
 
 void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
 {
+  // This line is simply to make it so that the canvas generated isn't show. The last line reverts this operation.
+  gROOT->SetBatch(kTRUE);
 
     TFile *run_file = new TFile(Form("run_%d%s%s%s.root",run, (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
     TTree *tree_reco;
@@ -38,4 +40,5 @@ void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
     }
 
     charge_dist -> Write(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));*/
+  gROOT->SetBatch(kFALSE);
 }

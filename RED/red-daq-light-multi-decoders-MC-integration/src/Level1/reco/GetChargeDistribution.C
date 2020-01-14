@@ -28,17 +28,16 @@ void GetChargeDistribution(int run, bool isMC = false, int ERorNR = 0)
   // Remove the histogram from the current directory so that there isn't an extra copy in it.
   charge_dist -> SetDirectory(0);
 
-  // Cheks wether the root file already exists.
+  // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
   if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
     std::cout << "The " << Form("hist_%d.root", run) << " file does not exist. Creating it..." << std::endl;
-    TFile *hist_file = new TFile(Form("hist_%d.root", run), "CREATE");
 
   } else {
     std::cout << "Opening the " << Form("hist_%d.root", run) << " file." << std::endl;
-    TFile *hist_file = new TFile(Form("hist_%d.root", run), "UPDATE");
-
-    if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
   }
+
+  TFile *hist_file = new TFile(Form("hist_%d.root", run), "UPDATE");
+  if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
 
   charge_dist -> Write(Form("charge_distribution%s%s%s", (isMC)?"MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""), TObject::kOverwrite);
   hist_file -> Close();

@@ -1,28 +1,27 @@
 #include <iostream>
-
+//#include "../../Modules/RDCluster.hh"
 #include <TFile.h>
 #include <TH1.h>
 #include <TObject.h>
 #include <TString.h>
 #include <TSystem.h>
 #include <TTree.h>
-#include <ROOT/TDataFrame.hxx>
+#include <ROOT/RDataFrame.hxx>
 
-using namespace ROOT::Experimental;
-
-void CompareSimulation(int run, int number_divisions){
+void CompareSimulation(int run, int number_divisions = 10, double max_charge = 2000){
 
   TFile *run_file = new TFile(Form("run_%d.root", run));
-  TFile *MCER_file = new TFile(Form("run_%dMCER.root", run));
-  TFile *MCNR_file = new TFile(Form("run_%dMCNR.root", run));
+  //TFile *MCER_file = new TFile(Form("run_%dMCER.root", run));
+  //TFile *MCNR_file = new TFile(Form("run_%dMCNR.root", run));
 
-  /*TTree *tree_reco_run;
+  TTree *tree_reco_run;
   TTree *tree_reco_MCER;
   TTree *tree_reco_MCNR;
-  */
 
-  TDataFrame d_run("reco", run_file);
-  TDataFrame d_MCER("reco", MCER_file);
-  TDataFrame d_MCNR("reco", MCNR_file);
+  run_file  -> GetObject("reco", reco_run);
+  MCER_file -> GetObject("reco", reco_MCER);
+  MCNR_file -> GetObject("reco", reco_MCNR);
+
+  
 
 }

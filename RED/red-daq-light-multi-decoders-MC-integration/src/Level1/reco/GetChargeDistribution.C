@@ -18,11 +18,14 @@ void GetChargeDistribution(int run, int max_charge = 30000, bool isMC = false, i
   run_file  -> GetObject("reco", tree_reco);
   tree_reco -> SetMarkerStyle(20);
   tree_reco -> SetMarkerSize(0.5);
-  tree_reco -> Draw("clusters[0].charge >> charge_dist", Form("clusters[0].f90 >= 0 && clusters[0].f90 <= 1 && clusters[0].charge >= 0 && clusters[0].charge <= %d", max_charge));
+  tree_reco -> Draw("clusters[0].charge >> charge_dist",
+               Form("clusters[0].f90 >= 0 && clusters[0].f90 <= 1 && clusters[0].charge >= 0 && clusters[0].charge <= %d", max_charge));
 
   TH1F *charge_dist = (TH1F*)gDirectory -> Get("charge_dist");
   charge_dist -> SetName(Form("charge_distribution%s%s%s", (isMC)?"_MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
   charge_dist -> SetTitle("Charge Distribution; Charge (in PE)");
+
+  run_file -> Close();
 
   // Remove the histogram from the current directory so that there isn't an extra copy in it.
   charge_dist -> SetDirectory(0);

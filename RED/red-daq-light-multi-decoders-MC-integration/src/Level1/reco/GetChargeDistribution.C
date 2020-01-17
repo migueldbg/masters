@@ -25,10 +25,12 @@ void GetChargeDistribution(int run, int max_charge = 30000, bool isMC = false, i
   charge_dist -> SetName(Form("charge_distribution%s%s%s", (isMC)?"_MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
   charge_dist -> SetTitle("Charge Distribution; Charge (in PE)");
 
-  run_file -> Close();
-
   // Remove the histogram from the current directory so that there isn't an extra copy in it.
   charge_dist -> SetDirectory(0);
+
+  run_file -> Close();
+  delete run_file;
+  delete tree_reco
 
   // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
   if (gSystem -> AccessPathName(Form("hist_%d.root", run))){

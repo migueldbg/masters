@@ -41,9 +41,3 @@ void CompareSimulation(int run, int number_divisions = 10, double max_charge_run
   double division_size_MCNR = max_charge_MCNR/number_divisions;
   */
 }
-
-
-/*TH1* Crea(){
-  TFile *run_data = new TFile(file_name);
-
-}*/

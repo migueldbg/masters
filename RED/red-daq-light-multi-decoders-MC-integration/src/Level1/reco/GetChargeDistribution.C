@@ -30,7 +30,7 @@ void GetChargeDistribution(int run, int max_charge = 30000, bool isMC = false, i
 
   run_file -> Close();
   delete run_file;
-  delete tree_reco
+  delete tree_reco;
 
   // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
   if (gSystem -> AccessPathName(Form("hist_%d.root", run))){

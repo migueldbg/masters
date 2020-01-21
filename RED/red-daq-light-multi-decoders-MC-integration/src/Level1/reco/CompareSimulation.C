@@ -23,17 +23,11 @@ TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Doub
 
   if (f90_dist -> GetSumw2N() == 0) f90_dist -> Sumw2(kTRUE);
 
-  /*Double_t norm;
+  Double_t norm = 1.0;
   Double_t scale = norm/(f90_dist -> Integral());
   f90_dist -> Scale(scale);
-  */
+
   return f90_dist;
-
-  /*for(int i = 0; i < count; i++) {
-    tmp->Fill(gRandom->Rndm(1)*count);
-  }
-
-  return((TH1F*)tmp->Clone());*/
 }
 
 void CompareSimulation(int run, int number_divisions = 10, double max_charge_run = 2000){

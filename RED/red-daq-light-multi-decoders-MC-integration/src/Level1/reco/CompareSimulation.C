@@ -10,15 +10,17 @@
 #include <ROOT/RDataFrame.hxx>
 
 
-TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Double_t f90_max, Double_t division_size, int bin_number) {
+TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Double_t f90_max, int number_divisions, int bin_number) {
   TFile *run_data = new TFile(file_name);
   TTree *reco_data; run_data -> GetObject("reco", reco_data);
 
+  Double_t division_size = charge_max/number_divisions;
   Double_t cbin_up  = bin_number * division_size;
   Double_t cbin_low = (bin_number - 1) * division_size;
 
   reco_data -> Draw("clusters[0].f90 >> hist",
-               Form("clusters[0].f90 >= %f && clusters[0].f90 <= %f && clusters[0].charge >= %f && clusters[0].charge <= %f", f90_min, f90_max, cbin_low, cbin_up),"goff");
+               Form("clusters[0].f90 >= %f && clusters[0].f90 <= %f && clusters[0].charge >= %f && clusters[0].charge <= %f", f90_min, f90_max, cbin_low, cbin_up),
+               "goff");
   TH1F* f90_dist = (TH1F*)gDirectory -> Get("hist");
 
   if (f90_dist -> GetSumw2N() == 0) f90_dist -> Sumw2(kTRUE);

@@ -2,7 +2,6 @@
 #include <array>
 #include <string>
 
-//#include "../../Modules/RDCluster.hh"
 #include <TFile.h>
 #include <TH1.h>
 #include <TObject.h>
@@ -26,10 +25,12 @@ TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Doub
 
   if (f90_dist -> GetSumw2N() == 0) f90_dist -> Sumw2(kTRUE);
 
+  // Normalize the histogram for better comparision later on.
   Double_t norm = 1.0;
   Double_t scale = norm/(f90_dist -> Integral());
   f90_dist -> Scale(scale);
 
+  // Remove the histogram from the current directory (TFile) so that I can close the file and still have access to it.
   f90_dist -> SetDirectory(0);
 
   file -> Close();
@@ -39,16 +40,25 @@ TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Doub
 
 void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_run = 2000., Double_t max_charge_MCER = 20000., Double_t max_charge_MCNR = 9000.){
 
-  std::array<Double_t, 3> max_charge = {max_charge_run, max_charge_MCER, max_charge_MCNR};
+  std::array<Double_t, 3>    max_charge  = {max_charge_run, max_charge_MCER, max_charge_MCNR};
+  std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
 
   TH1F** f90hist_run  = new TH1F*[number_divisions];
   TH1F** f90hist_MCER = new TH1F*[number_divisions];
   TH1F** f90hist_MCNR = new TH1F*[number_divisions];
 
-  std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
+  // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
+  if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
+    std::cout << "The " << Form("hist_%d.root", run) << " file does not exist. Creating it..." << std::endl;
+
+  } else {
+    std::cout << "Opening the " << Form("hist_%d.root", run) << " file." << std::endl;
+  }
+
+  TFile *hist_file = new TFile(Form("hist_%d.root", run), "UPDATE");
+  if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
 
   for (int i = 0; i < 3; i++){
-
     for (int j = 0; j < number_divisions; j++){
       if (i == 0){
         f90hist_run[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
@@ -60,6 +70,6 @@ void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_r
     }
   }
 
-  
+
 
 }

@@ -30,10 +30,14 @@ TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Doub
   Double_t scale = norm/(f90_dist -> Integral());
   f90_dist -> Scale(scale);
 
+  f90_dist -> SetDirectory(0);
+
+  file -> Close();
+
   return f90_dist;
 }
 
-void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_run = 2000., Double_t max_charge_MCER = 20000.0, Double_t max_charge_MCNR = 9000.0){
+void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_run = 2000., Double_t max_charge_MCER = 20000., Double_t max_charge_MCNR = 9000.){
 
   std::array<Double_t, 3> max_charge = {max_charge_run, max_charge_MCER, max_charge_MCNR};
 
@@ -41,9 +45,9 @@ void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_r
   TH1F** f90hist_MCER = new TH1F*[number_divisions];
   TH1F** f90hist_MCNR = new TH1F*[number_divisions];
 
-  string file_suffix[3] = {"", "MCER", "MCNR"};
+  std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
 
-  /*for (int i = 0; i < file_suffix.size(); i++){
+  for (int i = 0; i < 3; i++){
 
     for (int j = 0; j < number_divisions; j++){
       if (i == 0){
@@ -54,11 +58,8 @@ void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_r
         f90hist_MCER[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
       }
     }
+  }
 
-  }*/
-
-
-  TH1F* dist = Createf90Dist(Form("run_%d%s.root", run, file_suffix[0].c_str()), max_charge[0], 0., 1., number_divisions, 4);
-  dist -> Draw();
+  
 
 }

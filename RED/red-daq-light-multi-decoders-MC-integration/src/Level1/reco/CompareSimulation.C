@@ -9,8 +9,13 @@
 #include <TSystem.h>
 #include <TTree.h>
 
-
+// After running this function, ROOT defaults to the Rint directory, such that to write the generated histograms to a given file, one must change
+// directories to do so. Maybe add the ability for the function to detect the current directory before opening "file_name", such that at the end
+// the function closes the file and returns to the previous directory.
 TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Double_t f90_max, int number_divisions, int bin_number) {
+
+  //const char *previous_dir = gDirectory -> GetPath();
+
   TFile *file = new TFile(file_name);
   TTree *reco; file -> GetObject("reco", reco);
 
@@ -34,6 +39,7 @@ TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Doub
   f90_dist -> SetDirectory(0);
   file -> Close();
 
+  //gDirectory -> cd(previous_dir);
   return f90_dist;
 }
 
@@ -54,31 +60,48 @@ void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_r
     std::cout << "Opening file: " << Form("hist_%d.root", run) << std::endl;
   }
 
-  TFile *hist_file = new TFile(Form("hist_%d.root", run), "UPDATE");
+  TFile *hist_file = new TFile(Form("test_%d.root", run), "UPDATE");
   if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
+
+  // Check wether a folder for saving the f90 histograms exist.
+  // If not, create it.
+  TDirectory *f90_dir = hist_file -> GetDirectory("f90_histograms");
+  if (!f90_dir) f90_dir = hist_file -> mkdir("f90_histograms", "f90_hist");
+
+  f90_dir -> cd();
+  TDirectory *data_dir = f90_dir -> GetDirectory("data");
+  if (!data_dir) data_dir = f90_dir -> mkdir("data", "data");
+  TDirectory *MC_dir = f90_dir -> GetDirectory("monte_carlo");
+  if (!MC_dir) MC_dir = f90_dir -> mkdir("monte_carlo", "monte_carlo");
 
   for (int i = 0; i < 3; i++){
     for (int j = 0; j < number_divisions; j++){
       if (i == 0){
+        data_dir -> cd();
         f90hist_run[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
-        f90hist_run[j] -> SetName(Form("f90_distribution"));
-        f90hist_run[j] -> SetTitle("f90 Distrbution; f90");
-        f90hist_run[j] -> Write(Form("f90_distribution"), TObject::kOverwrite);
+        f90hist_run[j] -> SetName(Form("f90_distribution%d", j+1));
+        f90hist_run[j] -> SetTitle(Form("f90 Distribution (Bin Number: %d); f90", j+1));
+
+        data_dir -> cd();
+        f90hist_run[j] -> Write(Form("f90_distribution%d", j+1), TObject::kOverwrite);
       } else if (i == 1) {
         f90hist_MCER[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
-        f90hist_MCER[j] -> SetName(Form("f90_distribution_%s", file_suffix[i].c_str()));
-        f90hist_MCER[j] -> SetTitle("f90 Distrbution; f90");
-        f90hist_MCER[j] -> Write(Form("f90_distribution"), TObject::kOverwrite);
+        f90hist_MCER[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
+        f90hist_MCER[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
+
+        MC_dir -> cd();
+        f90hist_MCER[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
       } else if (i == 2) {
         f90hist_MCNR[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
-        f90hist_MCNR[j] -> SetName(Form("f90_distribution_%s", file_suffix[i].c_str()));
-        f90hist_MCNR[j] -> SetTitle("f90 Distrbution; f90");
-        f90hist_MCNR[j] -> Write(Form("f90_distribution"), TObject::kOverwrite);
+        f90hist_MCNR[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
+        f90hist_MCNR[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
+
+        MC_dir -> cd();
+        f90hist_MCNR[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
       }
     }
   }
 
-  f90hist_MCNR[3] -> Draw("HIST");
   hist_file -> Close();
 
 }

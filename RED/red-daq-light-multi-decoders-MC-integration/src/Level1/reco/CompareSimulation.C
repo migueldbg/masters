@@ -4,17 +4,13 @@
 
 #include <TFile.h>
 #include <TH1.h>
+#include <THStack.h>
 #include <TObject.h>
 #include <TString.h>
 #include <TSystem.h>
 #include <TTree.h>
 
-// After running this function, ROOT defaults to the Rint directory, such that to write the generated histograms to a given file, one must change
-// directories to do so. Maybe add the ability for the function to detect the current directory before opening "file_name", such that at the end
-// the function closes the file and returns to the previous directory.
-TH1F* Createf90Dist(char *file_name, Double_t charge_max, Double_t f90_min, Double_t f90_max, int number_divisions, int bin_number) {
-
-  //const char *previous_dir = gDirectory -> GetPath();
+TH1F* Generatef90Hist(char *file_name, Double_t charge_max, Double_t f90_min, Double_t f90_max, int number_divisions, int bin_number) {
 
   TFile *file = new TFile(file_name);
   TTree *reco; file -> GetObject("reco", reco);

@@ -35,23 +35,25 @@ TH1F* Generatef90Hist(char *file_name, Double_t charge_max, Double_t f90_min, Do
   f90_dist -> SetDirectory(0);
   file -> Close();
 
-  //gDirectory -> cd(previous_dir);
   return f90_dist;
 }
 
-void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_run = 2000., Double_t max_charge_MCER = 20000., Double_t max_charge_MCNR = 9000.){
+int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f90_mid, Double_t f90_max,
+                       Double_t max_charge_run, Double_t max_charge_MCER, Double_t max_charge_MCNR){
 
   std::array<Double_t, 3>    max_charge  = {max_charge_run, max_charge_MCER, max_charge_MCNR};
   std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
 
-  TH1F** f90hist_run  = new TH1F*[number_divisions];
-  TH1F** f90hist_MCER = new TH1F*[number_divisions];
-  TH1F** f90hist_MCNR = new TH1F*[number_divisions];
+  TH1F** f90hist_run   = new TH1F*[number_divisions];
+  TH1F** f90hist_runER = new TH1F*[number_divisions];
+  TH1F** f90hist_runNR = new TH1F*[number_divisions];
+  TH1F** f90hist_MCER  = new TH1F*[number_divisions];
+  TH1F** f90hist_MCNR  = new TH1F*[number_divisions];
+  THStack** f90hstack  = new THStack*[number_divisions];
 
   // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
   if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
     std::cout << "The " << Form("hist_%d.root", run) << " file does not exist. Creating it..." << std::endl;
-
   } else {
     std::cout << "Opening file: " << Form("hist_%d.root", run) << std::endl;
   }
@@ -59,8 +61,7 @@ void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_r
   TFile *hist_file = new TFile(Form("test_%d.root", run), "UPDATE");
   if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
 
-  // Check wether a folder for saving the f90 histograms exist.
-  // If not, create it.
+  // Checks wether a folder for saving the f90 histograms exists. If not, create it.
   TDirectory *f90_dir = hist_file -> GetDirectory("f90_histograms");
   if (!f90_dir) f90_dir = hist_file -> mkdir("f90_histograms", "f90_hist");
 

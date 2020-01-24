@@ -70,34 +70,73 @@ void CompareSimulation(int run, int number_divisions = 10, Double_t max_charge_r
   TDirectory *MC_dir = f90_dir -> GetDirectory("monte_carlo");
   if (!MC_dir) MC_dir = f90_dir -> mkdir("monte_carlo", "monte_carlo");
 
+  // Generate all the desire f90 histograms (run, run er, run nr, er only and nr only).
   for (int i = 0; i < 3; i++){
     for (int j = 0; j < number_divisions; j++){
       if (i == 0){
-        data_dir -> cd();
-        f90hist_run[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
+        f90hist_run[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_max, number_divisions, j+1);
         f90hist_run[j] -> SetName(Form("f90_distribution%d", j+1));
         f90hist_run[j] -> SetTitle(Form("f90 Distribution (Bin Number: %d); f90", j+1));
 
-        data_dir -> cd();
-        f90hist_run[j] -> Write(Form("f90_distribution%d", j+1), TObject::kOverwrite);
+        data_dir -> WriteObject(f90hist_run[j], Form("f90_distribution%d", j+1), TObject::kOverwrite);
+
+        f90hist_runER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
+        f90hist_runER[j] -> SetName(Form("f90_distribution_ER%d", j+1));
+        f90hist_runER[j] -> SetTitle(Form("f90 Distribution (ER, Bin Number: %d); f09", j+1));
+
+        data_dir -> WriteObject(f90hist_runER[j], Form("f90_distribution_ER%d", j+1), TObject::kOverwrite);
+
+        f90hist_runNR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
+        f90hist_runNR[j] -> SetName(Form("f90_distribution_NR%d", j+1));
+        f90hist_runNR[j] -> SetTitle(Form("f90 Distribution (NR, Bin Number: %d); f09", j+1));
+
+        data_dir -> WriteObject(f90hist_runNR[j], Form("f90_distribution_NR%d", j+1), TObject::kOverwrite);
+
       } else if (i == 1) {
-        f90hist_MCER[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
+        f90hist_MCER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
         f90hist_MCER[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
         f90hist_MCER[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
 
-        MC_dir -> cd();
-        f90hist_MCER[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
+        MC_dir -> WriteObject(f90hist_MCER[j], Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
       } else if (i == 2) {
-        f90hist_MCNR[j] = Createf90Dist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], 0., 1., number_divisions, j+1);
+        f90hist_MCNR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
         f90hist_MCNR[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
         f90hist_MCNR[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
 
-        MC_dir -> cd();
-        f90hist_MCNR[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
+        MC_dir -> WriteObject(f90hist_MCNR[j], Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
       }
     }
   }
 
+  // Create histograms with all three distributions for each division (visualization).
+  for (int j = 0; j < number_divisions; j++){
+    f90hstack[j] -> adNamed(f90hist_run[j]); f90hstack[j] -> add(f90hist_MCER[j]); f90hstack[j] -> add(f90hist_MCNR[j]);
+    f90hstack[j] -> SetName(Form("f90_distribution_all%d", j+1));
+    f90hstack[j] -> SetTitle(Form("f90 Distribution (All, Bin Number: %d); f90",  j+1));
+
+    f90_dir -> WriteObject(f90hstack[j],  Form("f90_distribution_all%d", j+1), TObject::kOverwrite);
+  }
+
   hist_file -> Close();
+
+  // I'm not sure if this final part is necessary, but better safe then sorry
+  hist_file -> delete; f90_dir -> delete; data_dir -> delete; MC_dir -> delete;
+
+  f90hist_run   -> delete;
+  f90hist_runER -> delete;
+  f90hist_runNR -> delete;
+  f90hist_MCER  -> delete;
+  f90hist_MCNR  -> delete;
+  f90hstack     -> delete;
+
+  return 0;
+}
+
+void CompareSimulation(int run, bool hist_exist = FALSE, Double_t f90_min = 0., Double_t f90_mid = 0.4, Double_t f90_max = 1.,
+                       Double_t max_charge_run = 2000., Double_t max_charge_MCER = 20000., Double_t max_charge_MCNR = 9000.){
+
+  if (!hist_exist){GenerateAllHist(run, number_divisions, f90_min, f90_mid, f90_max, max_charge_run, max_charge_MCER, max_charge_MCNR)}
+
+  //here goes the creationg of the histogram of ratios.
 
 }

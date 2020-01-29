@@ -38,7 +38,10 @@ TH1F* Generatef90Hist(char *file_name, Double_t charge_max, Double_t f90_min, Do
   return f90_dist;
 }
 
-TDirectory* MakeDir(string dir_name, string dir_title){
+// A function to create a directory that check wether the histogram already exists. If it does, it returns a pointer to it. If not, it creates one with there
+// desired name and title and returns a pointer to it.
+TDirectory* MakeDirectory(string dir_name, string dir_title){
+
   const char *dir1 = dir_name.c_str();
   const char *dir2 = dir_title.c_str();
   TDirectory *dir = gDirectory -> GetDirectory(dir1);
@@ -47,13 +50,12 @@ TDirectory* MakeDir(string dir_name, string dir_title){
   return dir;
 }
 
-
-int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f90_mid, Double_t f90_max,
-                       Double_t max_charge_run, Double_t max_charge_MCER, Double_t max_charge_MCNR){
+int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f90_mid, Double_t f90_max, Double_t max_charge_run,
+                    Double_t max_charge_MCER, Double_t max_charge_MCNR){
 
   std::array<Double_t, 3>    max_charge  = {max_charge_run, max_charge_MCER, max_charge_MCNR};
   std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
-  std::array<std::string, 1> dir_name = {"data"};
+  std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "both", "ER", "NR"};
 
   TH1F** f90hist_run   = new TH1F*[number_divisions];
   //TH1F** f90hist_runER = new TH1F*[number_divisions];
@@ -72,22 +74,21 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
   TFile *hist_file = new TFile(Form("hist_%d.root", run), "UPDATE");
   if ( !(hist_file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
 
-  // Checks wether a folder for saving the f90 histograms exists. If not, create it.
-  TDirectory *f90_dir = hist_file -> GetDirectory("f90_histograms");
-  if (!f90_dir) f90_dir = hist_file -> mkdir("f90_histograms", "f90_hist");
+  // Checks wether a folder for saving the f90 histograms exists. If not, create it. Then repeat the process for all sub-directories.
+  TDirectory *f90_dir = MakeDirectory(dir_name[0], dir_name[0]);
 
   f90_dir -> cd();
-  TDirectory *data_dir = MakeDir(dir_name[0], dir_name[0]);
-  //TDirectory *data_dir = f90_dir -> GetDirectory("data");
-  //if (!data_dir) data_dir = f90_dir -> mkdir("data", "data");
-  //data_dir -> cd();
-  //TDirectory *data_dir_both = data_dir -> GetDirectory("both");
-  //if (!data_dir_both) data_dir_both = data_dir -> mkdir("both", "both");
-  //TDirectory *data_dir_ER = data_dir -> GetDirectory("ER");
-  //if (!data_dir_ER)
-  TDirectory *MC_dir = f90_dir -> GetDirectory("monte_carlo");
-  if (!MC_dir) MC_dir = f90_dir -> mkdir("monte_carlo", "monte_carlo");
+  TDirectory *data_dir = MakeDirectory(dir_name[1], dir_name[1]);
+  TDirectory *MC_dir   = MakeDirectory(dir_name[2], dir_name[2]);
 
+  data_dir -> cd();
+  TDirectory *data_dir_both = MakeDirectory(dir_name[3], dir_name[3]);
+  TDirectory *data_dir_ER   = MakeDirectory(dir_name[4], dir_name[4]);
+  TDirectory *data_dir_NR   = MakeDirectory(dir_name[5], dir_name[5]);
+
+  MC_dir -> cd();
+  TDirectory *MC_dir_ER   = MakeDirectory(dir_name[4], dir_name[4]);
+  TDirectory *MC_dir_NR   = MakeDirectory(dir_name[5], dir_name[5]);
 
 
   // Generate all the desire f90 histograms (run, run er, run nr, er only and nr only).

@@ -57,12 +57,11 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
   std::array<std::string, 3> file_suffix = {"", "MC_ER", "MC_NR"};
   std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "both", "ER", "NR"};
 
-  TH1F** f90hist_run   = new TH1F*[number_divisions];
+  TH1F** f90hist_run    = new TH1F*[number_divisions];
   TH1F** f90hist_run_ER = new TH1F*[number_divisions];
   TH1F** f90hist_run_NR = new TH1F*[number_divisions];
   TH1F** f90hist_MC_ER  = new TH1F*[number_divisions];
   TH1F** f90hist_MC_NR  = new TH1F*[number_divisions];
-  //THStack** f90hstack  = new THStack*[number_divisions];
 
   // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
   if (gSystem -> AccessPathName(Form("hist_%d.root", run))){
@@ -78,8 +77,8 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
   TDirectory *f90_dir = MakeDirectory(dir_name[0], dir_name[0]);
 
   f90_dir -> cd();
-  TDirectory *data_dir = MakeDirectory(dir_name[1], dir_name[1]);
-  TDirectory *MC_dir   = MakeDirectory(dir_name[2], dir_name[2]);
+  TDirectory *data_dir    = MakeDirectory(dir_name[1], dir_name[1]);
+  TDirectory *MC_dir      = MakeDirectory(dir_name[2], dir_name[2]);
 
   data_dir -> cd();
   TDirectory *data_dir_both = MakeDirectory(dir_name[3], dir_name[3]);
@@ -114,34 +113,23 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
         f90hist_run_NR[j] -> SetTitle(Form("f90 Distribution (NR, Bin Number: %d); f09", j+1));
 
         data_dir_NR -> WriteObject(f90hist_run_NR[j], Form("f90_distribution_NR%d", j+1), "OverWrite");
-      }/* else if (i == 1) {
+
+      } else if (i == 1) {
         f90hist_MC_ER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
         f90hist_MC_ER[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
         f90hist_MC_ER[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
 
-        MC_dir -> cd();
-        f90hist_MC_ER[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
+        MC_dir_ER -> WriteObject(f90hist_MC_ER[j], Form("f90_distribution_ER%d", j+1), "OverWrite");
+
       } else if (i == 2) {
         f90hist_MC_NR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
         f90hist_MC_NR[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
         f90hist_MC_NR[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
 
-        MC_dir -> cd();
-        f90hist_MC_NR[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
-      }*/
+        MC_dir_NR -> WriteObject(f90hist_MC_NR[j], Form("f90_distribution_NR%d", j+1), "OverWrite");
+      }
     }
   }
-
-  // Create histograms with all three distributions for each division (visualization).
-  /*for (int j = 0; j < number_divisions; j++){
-    f90hstack[j] -> Add(f90hist_run[j]); f90hstack[j] -> Add(f90hist_MC_ER[j]); f90hstack[j] -> Add(f90hist_MC_NR[j]);
-    f90hstack[j] -> SetName(Form("f90_distribution_all%d", j+1));
-    f90hstack[j] -> SetTitle(Form("f90 Distribution (All, Bin Number: %d); f90",  j+1));
-
-    f90_dir -> WriteObject(f90hstack[j],  Form("f90_distribution_all%d", j+1), "OverWrite");
-  }
-  */
-  hist_file -> Close();
 
   return 0;
 }
@@ -149,8 +137,34 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
 void CompareSimulation(int run, int number_divisions, bool hist_exist = false, Double_t f90_min = 0., Double_t f90_mid = 0.4, Double_t f90_max = 1.,
                        Double_t max_charge_run = 2000., Double_t max_charge_MC_ER = 20000., Double_t max_charge_MC_NR = 9000.){
 
+  /* If the histograms to be studied have yet to be generated (hist_exist = false), the function bellow is called, generating them. If the f90_histograms
+  already exist (his_exist = true), then the function bellow is called and instead the histograms are obtained from the root file. */
   if (!hist_exist){GenerateAllHist(run, number_divisions, f90_min, f90_mid, f90_max, max_charge_run, max_charge_MC_ER, max_charge_MC_NR);}
 
-  //here goes the creationg of the histogram of ratios.
+  TH1F** f90hist_run_ER = new TH1F*[number_divisions];
+  TH1F** f90hist_run_NR = new TH1F*[number_divisions];
+  TH1F** f90hist_MC_ER  = new TH1F*[number_divisions];
+  TH1F** f90hist_MC_NR  = new TH1F*[number_divisions];
 
+  std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "both", "ER", "NR"};
+
+  TFile *hist_file = new TFile("hist_1220.root", "UPDATE");
+  TDirectory *f90_dir = MakeDirectory(dir_name[0], dir_name[0]);
+
+  f90_dir -> cd();
+  TDirectory *data_dir    = MakeDirectory(dir_name[1], dir_name[1]);
+  TDirectory *MC_dir      = MakeDirectory(dir_name[2], dir_name[2]);
+
+  data_dir -> cd();
+  TDirectory *data_dir_both = MakeDirectory(dir_name[3], dir_name[3]);
+  TDirectory *data_dir_ER   = MakeDirectory(dir_name[4], dir_name[4]);
+  TDirectory *data_dir_NR   = MakeDirectory(dir_name[5], dir_name[5]);
+
+  MC_dir -> cd();
+  TDirectory *MC_dir_ER   = MakeDirectory(dir_name[4], dir_name[4]);
+  TDirectory *MC_dir_NR   = MakeDirectory(dir_name[5], dir_name[5]);
+
+  for (int i = 0; i < number_divisions; i++){
+    f90hist_run_ER[i] = (TH1F *)data_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
+  }
 }

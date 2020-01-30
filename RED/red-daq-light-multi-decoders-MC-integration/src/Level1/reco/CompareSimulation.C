@@ -6,6 +6,7 @@
 #include <TH1.h>
 #include <THStack.h>
 #include <TObject.h>
+#include <TRatioPlot.h>
 #include <TString.h>
 #include <TSystem.h>
 #include <TTree.h>
@@ -105,14 +106,14 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
 
         f90hist_run_ER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
         f90hist_run_ER[j] -> SetName(Form("f90_distribution_ER%d", j+1));
-        f90hist_run_ER[j] -> SetTitle(Form("f90 Distribution (ER, Bin Number: %d); f09", j+1));
+        f90hist_run_ER[j] -> SetTitle(Form("f90 Distribution (ER, Bin Number: %d); f90", j+1));
 
         data_dir_ER -> WriteObject(f90hist_run_ER[j], Form("f90_distribution_ER%d", j+1), "OverWrite");
 
 
         f90hist_run_NR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
         f90hist_run_NR[j] -> SetName(Form("f90_distribution_NR%d", j+1));
-        f90hist_run_NR[j] -> SetTitle(Form("f90 Distribution (NR, Bin Number: %d); f09", j+1));
+        f90hist_run_NR[j] -> SetTitle(Form("f90 Distribution (NR, Bin Number: %d); f90", j+1));
 
         data_dir_NR -> WriteObject(f90hist_run_NR[j], Form("f90_distribution_NR%d", j+1), "OverWrite");
 
@@ -148,25 +149,42 @@ void CompareSimulation(int run, int number_divisions, bool hist_exist = false, D
   TH1F** f90hist_MC_ER  = new TH1F*[number_divisions];
   TH1F** f90hist_MC_NR  = new TH1F*[number_divisions];
 
-  std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "both", "ER", "NR"};
+  std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "ER", "NR"};
 
   TFile *hist_file = new TFile("hist_1220.root", "UPDATE");
   TDirectory *f90_dir = MakeDirectory(dir_name[0], dir_name[0]);
 
   f90_dir -> cd();
-  TDirectory *data_dir    = MakeDirectory(dir_name[1], dir_name[1]);
-  TDirectory *MC_dir      = MakeDirectory(dir_name[2], dir_name[2]);
+  TDirectory *data_dir = MakeDirectory(dir_name[1], dir_name[1]);
+  TDirectory *MC_dir   = MakeDirectory(dir_name[2], dir_name[2]);
 
   data_dir -> cd();
-  TDirectory *data_dir_both = MakeDirectory(dir_name[3], dir_name[3]);
-  TDirectory *data_dir_ER   = MakeDirectory(dir_name[4], dir_name[4]);
-  TDirectory *data_dir_NR   = MakeDirectory(dir_name[5], dir_name[5]);
+  TDirectory *data_dir_ER = MakeDirectory(dir_name[3], dir_name[3]);
+  TDirectory *data_dir_NR = MakeDirectory(dir_name[4], dir_name[4]);
 
   MC_dir -> cd();
-  TDirectory *MC_dir_ER   = MakeDirectory(dir_name[4], dir_name[4]);
-  TDirectory *MC_dir_NR   = MakeDirectory(dir_name[5], dir_name[5]);
+  TDirectory *MC_dir_ER = MakeDirectory(dir_name[3], dir_name[3]);
+  TDirectory *MC_dir_NR = MakeDirectory(dir_name[4], dir_name[4]);
 
   for (int i = 0; i < number_divisions; i++){
     f90hist_run_ER[i] = (TH1F *)data_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
+    f90hist_run_NR[i] = (TH1F *)data_dir_NR -> Get(Form("f90_distribution_NR%d", i+1));
+
+    f90hist_MC_ER[i] = (TH1F *)MC_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
+    f90hist_MC_NR[i] = (TH1F *)MC_dir_NR -> Get(Form("f90_distribution_NR%d", i+1));
   }
+
+  f90hist_MC_ER[0] -> Draw();
+
+  /*TRatioPlot** hist_ratio = new TRatioPlot*[number_divisions];
+
+  hist_ratio[0] = new TRatioPlot(f90hist_MC_ER[1], f90hist_run_ER[1], "divsym");
+  //f90hist_run_NR[0] -> Draw();
+
+  gStyle->SetOptStat(0);
+  auto c1 = new TCanvas("c1", "A ratio example");
+
+
+  //auto rp = new TRatioPlot(f90hist_MC_NR[0], f90hist_run_NR[0], "divsym");
+  hist_ratio[0] -> Draw();*/
 }

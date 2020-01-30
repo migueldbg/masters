@@ -31,6 +31,8 @@ TH1F* Generatef90Hist(char *file_name, Double_t charge_max, Double_t f90_min, Do
   Double_t scale = norm/(f90_dist -> Integral());
   f90_dist -> Scale(scale);
 
+  f90_dist -> SetOption("E1");
+
   // Remove the histogram from the current directory (TFile) so that I can close the file and still have access to it.
   f90_dist -> SetDirectory(0);
   file -> Close();

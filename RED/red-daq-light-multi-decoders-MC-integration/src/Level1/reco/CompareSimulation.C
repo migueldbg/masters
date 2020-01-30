@@ -99,43 +99,42 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
         f90hist_run[j] -> SetName(Form("f90_distribution%d", j+1));
         f90hist_run[j] -> SetTitle(Form("f90 Distribution (Bin Number: %d); f90", j+1));
 
-        data_dir -> WriteObject(f90hist_run[j], Form("f90_distribution%d", j+1), "OverWrite");
+        data_dir_both -> WriteObject(f90hist_run[j], Form("f90_distribution%d", j+1), "OverWrite");
 
-        //f90hist_run[j] -> Write(Form("f90_distribution%d", j+1), TObject::kOverwrite);
 
-        /*f90hist_runER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
-        f90hist_runER[j] -> SetName(Form("f90_distribution_ER%d", j+1));
-        f90hist_runER[j] -> SetTitle(Form("f90 Distribution (ER, Bin Number: %d); f09", j+1));
+        f90hist_run_ER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
+        f90hist_run_ER[j] -> SetName(Form("f90_distribution_ER%d", j+1));
+        f90hist_run_ER[j] -> SetTitle(Form("f90 Distribution (ER, Bin Number: %d); f09", j+1));
 
-        data_dir -> WriteObject(f90hist_runER[j], Form("f90_distribution_ER%d", j+1), "OverWrite");
+        data_dir_ER -> WriteObject(f90hist_run_ER[j], Form("f90_distribution_ER%d", j+1), "OverWrite");
 
-        f90hist_runNR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
-        f90hist_runNR[j] -> SetName(Form("f90_distribution_NR%d", j+1));
-        f90hist_runNR[j] -> SetTitle(Form("f90 Distribution (NR, Bin Number: %d); f09", j+1));
 
-        data_dir -> WriteObject(f90hist_runNR[j], Form("f90_distribution_NR%d", j+1), "OverWrite");*/
+        f90hist_run_NR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
+        f90hist_run_NR[j] -> SetName(Form("f90_distribution_NR%d", j+1));
+        f90hist_run_NR[j] -> SetTitle(Form("f90 Distribution (NR, Bin Number: %d); f09", j+1));
 
+        data_dir_NR -> WriteObject(f90hist_run_NR[j], Form("f90_distribution_NR%d", j+1), "OverWrite");
       }/* else if (i == 1) {
-        f90hist_MCER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
-        f90hist_MCER[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
-        f90hist_MCER[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
+        f90hist_MC_ER[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_min, f90_mid, number_divisions, j+1);
+        f90hist_MC_ER[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
+        f90hist_MC_ER[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
 
         MC_dir -> cd();
-        f90hist_MCER[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
+        f90hist_MC_ER[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
       } else if (i == 2) {
-        f90hist_MCNR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
-        f90hist_MCNR[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
-        f90hist_MCNR[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
+        f90hist_MC_NR[j] = Generatef90Hist(Form("run_%d%s.root", run, file_suffix[i].c_str()), max_charge[i], f90_mid, f90_max, number_divisions, j+1);
+        f90hist_MC_NR[j] -> SetName(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1));
+        f90hist_MC_NR[j] -> SetTitle(Form("f90 Distrbution (MC, Bin Number: %d); f90", j+1));
 
         MC_dir -> cd();
-        f90hist_MCNR[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
+        f90hist_MC_NR[j] -> Write(Form("f90_distribution_%s%d", file_suffix[i].c_str(), j+1), TObject::kOverwrite);
       }*/
     }
   }
 
   // Create histograms with all three distributions for each division (visualization).
   /*for (int j = 0; j < number_divisions; j++){
-    f90hstack[j] -> Add(f90hist_run[j]); f90hstack[j] -> Add(f90hist_MCER[j]); f90hstack[j] -> Add(f90hist_MCNR[j]);
+    f90hstack[j] -> Add(f90hist_run[j]); f90hstack[j] -> Add(f90hist_MC_ER[j]); f90hstack[j] -> Add(f90hist_MC_NR[j]);
     f90hstack[j] -> SetName(Form("f90_distribution_all%d", j+1));
     f90hstack[j] -> SetTitle(Form("f90 Distribution (All, Bin Number: %d); f90",  j+1));
 

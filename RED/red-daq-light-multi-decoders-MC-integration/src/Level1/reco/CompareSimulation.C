@@ -51,17 +51,17 @@ TDirectory* MakeDirectory(string dir_name, string dir_title){
 }
 
 int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f90_mid, Double_t f90_max, Double_t max_charge_run,
-                    Double_t max_charge_MCER, Double_t max_charge_MCNR){
+                    Double_t max_charge_MC_ER, Double_t max_charge_MC_NR){
 
-  std::array<Double_t, 3>    max_charge  = {max_charge_run, max_charge_MCER, max_charge_MCNR};
-  std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
+  std::array<Double_t, 3>    max_charge  = {max_charge_run, max_charge_MC_ER, max_charge_MC_NR};
+  std::array<std::string, 3> file_suffix = {"", "MC_ER", "MC_NR"};
   std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "both", "ER", "NR"};
 
   TH1F** f90hist_run   = new TH1F*[number_divisions];
-  //TH1F** f90hist_runER = new TH1F*[number_divisions];
-  //TH1F** f90hist_runNR = new TH1F*[number_divisions];
-  TH1F** f90hist_MCER  = new TH1F*[number_divisions];
-  TH1F** f90hist_MCNR  = new TH1F*[number_divisions];
+  TH1F** f90hist_run_ER = new TH1F*[number_divisions];
+  TH1F** f90hist_run_NR = new TH1F*[number_divisions];
+  TH1F** f90hist_MC_ER  = new TH1F*[number_divisions];
+  TH1F** f90hist_MC_NR  = new TH1F*[number_divisions];
   //THStack** f90hstack  = new THStack*[number_divisions];
 
   // Cheks wether the root file already exists and tells the user. The "UPDATE" option already takes into account the possibility of the file not existing.
@@ -148,9 +148,9 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
 }
 
 void CompareSimulation(int run, int number_divisions, bool hist_exist = false, Double_t f90_min = 0., Double_t f90_mid = 0.4, Double_t f90_max = 1.,
-                       Double_t max_charge_run = 2000., Double_t max_charge_MCER = 20000., Double_t max_charge_MCNR = 9000.){
+                       Double_t max_charge_run = 2000., Double_t max_charge_MC_ER = 20000., Double_t max_charge_MC_NR = 9000.){
 
-  if (!hist_exist){GenerateAllHist(run, number_divisions, f90_min, f90_mid, f90_max, max_charge_run, max_charge_MCER, max_charge_MCNR);}
+  if (!hist_exist){GenerateAllHist(run, number_divisions, f90_min, f90_mid, f90_max, max_charge_run, max_charge_MC_ER, max_charge_MC_NR);}
 
   //here goes the creationg of the histogram of ratios.
 

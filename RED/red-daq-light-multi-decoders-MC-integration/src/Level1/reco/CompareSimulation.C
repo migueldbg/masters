@@ -2,7 +2,9 @@
 #include <array>
 #include <string>
 
+#include <TCanvas.h>
 #include <TFile.h>
+#include <TGraph.h>
 #include <TH1.h>
 #include <THStack.h>
 #include <TObject.h>
@@ -151,7 +153,7 @@ void CompareSimulation(int run, int number_divisions, bool hist_exist = false, D
   TH1F** f90hist_MC_ER  = new TH1F*[number_divisions];
   TH1F** f90hist_MC_NR  = new TH1F*[number_divisions];
 
-  std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "ER", "NR"};
+  std::array<std::string, 5> dir_name = {"f90_histograms", "data", "monte_carlo", "ER", "NR"};
 
   TFile *hist_file = new TFile("hist_1220.root", "UPDATE");
   TDirectory *f90_dir = MakeDirectory(dir_name[0], dir_name[0]);
@@ -169,24 +171,48 @@ void CompareSimulation(int run, int number_divisions, bool hist_exist = false, D
   TDirectory *MC_dir_NR = MakeDirectory(dir_name[4], dir_name[4]);
 
   for (int i = 0; i < number_divisions; i++){
-    f90hist_run_ER[i] = (TH1F *)data_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
-    f90hist_run_NR[i] = (TH1F *)data_dir_NR -> Get(Form("f90_distribution_NR%d", i+1));
+    f90hist_run_ER[i] = (TH1F*)data_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
+    f90hist_run_NR[i] = (TH1F*)data_dir_NR -> Get(Form("f90_distribution_NR%d", i+1));
 
-    f90hist_MC_ER[i] = (TH1F *)MC_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
-    f90hist_MC_NR[i] = (TH1F *)MC_dir_NR -> Get(Form("f90_distribution_NR%d", i+1));
+    f90hist_MC_ER[i] = (TH1F*)MC_dir_ER -> Get(Form("f90_distribution_ER%d", i+1));
+    f90hist_MC_NR[i] = (TH1F*)MC_dir_NR -> Get(Form("f90_distribution_NR%d", i+1));
   }
 
-  f90hist_MC_ER[0] -> Draw();
+  // Generating the ratio histograms.
+  int canvas_size_x = 1000;
 
-  /*TRatioPlot** hist_ratio = new TRatioPlot*[number_divisions];
+  TCanvas *ER_canvas1 = new TCanvas("ER_canvas1", "ER Peak Ratio (1/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  ER_canvas1 -> Divide(2, 3);
+  TCanvas *ER_canvas2 = new TCanvas("ER_canvas2", "ER Peak Ratio (2/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  ER_canvas2 -> Divide(2, 2);
+  TCanvas *NR_canvas1 = new TCanvas("NR_canvas1", "NR Peak Ratio (1/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  NR_canvas1 -> Divide(2, 3);
+  TCanvas *NR_canvas2 = new TCanvas("NR_canvas2", "NR Peak Ratio (2/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  NR_canvas2 -> Divide(2, 2);
 
-  hist_ratio[0] = new TRatioPlot(f90hist_MC_ER[1], f90hist_run_ER[1], "divsym");
-  //f90hist_run_NR[0] -> Draw();
 
-  gStyle->SetOptStat(0);
-  auto c1 = new TCanvas("c1", "A ratio example");
+  TRatioPlot** f90_ER_ratio = new TRatioPlot*[number_divisions];
+  TRatioPlot** f90_NR_ratio = new TRatioPlot*[number_divisions];
+
+  for (int i = 0; i < number_divisions; i++){
+    f90_ER_ratio[i] = new TRatioPlot(f90hist_MC_ER[i], f90hist_run_ER[i], "divsym");
+    f90_NR_ratio[i] = new TRatioPlot(f90hist_MC_NR[i], f90hist_run_NR[i], "divsym");
+    f90_ER_ratio[i] -> SetGridlines(0,0);
+    f90_NR_ratio[i] -> SetGridlines(0,0);
+
+    if (i < 6){
+      ER_canvas1 -> cd(i+1);  f90_ER_ratio[i] -> Draw();
+      NR_canvas1 -> cd(i+1);  f90_NR_ratio[i] -> Draw();
+    } else {
+      ER_canvas2 -> cd(i+1 - 6);  f90_ER_ratio[i] -> Draw();
+      NR_canvas2 -> cd(i+1 - 6);  f90_NR_ratio[i] -> Draw();
+    }
+  }
+  ER_canvas1 -> SaveAs("ER_ratio1.pdf"); ER_canvas2 -> SaveAs("ER_ratio2.pdf");
+  NR_canvas1 -> SaveAs("NR_ratio1.pdf"); NR_canvas2 -> SaveAs("NR_ratio2.pdf");
+
+  // It returns the result ratio as a TGraph. A glance over the documentation indicates that I can probably extract the desired information
+  //auto ratio_result = f90_ER_ratio[1] -> GetCalculationOutputGraph();
 
 
-  //auto rp = new TRatioPlot(f90hist_MC_NR[0], f90hist_run_NR[0], "divsym");
-  hist_ratio[0] -> Draw();*/
 }

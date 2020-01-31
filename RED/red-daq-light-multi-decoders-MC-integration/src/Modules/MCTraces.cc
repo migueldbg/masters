@@ -416,10 +416,10 @@ void MCTraces::AddFluctuations(int isipm)
 
 int MCTraces::GetDuplicatedNpe(int isipm)
 {
-    int npe = 1;/*
+    int npe = 1;
     for (int counter=1; counter<=npe; counter++)
         if (rnd->Rndm() < pVino_sipm.at(isipm))
-            npe++;*/
+            npe++;
 
     return npe-1;
 }

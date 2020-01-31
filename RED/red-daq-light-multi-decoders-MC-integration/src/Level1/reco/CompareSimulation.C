@@ -134,11 +134,13 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
     }
   }
 
+  hist_file -> Close();
+
   return 0;
 }
 
-void CompareSimulation(int run, int number_divisions, bool hist_exist = false, Double_t f90_min = 0., Double_t f90_mid = 0.4, Double_t f90_max = 1.,
-                       Double_t max_charge_run = 2000., Double_t max_charge_MC_ER = 20000., Double_t max_charge_MC_NR = 9000.){
+void CompareSimulation(int run, int number_divisions, bool hist_exist = false, Double_t f90_min = 0.1, Double_t f90_mid = 0.4, Double_t f90_max = 0.7,
+                       Double_t max_charge_run = 2000., Double_t max_charge_MC_ER = 21000., Double_t max_charge_MC_NR = 7300.){
 
   /* If the histograms to be studied have yet to be generated (hist_exist = false), the function bellow is called, generating them. If the f90_histograms
   already exist (his_exist = true), then the function bellow is called and instead the histograms are obtained from the root file. */

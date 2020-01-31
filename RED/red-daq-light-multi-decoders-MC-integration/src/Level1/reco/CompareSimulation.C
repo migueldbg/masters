@@ -179,15 +179,15 @@ void CompareSimulation(int run, int number_divisions, bool hist_exist = false, D
   }
 
   // Generating the ratio histograms.
-  int canvas_size_x = 1000;
+  int canvas_size_x = 500;
 
-  TCanvas *ER_canvas1 = new TCanvas("ER_canvas1", "ER Peak Ratio (1/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  TCanvas *ER_canvas1 = new TCanvas("ER_canvas1", "ER Peak Ratio (1/2)", 2*canvas_size_x, 3*canvas_size_x);
   ER_canvas1 -> Divide(2, 3);
-  TCanvas *ER_canvas2 = new TCanvas("ER_canvas2", "ER Peak Ratio (2/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  TCanvas *ER_canvas2 = new TCanvas("ER_canvas2", "ER Peak Ratio (2/2)", 2*canvas_size_x, 2*canvas_size_x);
   ER_canvas2 -> Divide(2, 2);
-  TCanvas *NR_canvas1 = new TCanvas("NR_canvas1", "NR Peak Ratio (1/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  TCanvas *NR_canvas1 = new TCanvas("NR_canvas1", "NR Peak Ratio (1/2)", 2*canvas_size_x, 3*canvas_size_x);
   NR_canvas1 -> Divide(2, 3);
-  TCanvas *NR_canvas2 = new TCanvas("NR_canvas2", "NR Peak Ratio (2/2)", canvas_size_x, (number_divisions/2)*(canvas_size_x));
+  TCanvas *NR_canvas2 = new TCanvas("NR_canvas2", "NR Peak Ratio (2/2)", 2*canvas_size_x, 2*canvas_size_x);
   NR_canvas2 -> Divide(2, 2);
 
 

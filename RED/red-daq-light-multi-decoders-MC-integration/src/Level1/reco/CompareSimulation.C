@@ -58,7 +58,7 @@ int GenerateAllHist(int run, int number_divisions, Double_t f90_min, Double_t f9
                     Double_t max_charge_MC_ER, Double_t max_charge_MC_NR){
 
   std::array<Double_t, 3>    max_charge  = {max_charge_run, max_charge_MC_ER, max_charge_MC_NR};
-  std::array<std::string, 3> file_suffix = {"", "MC_ER", "MC_NR"};
+  std::array<std::string, 3> file_suffix = {"", "MCER", "MCNR"};
   std::array<std::string, 6> dir_name = {"f90_histograms", "data", "monte_carlo", "both", "ER", "NR"};
 
   TH1F** f90hist_run    = new TH1F*[number_divisions];

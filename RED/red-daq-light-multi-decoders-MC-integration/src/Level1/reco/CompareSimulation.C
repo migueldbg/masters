@@ -6,7 +6,6 @@
 #include <TFile.h>
 #include <TGraph.h>
 #include <TH1.h>
-#include <THStack.h>
 #include <TObject.h>
 #include <TRatioPlot.h>
 #include <TString.h>

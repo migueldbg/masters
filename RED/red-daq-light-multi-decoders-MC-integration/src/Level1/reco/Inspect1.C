@@ -9,7 +9,7 @@ void Load(int run, bool isMC=false, int ERorNR=0, bool ph2=true, bool s2Fit=fals
 {
     //SetStyle();
     //--- Clustering tree
-    TFile *f=new TFile(Form("run_%d%s%s%s.root",run, (isMC)?"MC":"", (ERorNR == 1)?"_ER":"", (ERorNR == 2)?"_NR":""));
+    TFile *f=new TFile(Form("run_%d%s%s%s.root",run, (isMC)?"_MC":"", (ERorNR == 1)?"ER":"", (ERorNR == 2)?"NR":""));
     f->GetObject("reco",t);
     t->SetMarkerStyle(20);
     t->SetMarkerSize(0.5);

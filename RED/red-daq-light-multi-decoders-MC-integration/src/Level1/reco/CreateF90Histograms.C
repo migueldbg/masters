@@ -1,7 +1,8 @@
-/* File: CreateF90Histograms.C (ROOT macro)
+/* File: CreateF90Histograms.C (ROOT macro).
  *
- * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com)
- * Date: February 4 2020
+ * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).
+ * Date of creation : February 4 2020.
+ * Last update      : February 5 2020.
  *
  * Summary of File:
  *
@@ -14,12 +15,15 @@
  *    when deciding the values of max charge and bin size.The generated histograms are then saved in a .root file, separated in
  *    different folders to facilitate later access, if necessary.
  */
+
 #include <array>
 
-#include <TCanvas.h>
 #include <TFile.h>
-#include <TGraph.h>
 #include <TH1.h>
+#include <TObject.h>
+#include <TString.h>
+#include <TSystem.h>
+#include <TTree.h>
 
 /* TFile* CheckFile( TString path_name )
  *
@@ -127,7 +131,7 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
   return directory;
 }
 
-
+// Write histogram function?
 
 void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000.){
 
@@ -217,10 +221,6 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
     mc_nr_dir -> WriteObject( f90hist_mc_nr[i], Form("f90_histogram_mcnr_%d", i+1), "OverWrite" );
 
   }
-
-  //hist_file -> cd();
-  //TH1F* hist = Generatef90Hist(Form("run_%d.root", run), 600, 620, 0.1, 0.8);
-  //hist -> Draw();
 
   hist_file -> Close();
 }

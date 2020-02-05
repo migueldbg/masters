@@ -115,6 +115,7 @@ void PlotRMS(int run){
 
   RMS_analysis_dir -> cd();
   TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
+  TDirectory* graphs_dir         = MakeDirectory("graphs", "graphs");
 
   histograms_dir -> cd();
   TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");

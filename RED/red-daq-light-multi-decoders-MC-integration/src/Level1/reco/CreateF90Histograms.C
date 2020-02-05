@@ -131,7 +131,7 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
   return directory;
 }
 
-// Write histogram function?
+// WriteHistogram() function?
 
 void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000.){
 
@@ -162,6 +162,8 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
   TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
   // --------------------------------------------------------------------------- //
 
+  // These values define the ranges used to obtain the total f90 distribution, the ER only peak and the NR only peak.
+  // Total -> f90_min - f90_max; ER only -> f90_min - f90_mid; NR only -> f90_mid - f90_max. 
   Double_t f90_min = 0.15;
   Double_t f90_mid = 0.4;
   Double_t f90_max = 0.65;

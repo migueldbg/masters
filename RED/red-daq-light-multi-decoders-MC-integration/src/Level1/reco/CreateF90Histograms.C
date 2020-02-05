@@ -163,8 +163,8 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
   // --------------------------------------------------------------------------- //
 
   // These values define the ranges used to obtain the total f90 distribution, the ER only peak and the NR only peak.
-  // Total -> f90_min - f90_max; ER only -> f90_min - f90_mid; NR only -> f90_mid - f90_max. 
-  Double_t f90_min = 0.15;
+  // Total -> f90_min - f90_max; ER only -> f90_min - f90_mid; NR only -> f90_mid - f90_max.
+  Double_t f90_min = 0.2;
   Double_t f90_mid = 0.4;
   Double_t f90_max = 0.65;
 

@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include <TFile.h>
+#include <TGraph.h>
 #include <TH1.h>
 #include <TKey.h>
 #include <TObject.h>
@@ -132,8 +133,38 @@ void PlotRMS(int run){
   TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
   // --------------------------------------------------------------------------- //
 
-  Int_t i = NumberOfHistograms(da_both_dir);
-  std::cout << i << std::endl;
+  Int_t number_of_histograms = NumberOfHistograms(da_both_dir);
+
+  Double_t RMS_da_er[number_of_histograms];      Double_t RMS_da_nr[number_of_histograms];
+  Double_t RMSerr_da_er[number_of_histograms];   Double_t RMSerr_da_nr[number_of_histograms];
+
+  Double_t RMS_mc_er[number_of_histograms];      Double_t RMS_mc_nr[number_of_histograms];
+  Double_t RMSerr_mc_er[number_of_histograms];   Double_t RMSerr_mc_nr[number_of_histograms];
+
+  Double_t charge_total[number_of_histograms];
+
+  TH1F* htemp = 0;
+
+  for ( int i = 0; i < number_of_histograms; i++ ){
+
+    htemp = (TH1F *)da_er_dir -> Get( Form("f90_histogram_er_%d", i+1) );
+    RMS_da_er[i] = htemp -> GetRMS();  RMSerr_da_er[i] = htemp -> GetRMSError();
+
+    htemp = (TH1F *)da_nr_dir -> Get( Form("f90_histogram_nr_%d", i+1) );
+    RMS_da_nr[i] = htemp -> GetRMS();  RMSerr_da_nr[i] = htemp -> GetRMSError();
+
+    htemp = (TH1F *)mc_er_dir -> Get( Form("f90_histogram_mcer_%d", i+1) );
+    RMS_mc_er[i] = htemp -> GetRMS();  RMSerr_mc_er[i] = htemp -> GetRMSError();
+
+    htemp = (TH1F *)mc_nr_dir -> Get( Form("f90_histogram_mcnr_%d", i+1) );
+    RMS_mc_nr[i] = htemp -> GetRMS();  RMSerr_mc_nr[i] = htemp -> GetRMSError();
+
+    charge_total[i] = 20*(i+1) - 10;
+  }
+
+  TGraph* gr = new TGraph(number_of_histograms, charge_total, RMS_da_er);
+  gr -> Draw("A*");
+
 
   // get the desired histogram -> get the rms and its error -> save it -> close the histogram
   // plot the rms

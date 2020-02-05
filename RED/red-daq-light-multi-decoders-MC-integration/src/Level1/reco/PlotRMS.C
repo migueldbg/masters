@@ -20,6 +20,7 @@
 #include <array>
 #include <iostream>
 
+#include <TCanvas.h>
 #include <TFile.h>
 #include <TGraph.h>
 #include <TH1.h>
@@ -104,6 +105,43 @@ Int_t NumberOfHistograms( TDirectory* directory ){
   return number_of_histograms;
 }
 
+/* TGraphErrors WriteGraph (TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0,
+                            const char* title = "", const char* name = "graph", Int_t ms = 22)
+ *
+ * Summary of WriteGraph function:
+ *
+ *    The WriteGraph function takes the necessary parameters to construct a TGraphErrors object and does. It
+ *    can also take some parameters to determine the name, title and marker style of the resulting graph. The
+ *    code than writes the graph to the given directory and returns it.
+ *
+ * Parameters   : directory       >> where to write the graph.
+ *                title           >> title of the graph ("TITLE; XAXIS; YAXIS").
+ *                name            >> name of the graph.
+ *                ms              >> indicates the MarkerStyle to be used.
+ *                mc              >> indicates the MarkerColor to be used.
+ *                n, x, y, ex, ey >> necessary parameters to construct a TGraphErros object.
+ *
+ * Return Value : TGraphErros* graph
+ */
+TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0,
+                          const char* title = "", const char* name = "graph", Int_t ms = 22, Int_t mc = 1){
+
+  TGraphErrors* graph = new TGraphErrors(n, x, y, ex, ey);
+  graph -> SetTitle(title);
+  graph -> SetName(name);
+  graph -> SetMarkerStyle(ms);
+  graph -> SetMarkerColor(mc);
+  graph -> SetMarkerSize(1.5);
+  graph -> SetLineColor(mc);
+  graph -> GetXaxis() -> SetRangeUser(-50., 1100.);
+  graph -> GetXaxis() -> SetTitle("Charge (PE)");
+  graph -> GetYaxis() -> SetTitle("RMS");
+
+  directory -> WriteObject(graph, name, "OverWrite");
+
+  return graph;
+}
+
 void PlotRMS(int run){
 
   TString file_name = Form("hist_%d.root", run);
@@ -163,13 +201,25 @@ void PlotRMS(int run){
     charge_total[i] = 20*(i+1) - 10;
   }
 
-  TGraph* gr = new TGraph(number_of_histograms, charge_total, RMS_da_er);
-  gr -> Draw("A*");
+
+  TGraphErrors* da_er_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_er, 0, RMSerr_da_er,
+                                          "RMS of f90 Histograms (ER)", "f90RMSxCharge_total_er", 22, 40);
+  TGraphErrors* da_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_nr, 0, RMSerr_da_nr,
+                                          "RMS of f90 Histograms (NR)", "f90RMSxCharge_total_nr", 23, 40);
+  TGraphErrors* mc_er_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er, 0, RMSerr_mc_er,
+                                          "RMS of f90 Histograms (MC ER)", "f90RMSxCharge_total_mcer", 22, 30);
+  TGraphErrors* mc_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
+                                          "RMS of f90 Histograms (MC NR)", "f90RMSxCharge_total_mcnr", 23, 30);
+// now just do the rest.
 
 
-  // get the desired histogram -> get the rms and its error -> save it -> close the histogram
-  // plot the rms
-  // save the images
+  TCanvas* c1 = new TCanvas("c1");
+  TMultiGraph* mg = new TMultiGraph();
+  mg -> Add(da_er_graph); mg -> Add(mc_er_graph);
+
+  mg -> Draw("ALP");
+
+  c1 -> BuildLegend();
 
 
 }

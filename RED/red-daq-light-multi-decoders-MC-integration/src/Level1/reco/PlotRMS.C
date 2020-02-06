@@ -350,5 +350,5 @@ void PlotRMS(int run){
   er_canvas -> SaveAs("f90RMS v Charge (ER).pdf");                       er_canvas -> SaveAs("f90RMS v Charge (ER).png");
   nr_canvas -> SaveAs("f90RMS v Charge (NR).pdf");                       nr_canvas -> SaveAs("f90RMS v Charge (NR).png");
   er_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).pdf");  er_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).png");
-  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).pdf");  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (NR).png");
+  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (NR).pdf");  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (NR).png");
 }

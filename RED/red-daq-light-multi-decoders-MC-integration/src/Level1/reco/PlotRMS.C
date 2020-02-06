@@ -18,6 +18,7 @@
  */
 
 #include <array>
+#include <cmath>
 #include <iostream>
 #include <stdlib.h>
 
@@ -58,25 +59,63 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
-// ************ REWRITE THE FUNCTION BELOW ******************* //
-// make it so that it takes to TGraphErrors object and constructs a new TGraphErros as the difference between them.  
+/* TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t option = 0 )
+ *
+ * Summary of GraphDiff function:
+ *
+ *    The GraphDiff function takes two TGraphErrors objects and returns a third TGraphErrors object containing
+ *    the difference between them. The two graphs given to the function must have the same number of points for
+ *    the function to run without errors. The user has three options when it comes to the output: option 1
+ *    returns the absolute difference, option 2 calculates the difference relative to the first graph and option
+ *    2 returns the difference relative to the second graph.
+ *
+ * Parameters   : graph1 >> first graph.
+ *                graph2 >> second graph.
+ *                option >> determines the type of differnce to be calculated. Defaults to absolute difference.
+ *
+ * Return value : TGraphErrors* graph_diff.
+ */
+TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t option = 0 ){
+  Int_t n_points1 = graph1 -> GetN();   Int_t n_points2 = graph2 -> GetN();
 
-TGraph* GraphDiff( Double_t* array1, Double_t* array2, Double_t* y_array, Int_t size, Int_t base_array = 0 ){
+  if ( n_points1 != n_points2 ) { exit(EXIT_FAILURE); }
 
-  Double_t diff_array[size];
+  Double_t* y1_value = graph1 -> GetY();    Double_t* y1_error = graph1 -> GetEY();
+  Double_t* y2_value = graph2 -> GetY();    Double_t* y2_error = graph2 -> GetEY();
 
-  for (Int_t i = 0; i < size; i++){
-    if (base_array == 0) {
-      diff_array[i] = TMath::Abs( array1[i] - array2[i] );
-    } else if (base_array == 1) {
-      diff_array[i] = TMath::Abs( array1[i] - array2[i] ) / array1[i];
-    } else if (base_array == 2) {
-      diff_array[i] = TMath::Abs( array1[i] - array2[i] ) / array2[i];
+  Double_t* x_value  = graph1 -> GetX();    Double_t* x_error   = graph1 ->GetEX();
+
+  Double_t y_diff[n_points1];
+  Double_t y_diff_error[n_points1];
+
+  Double_t abs_diff = 0;
+  Double_t abs_diff_error = 0;
+
+  for ( Int_t i = 0; i < n_points1; i++ ) {
+    if ( option == 0 ) {
+
+      y_diff[i] = TMath::Abs( y1_value[i] - y2_value[i] );
+      y_diff_error[i] = TMath::Sqrt( pow(y1_error[i], 2) + pow(y2_error[i], 2) );
+
+    } else if ( option == 1 ) {
+
+      abs_diff = TMath::Abs( y1_value[i] - y2_value[i] );
+      abs_diff_error = TMath::Sqrt( pow(y1_error[i], 2) + pow(y2_error[i], 2) );
+
+      y_diff[i] = abs_diff / y1_value[i];
+      y_diff_error[i] = y_diff[i] * TMath::Sqrt( pow( (abs_diff_error/abs_diff), 2 ) + pow( (y1_error[i]/y1_value[i]), 2 ) );
+
+    } else if ( option == 2 ) {
+
+      abs_diff = TMath::Abs( y1_value[i] - y2_value[i] );
+      abs_diff_error = TMath::Sqrt( pow(y1_error[i], 2) + pow(y2_error[i], 2) );
+
+      y_diff[i] = abs_diff / y2_value[i];
+      y_diff_error[i] = y_diff[i] * TMath::Sqrt( pow( (abs_diff_error/abs_diff), 2 ) + pow( (y2_error[i]/y2_value[i]), 2 ) );
     }
   }
 
-  TGraph* graph_diff = new TGraph(size, y_array, diff_array);
-
+  TGraphErrors* graph_diff = new TGraphErrors(n_points1, x_value, y_diff, x_error, y_diff_error);
   return graph_diff;
 }
 
@@ -167,6 +206,7 @@ TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t*
   return graph;
 }
 
+// **************************************************** PlotRMS() MACRO **************************************************** //
 void PlotRMS(int run){
 
   TString file_name = Form("hist_%d.root", run);
@@ -235,15 +275,23 @@ void PlotRMS(int run){
   TGraphErrors* mc_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
                                           "RMS of f90 Histograms (MC NR)", "f90RMSxCharge_total_mcnr", 23, 30);
 
+
+  // ******************************************* CONSTRUCTING THE DESIRED PLOTS ******************************************* //
+
   Double_t y_size = 500.;
   Double_t x_size = 1.61803398875 * y_size;
+
+  // RMS x Charge Total Plots ---------------------------------------------------------------------------- //
 
   TCanvas* er_canvas = new TCanvas("er_canvas", "er_canvas", x_size, y_size);
 
   TMultiGraph* er_multigraph = new TMultiGraph();
   er_multigraph -> Add(da_er_graph); er_multigraph -> Add(mc_er_graph);
   er_multigraph -> SetTitle("Data and MC Comparision (1220, ER); Charge (PE); RMS");
+  er_multigraph -> SetName("f90RMSxCharge_total_er_both");
   er_multigraph -> Draw("ALP");
+
+  graphs_dir -> WriteObject( er_multigraph, "f90RMSxCharge_total_er_both", "OverWrite" );
 
   TLegend* er_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
   er_legend -> AddEntry( da_er_graph, "Data", "lep" );
@@ -255,24 +303,52 @@ void PlotRMS(int run){
   TMultiGraph* nr_multigraph = new TMultiGraph();
   nr_multigraph -> Add(da_nr_graph); nr_multigraph -> Add(mc_nr_graph);
   nr_multigraph -> SetTitle("Data and MC Comparision (1220, NR); Charge (PE); RMS");
+  nr_multigraph -> SetName("f90RMSxCharge_total_nr_both");
   nr_multigraph -> Draw("ALP");
+
+  graphs_dir -> WriteObject( nr_multigraph, "f90RMSxCharge_total_nr_both", "OverWrite" );
 
   TLegend* nr_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
   nr_legend -> AddEntry( da_nr_graph, "Data", "lep" );
   nr_legend -> AddEntry( mc_nr_graph, "Monte Carlo", "lep" );
   nr_legend -> Draw();
 
-  /*
-  TGraph* test = GraphDiff( RMS_da_er, RMS_mc_er, charge_total, number_of_histograms, 1 );
-  TCanvas* c1 = new TCanvas("c1");
-  test -> SetMaximum(1.);
-  test-> SetMarkerStyle(21);
-  test -> Draw("APL");
-  */
+  // Relative Difference x Charge Total Plots ------------------------------------------------------------ //
 
-  er_canvas -> SaveAs("f90RMS v Charge (ER).pdf");    er_canvas -> SaveAs("f90RMS v Charge (ER).png");
-  nr_canvas -> SaveAs("f90RMS v Charge (NR).pdf");    nr_canvas -> SaveAs("f90RMS v Charge (NR).png");
+  TCanvas* er_diff_canvas = new TCanvas("er_diff_canvas", "er_diff_canvas", x_size, y_size);
 
-  Double_t* test =  da_nr_graph ->GetX();
-  cout << test[0] << endl;
+  TGraphErrors* er_diff_graph = GraphDiff( da_er_graph, mc_er_graph, 1 );
+  er_diff_graph -> SetTitle("Relative Difference of MC and Data RMS (1220, ER); Charge(PE); Difference");
+  er_diff_graph -> SetName("f90RMS_diffxCharge_total_er");
+
+  er_diff_graph -> SetMarkerStyle(22);
+  er_diff_graph -> SetMarkerColor(46);
+  er_diff_graph -> SetMarkerSize(1.5);
+  er_diff_graph -> SetLineColor(46);
+
+  er_diff_graph -> Draw();
+
+  graphs_dir -> WriteObject( er_diff_graph, "f90RMS_diffxCharge_total_er", "OverWrite" );
+
+  TCanvas* nr_diff_canvas = new TCanvas("nr_diff_canvas", "nr_diff_canvas", x_size, y_size);
+
+  TGraphErrors* nr_diff_graph = GraphDiff( da_nr_graph, mc_nr_graph, 1 );
+  nr_diff_graph -> SetTitle("Relative Difference of MC and Data RMS (1220, NR); Charge(PE); Difference");
+  nr_diff_graph -> SetName("f90RMS_diffxCharge_total_nr");
+
+  nr_diff_graph -> SetMarkerStyle(23);
+  nr_diff_graph -> SetMarkerColor(46);
+  er_diff_graph -> SetMarkerSize(1.5);
+  nr_diff_graph -> SetLineColor(46);
+
+  nr_diff_graph -> Draw();
+
+  graphs_dir -> WriteObject( nr_diff_graph, "f90RMS_diffxCharge_total_nr", "OverWrite" );
+
+  // Saving All Plots Generated -------------------------------------------------------------------------_ //
+
+  er_canvas -> SaveAs("f90RMS v Charge (ER).pdf");                       er_canvas -> SaveAs("f90RMS v Charge (ER).png");
+  nr_canvas -> SaveAs("f90RMS v Charge (NR).pdf");                       nr_canvas -> SaveAs("f90RMS v Charge (NR).png");
+  er_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).pdf");  er_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).png");
+  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).pdf");  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (NR).png");
 }

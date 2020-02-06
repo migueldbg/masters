@@ -19,12 +19,15 @@
 
 #include <array>
 #include <iostream>
+#include <stdlib.h>
 
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TGraph.h>
 #include <TH1.h>
 #include <TKey.h>
+#include <TLegend.h>
+#include <TMath.h>
 #include <TObject.h>
 #include <TString.h>
 #include <TSystem.h>
@@ -53,6 +56,28 @@ TFile* CheckFile( TString path_name ){
   if ( !(file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
 
   return file;
+}
+
+// ************ REWRITE THE FUNCTION BELOW ******************* //
+// make it so that it takes to TGraphErrors object and constructs a new TGraphErros as the difference between them.  
+
+TGraph* GraphDiff( Double_t* array1, Double_t* array2, Double_t* y_array, Int_t size, Int_t base_array = 0 ){
+
+  Double_t diff_array[size];
+
+  for (Int_t i = 0; i < size; i++){
+    if (base_array == 0) {
+      diff_array[i] = TMath::Abs( array1[i] - array2[i] );
+    } else if (base_array == 1) {
+      diff_array[i] = TMath::Abs( array1[i] - array2[i] ) / array1[i];
+    } else if (base_array == 2) {
+      diff_array[i] = TMath::Abs( array1[i] - array2[i] ) / array2[i];
+    }
+  }
+
+  TGraph* graph_diff = new TGraph(size, y_array, diff_array);
+
+  return graph_diff;
 }
 
 /* TDirectory* MakeDirectory( const char* dir_name, const char* dir_title )
@@ -201,7 +226,6 @@ void PlotRMS(int run){
     charge_total[i] = 20*(i+1) - 10;
   }
 
-
   TGraphErrors* da_er_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_er, 0, RMSerr_da_er,
                                           "RMS of f90 Histograms (ER)", "f90RMSxCharge_total_er", 22, 40);
   TGraphErrors* da_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_nr, 0, RMSerr_da_nr,
@@ -210,16 +234,45 @@ void PlotRMS(int run){
                                           "RMS of f90 Histograms (MC ER)", "f90RMSxCharge_total_mcer", 22, 30);
   TGraphErrors* mc_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
                                           "RMS of f90 Histograms (MC NR)", "f90RMSxCharge_total_mcnr", 23, 30);
-// now just do the rest.
 
+  Double_t y_size = 500.;
+  Double_t x_size = 1.61803398875 * y_size;
 
+  TCanvas* er_canvas = new TCanvas("er_canvas", "er_canvas", x_size, y_size);
+
+  TMultiGraph* er_multigraph = new TMultiGraph();
+  er_multigraph -> Add(da_er_graph); er_multigraph -> Add(mc_er_graph);
+  er_multigraph -> SetTitle("Data and MC Comparision (1220, ER); Charge (PE); RMS");
+  er_multigraph -> Draw("ALP");
+
+  TLegend* er_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  er_legend -> AddEntry( da_er_graph, "Data", "lep" );
+  er_legend -> AddEntry( mc_er_graph, "Monte Carlo", "lep" );
+  er_legend -> Draw();
+
+  TCanvas* nr_canvas = new TCanvas("nr_canvas", "nr_canvas", x_size, y_size);
+
+  TMultiGraph* nr_multigraph = new TMultiGraph();
+  nr_multigraph -> Add(da_nr_graph); nr_multigraph -> Add(mc_nr_graph);
+  nr_multigraph -> SetTitle("Data and MC Comparision (1220, NR); Charge (PE); RMS");
+  nr_multigraph -> Draw("ALP");
+
+  TLegend* nr_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  nr_legend -> AddEntry( da_nr_graph, "Data", "lep" );
+  nr_legend -> AddEntry( mc_nr_graph, "Monte Carlo", "lep" );
+  nr_legend -> Draw();
+
+  /*
+  TGraph* test = GraphDiff( RMS_da_er, RMS_mc_er, charge_total, number_of_histograms, 1 );
   TCanvas* c1 = new TCanvas("c1");
-  TMultiGraph* mg = new TMultiGraph();
-  mg -> Add(da_er_graph); mg -> Add(mc_er_graph);
+  test -> SetMaximum(1.);
+  test-> SetMarkerStyle(21);
+  test -> Draw("APL");
+  */
 
-  mg -> Draw("ALP");
+  er_canvas -> SaveAs("f90RMS v Charge (ER).pdf");    er_canvas -> SaveAs("f90RMS v Charge (ER).png");
+  nr_canvas -> SaveAs("f90RMS v Charge (NR).pdf");    nr_canvas -> SaveAs("f90RMS v Charge (NR).png");
 
-  c1 -> BuildLegend();
-
-
+  Double_t* test =  da_nr_graph ->GetX();
+  cout << test[0] << endl;
 }

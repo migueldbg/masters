@@ -18,6 +18,7 @@
 
 #include <array>
 
+#include <TCut.h>
 #include <TFile.h>
 #include <TH1.h>
 #include <TObject.h>
@@ -93,8 +94,14 @@ TH1F* Generatef90Hist( TString file_name, Double_t charge_low, Double_t charge_u
   TFile *file = new TFile(file_name);
   TTree *reco; file -> GetObject("reco", reco);
 
-  reco -> Draw("clusters[0].f90 >> hist", Form("clusters[0].f90 >= %f && clusters[0].f90 <= %f && clusters[0].charge >= %f && clusters[0].charge <= %f",
-          f90_low, f90_up, charge_low, charge_up), "goff");
+  TCut cut_f90_min = Form("clusters[0].f90 >= %f", f90_low);
+  TCut cut_f90_max = Form("clusters[0].f90 <= %f", f90_up);
+  TCut cut_charge_min = Form("clusters[0].charge >= %f", charge_low);
+  TCut cut_charge_max = Form("clusters[0].charge <= %f", charge_up);
+
+  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min;
+
+  reco -> Draw("clusters[0].f90 >> hist", cut_all, "goff");
   TH1F* f90_hist = (TH1F*)gDirectory -> Get("hist");
 
   if (f90_hist -> GetSumw2N() == 0) f90_hist -> Sumw2(kTRUE);

@@ -140,9 +140,6 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
   // --------------------- CREATING NECESSARY DIRECTORIES ---------------------- //
   hist_file -> cd();
-  TDirectory* RMS_analysis_dir   = MakeDirectory("RMS_analysis", "RMS_analysis");
-
-  RMS_analysis_dir -> cd();
   TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
 
   histograms_dir -> cd();

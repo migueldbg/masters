@@ -215,9 +215,9 @@ void PlotRMS(int run){
   // --------------------- CREATING NECESSARY DIRECTORIES ---------------------- //
   hist_file -> cd();
   TDirectory* RMS_analysis_dir   = MakeDirectory("RMS_analysis", "RMS_analysis");
+  TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
 
   RMS_analysis_dir -> cd();
-  TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
   TDirectory* graphs_dir         = MakeDirectory("graphs", "graphs");
 
   histograms_dir -> cd();
@@ -239,11 +239,15 @@ void PlotRMS(int run){
 
   Int_t number_of_histograms = NumberOfHistograms(da_both_dir);
 
-  Double_t RMS_da_er[number_of_histograms];      Double_t RMS_da_nr[number_of_histograms];
-  Double_t RMSerr_da_er[number_of_histograms];   Double_t RMSerr_da_nr[number_of_histograms];
+  Double_t RMS_da_er     [number_of_histograms];      Double_t RMS_da_nr     [number_of_histograms];
+  Double_t RMSerr_da_er  [number_of_histograms];      Double_t RMSerr_da_nr  [number_of_histograms];
+  Double_t MEAN_da_er    [number_of_histograms];      Double_t MEAN_da_nr    [number_of_histograms];
+  Double_t MEANerr_da_er [number_of_histograms];      Double_t MEANerr_da_nr [number_of_histograms];
 
-  Double_t RMS_mc_er[number_of_histograms];      Double_t RMS_mc_nr[number_of_histograms];
-  Double_t RMSerr_mc_er[number_of_histograms];   Double_t RMSerr_mc_nr[number_of_histograms];
+  Double_t RMS_mc_er     [number_of_histograms];      Double_t RMS_mc_nr     [number_of_histograms];
+  Double_t RMSerr_mc_er  [number_of_histograms];      Double_t RMSerr_mc_nr  [number_of_histograms];
+  Double_t MEAN_mc_er    [number_of_histograms];      Double_t MEAN_mc_nr    [number_of_histograms];
+  Double_t MEANerr_mc_er [number_of_histograms];      Double_t MEANerr_mc_nr [number_of_histograms];
 
   Double_t charge_total[number_of_histograms];
 
@@ -252,103 +256,191 @@ void PlotRMS(int run){
   for ( int i = 0; i < number_of_histograms; i++ ){
 
     htemp = (TH1F *)da_er_dir -> Get( Form("f90_histogram_er_%d", i+1) );
-    RMS_da_er[i] = htemp -> GetRMS();  RMSerr_da_er[i] = htemp -> GetRMSError();
+    RMS_da_er[i]  = htemp -> GetRMS();   RMSerr_da_er[i]  = htemp -> GetRMSError();
+    MEAN_da_er[i] = htemp -> GetMean();  MEANerr_da_er[i] = htemp -> GetMeanError();
 
     htemp = (TH1F *)da_nr_dir -> Get( Form("f90_histogram_nr_%d", i+1) );
-    RMS_da_nr[i] = htemp -> GetRMS();  RMSerr_da_nr[i] = htemp -> GetRMSError();
+    RMS_da_nr[i]  = htemp -> GetRMS();   RMSerr_da_nr[i]  = htemp -> GetRMSError();
+    MEAN_da_nr[i] = htemp -> GetMean();  MEANerr_da_nr[i] = htemp -> GetMeanError();
 
     htemp = (TH1F *)mc_er_dir -> Get( Form("f90_histogram_mcer_%d", i+1) );
-    RMS_mc_er[i] = htemp -> GetRMS();  RMSerr_mc_er[i] = htemp -> GetRMSError();
+    RMS_mc_er[i]  = htemp -> GetRMS();   RMSerr_mc_er[i]  = htemp -> GetRMSError();
+    MEAN_mc_er[i] = htemp -> GetMean();  MEANerr_mc_er[i] = htemp -> GetMeanError();
 
     htemp = (TH1F *)mc_nr_dir -> Get( Form("f90_histogram_mcnr_%d", i+1) );
-    RMS_mc_nr[i] = htemp -> GetRMS();  RMSerr_mc_nr[i] = htemp -> GetRMSError();
+    RMS_mc_nr[i]  = htemp -> GetRMS();   RMSerr_mc_nr[i]  = htemp -> GetRMSError();
+    MEAN_mc_nr[i] = htemp -> GetMean();  MEANerr_mc_nr[i] = htemp -> GetMeanError();
 
     charge_total[i] = 20*(i+1) - 10;
   }
 
-  TGraphErrors* da_er_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_er, 0, RMSerr_da_er,
-                                          "RMS of f90 Histograms (ER)", "f90RMSxCharge_total_er", 22, 40);
-  TGraphErrors* da_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_nr, 0, RMSerr_da_nr,
-                                          "RMS of f90 Histograms (NR)", "f90RMSxCharge_total_nr", 23, 40);
-  TGraphErrors* mc_er_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er, 0, RMSerr_mc_er,
-                                          "RMS of f90 Histograms (MC ER)", "f90RMSxCharge_total_mcer", 22, 30);
-  TGraphErrors* mc_nr_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
-                                          "RMS of f90 Histograms (MC NR)", "f90RMSxCharge_total_mcnr", 23, 30);
-
+  TGraphErrors* da_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_er,  0, RMSerr_da_er,
+                                              "RMS of f90 Histograms (ER)",     "f90RMSxCharge_total_er",    22, 40);
+  TGraphErrors* da_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_da_er, 0, MEANerr_da_er,
+                                              "Mean of f90 Histograms (ER)",    "f90MeanxCharge_total_er",   22, 40);
+  TGraphErrors* da_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_nr,  0, RMSerr_da_nr,
+                                              "RMS of f90 Histograms (NR)",     "f90RMSxCharge_total_nr",    23, 40);
+  TGraphErrors* da_nr_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_da_nr, 0, MEANerr_da_nr,
+                                              "Mean of f90 Histograms (NR)",    "f90MeanxCharge_total_nr",   23, 40);
+  TGraphErrors* mc_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er,  0, RMSerr_mc_er,
+                                              "RMS of f90 Histograms (MC ER)",  "f90RMSxCharge_total_mcer",  22, 30);
+  TGraphErrors* mc_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_er, 0, MEANerr_mc_er,
+                                              "Mean of f90 Histograms (MC ER)", "f90MeanxCharge_total_mcer", 22, 30);
+  TGraphErrors* mc_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms,  charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
+                                              "RMS of f90 Histograms (MC NR)",  "f90RMSxCharge_total_mcnr",  23, 30);
+  TGraphErrors* mc_nr_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_nr, 0, MEANerr_mc_nr,
+                                              "Mean of f90 Histograms (MC NR)", "f90MeanxCharge_total_mcnr", 23, 30);
 
   // ******************************************* CONSTRUCTING THE DESIRED PLOTS ******************************************* //
 
-  Double_t y_size = 500.;
+  Double_t y_size = 1000.;
   Double_t x_size = 1.61803398875 * y_size;
+
+  // Mean x Charge Total Plots --------------------------------------------------------------------------- //
+
+  TCanvas* er_mean_canvas = new TCanvas("er_mean_canvas", "er_mean_canvas", x_size, y_size);
+
+  TMultiGraph* er_mean_multigraph = new TMultiGraph();
+  er_mean_multigraph -> Add(da_er_mean_graph); er_mean_multigraph -> Add(mc_er_mean_graph);
+
+  er_mean_multigraph -> SetTitle("Data and MC f90 Mean Comparision (1220, ER); Charge (PE); Mean");
+  er_mean_multigraph -> SetName("f90MeanxCharge_total_er_both");
+  er_mean_multigraph -> Draw("ALP");
+
+  TLegend* er_mean_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  er_mean_legend -> AddEntry( da_er_mean_graph, "Data", "lep" );
+  er_mean_legend -> AddEntry( mc_er_mean_graph, "Monte Carlo", "lep" );
+  er_mean_legend -> Draw();
+
+  graphs_dir -> WriteObject ( er_mean_multigraph, "f90MeanxCharge_total_er_both", "OverWrite" );
+
+
+  TCanvas* nr_mean_canvas = new TCanvas("nr_mean_canvas", "nr_mean_canvas", x_size, y_size);
+
+  TMultiGraph* nr_mean_multigraph = new TMultiGraph();
+  nr_mean_multigraph -> Add(da_nr_mean_graph); nr_mean_multigraph -> Add(mc_nr_mean_graph);
+
+  nr_mean_multigraph -> SetTitle("Data and MC f90 Mean Comparision (1220, NR); Charge (PE); Mean");
+  nr_mean_multigraph -> SetName("f90MeanxCharge_total_nr_both");
+  nr_mean_multigraph -> Draw("ALP");
+
+  TLegend* nr_mean_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  nr_mean_legend -> AddEntry( da_nr_mean_graph, "Data", "lep" );
+  nr_mean_legend -> AddEntry( mc_nr_mean_graph, "Monte Carlo", "lep" );
+  nr_mean_legend -> Draw();
+
+  graphs_dir -> WriteObject ( nr_mean_multigraph, "f90MeanxCharge_total_nr_both", "OverWrite" );
+
+  // Relative Difference of Mean x Charge Total Plots ---------------------------------------------------- //
+
+  TCanvas* er_mean_diff_canvas = new TCanvas("er_mean_diff_canvas", "er_mean_diff_canvas", x_size, y_size);
+
+  TGraphErrors* er_mean_diff_graph = GraphDiff( da_er_mean_graph, mc_er_mean_graph, 1 );
+  er_mean_diff_graph -> SetTitle("Relative Difference of MC and Data f90 Mean (1220, ER); Charge(PE); Difference");
+  er_mean_diff_graph -> SetName("f90Mean_diffxCharge_total_er");
+
+  er_mean_diff_graph -> SetMarkerStyle(22);
+  er_mean_diff_graph -> SetMarkerColor(46);
+  er_mean_diff_graph -> SetMarkerSize(1.5);
+  er_mean_diff_graph -> SetLineColor(46);
+
+  er_mean_diff_graph -> Draw();
+
+  graphs_dir -> WriteObject( er_mean_diff_graph, "f90Mean_diffxCharge_total_er", "OverWrite" );
+
+
+  TCanvas* nr_mean_diff_canvas = new TCanvas("nr_mean_diff_canvas", "nr_mean_diff_canvas", x_size, y_size);
+
+  TGraphErrors* nr_mean_diff_graph = GraphDiff( da_nr_mean_graph, mc_nr_mean_graph, 1 );
+  nr_mean_diff_graph -> SetTitle("Relative Difference of MC and Data f90 Mean (1220, NR); Charge(PE); Difference");
+  nr_mean_diff_graph -> SetName("f90Mean_diffxCharge_total_nr");
+
+  nr_mean_diff_graph -> SetMarkerStyle(23);
+  nr_mean_diff_graph -> SetMarkerColor(46);
+  er_mean_diff_graph -> SetMarkerSize(1.5);
+  nr_mean_diff_graph -> SetLineColor(46);
+
+  nr_mean_diff_graph -> Draw();
+
+  graphs_dir -> WriteObject( nr_mean_diff_graph, "f90Mean_diffxCharge_total_nr", "OverWrite" );
 
   // RMS x Charge Total Plots ---------------------------------------------------------------------------- //
 
-  TCanvas* er_canvas = new TCanvas("er_canvas", "er_canvas", x_size, y_size);
+  TCanvas* er_rms_canvas = new TCanvas("er_rms_canvas", "er_rms_canvas", x_size, y_size);
 
-  TMultiGraph* er_multigraph = new TMultiGraph();
-  er_multigraph -> Add(da_er_graph); er_multigraph -> Add(mc_er_graph);
-  er_multigraph -> SetTitle("Data and MC Comparision (1220, ER); Charge (PE); RMS");
-  er_multigraph -> SetName("f90RMSxCharge_total_er_both");
-  er_multigraph -> Draw("ALP");
+  TMultiGraph* er_rms_multigraph = new TMultiGraph();
+  er_rms_multigraph -> Add(da_er_rms_graph); er_rms_multigraph -> Add(mc_er_rms_graph);
 
-  graphs_dir -> WriteObject( er_multigraph, "f90RMSxCharge_total_er_both", "OverWrite" );
+  er_rms_multigraph -> SetTitle("Data and MC f90 RMS Comparision (1220, ER); Charge (PE); RMS");
+  er_rms_multigraph -> SetName("f90RMSxCharge_total_er_both");
+  er_rms_multigraph -> Draw("ALP");
 
-  TLegend* er_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  er_legend -> AddEntry( da_er_graph, "Data", "lep" );
-  er_legend -> AddEntry( mc_er_graph, "Monte Carlo", "lep" );
-  er_legend -> Draw();
+  TLegend* er_rms_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  er_rms_legend -> AddEntry( da_er_rms_graph, "Data ", "lep" );
+  er_rms_legend -> AddEntry( mc_er_rms_graph, "Monte Carlo", "lep" );
+  er_rms_legend -> Draw();
 
-  TCanvas* nr_canvas = new TCanvas("nr_canvas", "nr_canvas", x_size, y_size);
+  graphs_dir -> WriteObject( er_rms_multigraph, "f90RMSxCharge_total_er_both", "OverWrite" );
 
-  TMultiGraph* nr_multigraph = new TMultiGraph();
-  nr_multigraph -> Add(da_nr_graph); nr_multigraph -> Add(mc_nr_graph);
-  nr_multigraph -> SetTitle("Data and MC Comparision (1220, NR); Charge (PE); RMS");
-  nr_multigraph -> SetName("f90RMSxCharge_total_nr_both");
-  nr_multigraph -> Draw("ALP");
 
-  graphs_dir -> WriteObject( nr_multigraph, "f90RMSxCharge_total_nr_both", "OverWrite" );
+  TCanvas* nr_rms_canvas = new TCanvas("nr_rms_canvas", "nr_rms_canvas", x_size, y_size);
 
-  TLegend* nr_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  nr_legend -> AddEntry( da_nr_graph, "Data", "lep" );
-  nr_legend -> AddEntry( mc_nr_graph, "Monte Carlo", "lep" );
-  nr_legend -> Draw();
+  TMultiGraph* nr_rms_multigraph = new TMultiGraph();
+  nr_rms_multigraph -> Add(da_nr_rms_graph); nr_rms_multigraph -> Add(mc_nr_rms_graph);
 
-  // Relative Difference x Charge Total Plots ------------------------------------------------------------ //
+  nr_rms_multigraph -> SetTitle("Data and MC f90 RMS Comparision (1220, NR); Charge (PE); RMS");
+  nr_rms_multigraph -> SetName("f90RMSxCharge_total_nr_both");
+  nr_rms_multigraph -> Draw("ALP");
 
-  TCanvas* er_diff_canvas = new TCanvas("er_diff_canvas", "er_diff_canvas", x_size, y_size);
+  TLegend* nr_rms_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  nr_rms_legend -> AddEntry( da_nr_rms_graph, "Data", "lep" );
+  nr_rms_legend -> AddEntry( mc_nr_rms_graph, "Monte Carlo", "lep" );
+  nr_rms_legend -> Draw();
 
-  TGraphErrors* er_diff_graph = GraphDiff( da_er_graph, mc_er_graph, 1 );
-  er_diff_graph -> SetTitle("Relative Difference of MC and Data RMS (1220, ER); Charge(PE); Difference");
-  er_diff_graph -> SetName("f90RMS_diffxCharge_total_er");
+  graphs_dir -> WriteObject( nr_rms_multigraph, "f90RMSxCharge_total_nr_both", "OverWrite" );
 
-  er_diff_graph -> SetMarkerStyle(22);
-  er_diff_graph -> SetMarkerColor(46);
-  er_diff_graph -> SetMarkerSize(1.5);
-  er_diff_graph -> SetLineColor(46);
+  // Relative Difference of RMS x Charge Total Plots ----------------------------------------------------- //
 
-  er_diff_graph -> Draw();
+  TCanvas* er_rms_diff_canvas = new TCanvas("er_rms_diff_canvas", "er_rms_diff_canvas", x_size, y_size);
 
-  graphs_dir -> WriteObject( er_diff_graph, "f90RMS_diffxCharge_total_er", "OverWrite" );
+  TGraphErrors* er_rms_diff_graph = GraphDiff( da_er_rms_graph, mc_er_rms_graph, 1 );
+  er_rms_diff_graph -> SetTitle("Relative Difference of MC and Data f90 RMS (1220, ER); Charge(PE); Difference");
+  er_rms_diff_graph -> SetName("f90RMS_diffxCharge_total_er");
 
-  TCanvas* nr_diff_canvas = new TCanvas("nr_diff_canvas", "nr_diff_canvas", x_size, y_size);
+  er_rms_diff_graph -> SetMarkerStyle(22);
+  er_rms_diff_graph -> SetMarkerColor(46);
+  er_rms_diff_graph -> SetMarkerSize(1.5);
+  er_rms_diff_graph -> SetLineColor(46);
 
-  TGraphErrors* nr_diff_graph = GraphDiff( da_nr_graph, mc_nr_graph, 1 );
-  nr_diff_graph -> SetTitle("Relative Difference of MC and Data RMS (1220, NR); Charge(PE); Difference");
-  nr_diff_graph -> SetName("f90RMS_diffxCharge_total_nr");
+  er_rms_diff_graph -> Draw();
 
-  nr_diff_graph -> SetMarkerStyle(23);
-  nr_diff_graph -> SetMarkerColor(46);
-  er_diff_graph -> SetMarkerSize(1.5);
-  nr_diff_graph -> SetLineColor(46);
+  graphs_dir -> WriteObject( er_rms_diff_graph, "f90RMS_diffxCharge_total_er", "OverWrite" );
 
-  nr_diff_graph -> Draw();
 
-  graphs_dir -> WriteObject( nr_diff_graph, "f90RMS_diffxCharge_total_nr", "OverWrite" );
+  TCanvas* nr_rms_diff_canvas = new TCanvas("nr_rms_diff_canvas", "nr_rms_diff_canvas", x_size, y_size);
+
+  TGraphErrors* nr_rms_diff_graph = GraphDiff( da_nr_rms_graph, mc_nr_rms_graph, 1 );
+  nr_rms_diff_graph -> SetTitle("Relative Difference of MC and Data f90 RMS (1220, NR); Charge(PE); Difference");
+  nr_rms_diff_graph -> SetName("f90RMS_diffxCharge_total_nr");
+
+  nr_rms_diff_graph -> SetMarkerStyle(23);
+  nr_rms_diff_graph -> SetMarkerColor(46);
+  er_rms_diff_graph -> SetMarkerSize(1.5);
+  nr_rms_diff_graph -> SetLineColor(46);
+
+  nr_rms_diff_graph -> Draw();
+
+  graphs_dir -> WriteObject( nr_rms_diff_graph, "f90RMS_diffxCharge_total_nr", "OverWrite" );
 
   // Saving All Plots Generated -------------------------------------------------------------------------_ //
 
-  er_canvas -> SaveAs("f90RMS v Charge (ER).pdf");                       er_canvas -> SaveAs("f90RMS v Charge (ER).png");
-  nr_canvas -> SaveAs("f90RMS v Charge (NR).pdf");                       nr_canvas -> SaveAs("f90RMS v Charge (NR).png");
-  er_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).pdf");  er_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (ER).png");
-  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (NR).pdf");  nr_diff_canvas -> SaveAs ("Relative f90RMS Diff. v Charge (NR).png");
+  er_rms_canvas -> SaveAs("f90 RMS v Charge (ER).pdf");                       er_rms_canvas -> SaveAs("f90 RMS v Charge (ER).png");
+  nr_rms_canvas -> SaveAs("f90 RMS v Charge (NR).pdf");                       nr_rms_canvas -> SaveAs("f90 RMS v Charge (NR).png");
+  er_rms_diff_canvas -> SaveAs ("Relative f90 RMS Diff. v Charge (ER).pdf");  er_rms_diff_canvas -> SaveAs ("Relative f90 RMS Diff. v Charge (ER).png");
+  nr_rms_diff_canvas -> SaveAs ("Relative f90 RMS Diff. v Charge (NR).pdf");  nr_rms_diff_canvas -> SaveAs ("Relative f90 RMS Diff. v Charge (NR).png");
+
+  er_mean_canvas -> SaveAs("f90 Mean v Charge (ER).pdf");                       er_mean_canvas -> SaveAs("f90 Mean v Charge (ER).png");
+  nr_mean_canvas -> SaveAs("f90 Mean v Charge (NR).pdf");                       nr_mean_canvas -> SaveAs("f90 Mean v Charge (NR).png");
+  er_mean_diff_canvas -> SaveAs ("Relative f90 Mean Diff. v Charge (ER).pdf");  er_mean_diff_canvas -> SaveAs ("Relative f90 Mean Diff. v Charge (ER).png");
+  nr_mean_diff_canvas -> SaveAs ("Relative f90 Mean Diff. v Charge (NR).pdf");  nr_mean_diff_canvas -> SaveAs ("Relative f90 Mean Diff. v Charge (NR).png");
 }

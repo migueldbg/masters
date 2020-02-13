@@ -94,12 +94,14 @@ TH1F* Generatef90Hist( TString file_name, Double_t charge_low, Double_t charge_u
   TFile *file = new TFile(file_name);
   TTree *reco; file -> GetObject("reco", reco);
 
-  TCut cut_f90_min = Form("clusters[0].f90 >= %f", f90_low);
-  TCut cut_f90_max = Form("clusters[0].f90 <= %f", f90_up);
-  TCut cut_charge_min = Form("clusters[0].charge >= %f", charge_low);
-  TCut cut_charge_max = Form("clusters[0].charge <= %f", charge_up);
+  TCut cut_f90_min         = Form("clusters[0].f90 >= %f", f90_low);
+  TCut cut_f90_max         = Form("clusters[0].f90 <= %f", f90_up);
+  TCut cut_charge_min      = Form("clusters[0].charge >= %f", charge_low);
+  TCut cut_charge_max      = Form("clusters[0].charge <= %f", charge_up);
+  TCut cut_cluster_number  = "number_of_clusters == 1";
+  TCut cut_rep             = "clusters[0].rep == 1";
 
-  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min;
+  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
 
   reco -> Draw("clusters[0].f90 >> hist", cut_all, "goff");
   TH1F* f90_hist = (TH1F*)gDirectory -> Get("hist");

@@ -3,6 +3,18 @@
 #include <TString.h>
 #include <TTree.h>
 
+/* TH2F* F90vChargeHistogram ( TString file_name )
+ *
+ *  Summary of Function:
+ *
+ *    Generates a 2D histogram with the y-axis being the f90 parameter and the x-axis being the total charge
+ *    of the event. The data is taken from a root file. The function then returns a pointer to the generated
+ *    TH2F histogram.
+ *
+ *  Parameters   :  file_name >> the name of the file containing the data from which to construct the hist.
+ *
+ *  Return Value :  TH2F* f90vCharge.
+ */
 TH2F* F90vChargeHistogram( TString file_name ){
 
   TFile* file = new TFile( file_name );
@@ -17,6 +29,19 @@ TH2F* F90vChargeHistogram( TString file_name ){
   return f90vCharge;
 }
 
+/* F90ClusterHist ( TString file_name, int cluster )
+ *
+ *  Summary of Function:
+ *
+ *    The function generates a histogram of f90. It automatically applies quality cuts (f90 > 0 and f90 < 1).
+ *    The user must also define the specific cluster from witch to construct the histogram, where each one
+ *    indicates a specific part of the signal (1 = S1, 2 = S2 and 3 = S3).
+ *
+ *  Parameters   : file_name >> the root file containing the data to construct the histogram.
+ *                 cluster   >> an integer indicating which cluster to consider.
+ *
+ *  Return Value : TH1F* f90cluster_hist.
+ */
 TH1F* F90ClusterHist( TString file_name, int cluster ){
 
   TFile* file = new TFile( file_name );
@@ -31,6 +56,17 @@ TH1F* F90ClusterHist( TString file_name, int cluster ){
   return f90cluster_hist;
 }
 
+/* TH1F* F90SIPMHist ( TString file_name, int sipm_number )
+ *
+ *  Summary of Function:
+ *
+ *    The function creates a histogram of f90, but it considers only the signal detected by a specific sipm.
+ *
+ *  Parameters   : file_name   >> the root file containing the data to construc the histogram.
+ *                 sipm_number >> the specific sipm for witch the f90 histogram is generated.
+ *
+ *  Return Value : TH1F* f90sipm_hist.    
+ */
 TH1F* F90SIPMHist( TString file_name, int sipm_number ){
 
   TFile* file = new TFile( file_name );
@@ -74,9 +110,10 @@ void GenerateF90vChargeCanvas( int run ){
   f90vC_canvas -> SaveAs("f90 v Charge Distribution.png"); f90vC_canvas -> SaveAs("f90 v Charge Distribution.pdf");
 }
 
-void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool isMC = false){
+void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool isMC ){
 
-  TH1F* f90cluster_hist = F90ClusterHist(Form("run_%d%s.root", run, isMC ? "_MCER":""), cluster);  f90cluster_hist -> SetTitle("f90 Distribution (Cluster); f90");
+  TH1F* f90cluster_hist = F90ClusterHist(Form("run_%d%s.root", run, isMC ? "_MCER":""), cluster);
+  f90cluster_hist -> SetTitle("f90 Distribution (Cluster); f90");
 
   TH1F** f90sipm_hist = new TH1F*[number_of_sipm];
   for (Int_t i = 0; i < number_of_sipm; i++){
@@ -111,12 +148,10 @@ void Images( int run ){
 
   int cluster = 0;
   int number_of_sipm = 28;
-  bool isMC = true;
 
   GenerateF90vChargeCanvas( run );
 
-  GenerateF90comparisonCanvas( run, cluster, number_of_sipm );
+  GenerateF90comparisonCanvas( run, cluster, number_of_sipm, false );
 
-  GenerateF90comparisonCanvas( run, cluster, number_of_sipm, isMC );
-
+  GenerateF90comparisonCanvas( run, cluster, number_of_sipm, true );
 }

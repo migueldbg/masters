@@ -6,7 +6,7 @@
 #include <TFile.h>
 #include <TCanvas.h>
 #include <TGraph.h>
-#include <TTree.h> 
+#include <TTree.h>
 #include <TF1.h>
 #include <TApplication.h>
 #include <TTimer.h>
@@ -30,13 +30,13 @@
 
 using namespace std;
 
-void viewer(int run, string listfile, bool islaser, int sch, string customfile, string customMCfile, string serfile, 
+void viewer(int run, string listfile, bool islaser, int sch, string customfile, string customMCfile, string serfile,
             bool isExtendedSER, string mappingfile, int customnsamples, bool generateTraces)
 {
     TApplication* app = new TApplication("App",0,0);
     int ev = 0;
     std::string datadir = "";
-    
+
     RDconfig::GetInstance()->SetIsExtendedSER(isExtendedSER);
 
     string configfile =(islaser) ?  "cfg/laser.cfg" :
@@ -47,16 +47,16 @@ void viewer(int run, string listfile, bool islaser, int sch, string customfile, 
     // read configuration file
     RDconfig::GetInstance()->SetIsLaser(islaser);
     map<string, double> cfg  = RDconfig::GetInstance()->get_cfg(configfile);
-            
+
     if (mappingfile != "")
         RDconfig::GetInstance()->SetConfigFile(mappingfile);
     if (serfile != "")
         RDconfig::GetInstance()->SetSERFile(serfile);
-        
+
     string configmcfile = "cfg/MCconfig.cfg";
-    if (customMCfile != "") 
-        configmcfile = customMCfile; 
-        
+    if (customMCfile != "")
+        configmcfile = customMCfile;
+
     VDecoder* theDecoder;
     if (generateTraces)
         theDecoder = new MCDecoder(configmcfile);
@@ -70,13 +70,13 @@ void viewer(int run, string listfile, bool islaser, int sch, string customfile, 
         fprintf (stderr,"Unable to open file. Exiting.\n");
         exit(1);
     }
-    
+
     vector<double> ser = RDconfig::GetInstance()->GetSER();
 
     Analyzer* theAnalyzer = new Analyzer(islaser,configfile);
 
     if ( !isExtendedSER )
-        for (int s = 0; s < ser.size(); s++) 
+        for (int s = 0; s < ser.size(); s++)
             cout << "Ser " <<  s << " = " << ser[s] << endl;
 
     double scale = 0.75;
@@ -130,11 +130,11 @@ void viewer(int run, string listfile, bool islaser, int sch, string customfile, 
         else if (evNumber > ev && !generateTraces) //rewind
         {
             delete theDecoder;
-        
+
             VDecoder* theDecoder;
-            theDecoder = new Decoder(datadir);    
+            theDecoder = new Decoder(datadir);
             theDecoder->OpenFiles(listfile,run);
-            
+
             continue;
         }
         cout << "Display event #" << ev << endl;
@@ -470,7 +470,7 @@ void viewer(int run, string listfile, bool islaser, int sch, string customfile, 
             }
         }
         gfitS2->SetLineWidth(2);
-        
+
         if ( gS2->GetN()>0 ) { gS2->SetMarkerColor(kRed); gS2->SetMarkerSize(1.2); gS2->SetMarkerStyle(20); gS2->Draw("Psame"); }
         if ( gfitS2->GetN()>0 ) { gfitS2->SetLineWidth(3); gfitS2->SetLineColor(kBlack); gfitS2->Draw("LPsame"); }
 
@@ -671,7 +671,7 @@ int main(int argc, char *argv[]) {
         if ( listfile.compare("")!=0 && runnr!=0 ) {
             fprintf (stderr,"Both run number and list file were specified. Exiting.");
             exit(1);
-        }        
+        }
     }
     else
     {
@@ -687,7 +687,7 @@ int main(int argc, char *argv[]) {
         if ( mappingfile.compare("cfg/channelmapping_Na.cfg")!=0 ) {
             fprintf (stderr,"For now to generate MC traces is only allowed the channel mapping of Naples:\n");
             mappingfile = "cfg/channelmapping_Na.cfg";
-            fprintf(stdout,"- Using channel mapping from file: %s\n",mappingfile.c_str());            
+            fprintf(stdout,"- Using channel mapping from file: %s\n",mappingfile.c_str());
         }
     }
 

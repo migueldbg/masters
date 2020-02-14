@@ -127,7 +127,8 @@ void GenerateF90vChargeCanvas( int run ){
   f90vC_canvas -> cd(2);
   f90vCharge_mc_nr -> Draw(); f90vCharge_mc_er -> Draw("same"); f90_low -> Draw("same"); f90_mid -> Draw("same"); f90_upp -> Draw("same");
 
-  f90vC_canvas -> SaveAs("f90 v Charge Distribution.png"); f90vC_canvas -> SaveAs("f90 v Charge Distribution.pdf");
+  f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/ Quality Cuts/f90 v Charge Distribution.png");
+  f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/ Quality Cuts/f90 v Charge Distribution.pdf");
 }
 
 void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool isMC ){
@@ -155,11 +156,11 @@ void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool
   }
 
   if ( isMC ){
-    f90comparison_canvas -> SaveAs("f90 Distribution Comparison (1220, MC).png");
-    f90comparison_canvas -> SaveAs("f90 Distribution Comparison (1220, MC).pdf");
+    f90comparison_canvas -> SaveAs("plots/1220/Study of Monte Carlo/f90 Distribution Behaviour/f90 Distribution Comparison (1220, MC).png");
+    f90comparison_canvas -> SaveAs("plots/1220/Study of Monte Carlo/f90 Distribution Behaviour/f90 Distribution Comparison (1220, MC).pdf");
   } else {
-    f90comparison_canvas -> SaveAs("f90 Distribution Comparison (1220, Data).png");
-    f90comparison_canvas -> SaveAs("f90 Distribution Comparison (1220, Data).pdf");
+    f90comparison_canvas -> SaveAs("plots/1220/Study of Monte Carlo/f90 Distribution Behaviour/f90 Distribution Comparison (1220, Data).png");
+    f90comparison_canvas -> SaveAs("plots/1220/Study of Monte Carlo/f90 Distribution Behaviour/f90 Distribution Comparison (1220, Data).pdf");
   }
 
 }

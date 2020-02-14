@@ -1,3 +1,4 @@
+#include <TCut.h>
 #include <TFile.h>
 #include <TLine.h>
 #include <TString.h>
@@ -20,7 +21,16 @@ TH2F* F90vChargeHistogram( TString file_name ){
   TFile* file = new TFile( file_name );
   TTree* reco; file -> GetObject("reco", reco);
 
-  reco -> Draw("clusters[0].f90:clusters[0].charge >> hist", "clusters[0].f90 > 0. && clusters[0].f90 < 1.0 && clusters[0].charge > 0. && clusters[0].charge < 1000.", "goff");
+  TCut cut_f90_min         = "clusters[0].f90 > 0.";
+  TCut cut_f90_max         = "clusters[0].f90 < 1.0";
+  TCut cut_charge_min      = "clusters[0].charge > 0.";
+  TCut cut_charge_max      = "clusters[0].charge < 1000.";
+  TCut cut_cluster_number  = "number_of_clusters == 1";
+  TCut cut_rep             = "clusters[0].rep == 1";
+
+  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
+
+  reco -> Draw("clusters[0].f90:clusters[0].charge >> hist", cut_all, "goff");
   TH2F* f90vCharge = (TH2F*) gDirectory -> Get("hist");
 
   f90vCharge -> SetDirectory(0);
@@ -47,7 +57,12 @@ TH1F* F90ClusterHist( TString file_name, int cluster ){
   TFile* file = new TFile( file_name );
   TTree* reco; file -> GetObject("reco", reco);
 
-  reco -> Draw( Form("clusters[%d].f90 >> hist", cluster), Form("clusters[%d].f90 > 0. && clusters[%d].f90 < 1.", cluster, cluster), "goff" );
+  TCut cut_f90_min = Form("clusters[%d].f90 > 0.0",  cluster);
+  TCut cut_f90_max = Form("clusters[%d].f90 < 1.0",  cluster);
+
+  TCut cut_all = cut_f90_min && cut_f90_max;
+
+  reco -> Draw( Form("clusters[%d].f90 >> hist", cluster), cut_all, "goff" );
   TH1F* f90cluster_hist = (TH1F*) gDirectory -> Get("hist");
 
   f90cluster_hist -> SetDirectory(0);
@@ -65,14 +80,19 @@ TH1F* F90ClusterHist( TString file_name, int cluster ){
  *  Parameters   : file_name   >> the root file containing the data to construc the histogram.
  *                 sipm_number >> the specific sipm for witch the f90 histogram is generated.
  *
- *  Return Value : TH1F* f90sipm_hist.    
+ *  Return Value : TH1F* f90sipm_hist.
  */
 TH1F* F90SIPMHist( TString file_name, int sipm_number ){
 
   TFile* file = new TFile( file_name );
   TTree* reco; file -> GetObject("reco", reco);
 
-  reco -> Draw( Form("f90[%d] >> hist", sipm_number), Form("f90[%d] > 0. && f90[%d] < 1.", sipm_number, sipm_number), "goff" );
+  TCut cut_f90_min = Form("f90[%d] > 0.0", sipm_number);
+  TCut cut_f90_max = Form("f90[%d] < 1.0.", sipm_number);
+
+  TCut cut_all = cut_f90_min && cut_f90_max;
+
+  reco -> Draw( Form("f90[%d] >> hist", sipm_number), cut_all, "goff" );
   TH1F* f90sipm_hist = (TH1F*) gDirectory -> Get("hist");
 
   f90sipm_hist -> SetDirectory(0);

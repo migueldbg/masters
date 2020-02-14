@@ -16,17 +16,28 @@
  *
  *  Return Value :  TH2F* f90vCharge.
  */
-TH2F* F90vChargeHistogram( TString file_name ){
+TH2F* F90vChargeHistogram( TString file_name, bool quality_cuts ){
 
   TFile* file = new TFile( file_name );
   TTree* reco; file -> GetObject("reco", reco);
 
-  TCut cut_f90_min         = "clusters[0].f90 > 0.";
-  TCut cut_f90_max         = "clusters[0].f90 < 1.0";
-  TCut cut_charge_min      = "clusters[0].charge > 0.";
-  TCut cut_charge_max      = "clusters[0].charge < 1000.";
-  TCut cut_cluster_number  = "number_of_clusters == 1";
-  TCut cut_rep             = "clusters[0].rep == 1";
+  if (quality_cuts){
+    TCut cut_f90_min         = "clusters[0].f90 > 0.2";
+    TCut cut_f90_max         = "clusters[0].f90 < 0.6";
+    TCut cut_charge_min      = "clusters[0].charge > 0.";
+    TCut cut_charge_max      = "clusters[0].charge < 1000.";
+    TCut cut_cluster_number  = "number_of_clusters == 1";
+    TCut cut_rep             = "clusters[0].rep == 1";
+
+    TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
+  } else {
+    TCut cut_f90_min         = "clusters[0].f90 > 0.";
+    TCut cut_f90_max         = "clusters[0].f90 < 1.0";
+    TCut cut_charge_min      = "clusters[0].charge > 0.";
+    TCut cut_charge_max      = "clusters[0].charge < 1000.";
+
+    TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min;
+  }
 
   TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
 
@@ -103,14 +114,15 @@ TH1F* F90SIPMHist( TString file_name, int sipm_number ){
 
 void GenerateF90vChargeCanvas( int run ){
 
-  TH2F* f90vCharge_data  = F90vChargeHistogram( Form("run_%d.root",      run) );  f90vCharge_data  -> SetTitle("f90 vs Charge (1220); Charge (PE); f90");
-  TH2F* f90vCharge_mc_er = F90vChargeHistogram( Form("run_%d_MCER.root", run) );  f90vCharge_mc_er -> SetTitle("f90 vs Charge (1220, MC ER); Charge (PE); f90");
-  TH2F* f90vCharge_mc_nr = F90vChargeHistogram( Form("run_%d_MCNR.root", run) );  f90vCharge_mc_nr -> SetTitle("f90 vs Charge (1220, MC NR); Charge (PE); f90");
+  TH2F* f90vCharge_data  = F90vChargeHistogram( Form("run_%d.root",      run), false );  f90vCharge_data  -> SetTitle("f90 vs Charge (1220); Charge (PE); f90");
+  TH2F* f90vCharge_mc_er = F90vChargeHistogram( Form("run_%d_MCER.root", run), false );  f90vCharge_mc_er -> SetTitle("f90 vs Charge (1220, MC ER); Charge (PE); f90");
+  TH2F* f90vCharge_mc_nr = F90vChargeHistogram( Form("run_%d_MCNR.root", run), false );  f90vCharge_mc_nr -> SetTitle("f90 vs Charge (1220, MC NR); Charge (PE); f90");
 
   f90vCharge_data  -> SetMarkerStyle(8);    f90vCharge_data  -> SetMarkerSize(0.5);
   f90vCharge_mc_er -> SetMarkerStyle(8);    f90vCharge_mc_er -> SetMarkerSize(0.3);   f90vCharge_mc_er -> SetMarkerColorAlpha(30, 0.5);
   f90vCharge_mc_nr -> SetMarkerStyle(8);    f90vCharge_mc_nr -> SetMarkerSize(0.3);   f90vCharge_mc_nr -> SetMarkerColor(46);
 
+  // This lines may not be necessary if I instead generate another image with all the quality cuts.
   TLine* f90_low = new TLine(0., 0.2,  1050., 0.2);    f90_low -> SetLineStyle(10);  f90_low -> SetLineWidth(3); f90_low -> SetLineColor(13);
   TLine* f90_mid = new TLine(0., 0.4,  1050., 0.4);    f90_mid -> SetLineStyle(10);  f90_mid -> SetLineWidth(3); f90_mid -> SetLineColor(13);
   TLine* f90_upp = new TLine(0., 0.65, 1050., 0.65);   f90_upp -> SetLineStyle(10);  f90_upp -> SetLineWidth(3); f90_upp -> SetLineColor(13);

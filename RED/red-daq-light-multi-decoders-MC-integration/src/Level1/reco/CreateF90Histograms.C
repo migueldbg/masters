@@ -185,8 +185,8 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
   for (int i = 0; i < number_of_divisions; i++){
     // Calculate the boundaries of the current bin.
-    charge_low = i * bin_size;
-    charge_up  = (i + 1) * bin_size;
+    charge_low = ( i       * bin_size ) + min_charge;
+    charge_up  = ( (i + 1) * bin_size ) + min_charge;
 
     //--------------------------------------------------------------------------------------------------------------------------------------//
 

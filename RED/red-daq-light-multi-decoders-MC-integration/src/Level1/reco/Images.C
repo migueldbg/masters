@@ -21,6 +21,7 @@ TH2F* F90vChargeHistogram( TString file_name, bool quality_cuts ){
   TFile* file = new TFile( file_name );
   TTree* reco; file -> GetObject("reco", reco);
 
+  TCut cut_all;
   if (quality_cuts){
     TCut cut_f90_min         = "clusters[0].f90 > 0.2";
     TCut cut_f90_max         = "clusters[0].f90 < 0.6";
@@ -29,17 +30,15 @@ TH2F* F90vChargeHistogram( TString file_name, bool quality_cuts ){
     TCut cut_cluster_number  = "number_of_clusters == 1";
     TCut cut_rep             = "clusters[0].rep == 1";
 
-    TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
+    cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
   } else {
     TCut cut_f90_min         = "clusters[0].f90 > 0.";
     TCut cut_f90_max         = "clusters[0].f90 < 1.0";
     TCut cut_charge_min      = "clusters[0].charge > 0.";
     TCut cut_charge_max      = "clusters[0].charge < 1000.";
 
-    TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min;
+    cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min;
   }
-
-  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
 
   reco -> Draw("clusters[0].f90:clusters[0].charge >> hist", cut_all, "goff");
   TH2F* f90vCharge = (TH2F*) gDirectory -> Get("hist");
@@ -99,7 +98,7 @@ TH1F* F90SIPMHist( TString file_name, int sipm_number ){
   TTree* reco; file -> GetObject("reco", reco);
 
   TCut cut_f90_min = Form("f90[%d] > 0.0", sipm_number);
-  TCut cut_f90_max = Form("f90[%d] < 1.0.", sipm_number);
+  TCut cut_f90_max = Form("f90[%d] < 1.0", sipm_number);
 
   TCut cut_all = cut_f90_min && cut_f90_max;
 
@@ -134,23 +133,28 @@ void GenerateF90vChargeCanvas( int run ){
   f90vC_canvas -> Divide(2,1);
 
   f90vC_canvas -> cd(1);
-  f90vCharge_data -> Draw(); f90_low -> Draw("same"); f90_mid -> Draw("same"); f90_upp -> Draw("same");
+  f90vCharge_data -> Draw(); f90_low -> Draw("SAME"); f90_mid -> Draw("SAME"); f90_upp -> Draw("SAME");
 
   f90vC_canvas -> cd(2);
-  f90vCharge_mc_nr -> Draw(); f90vCharge_mc_er -> Draw("same"); f90_low -> Draw("same"); f90_mid -> Draw("same"); f90_upp -> Draw("same");
+  f90vCharge_mc_nr -> Draw(); f90vCharge_mc_er -> Draw("SAME"); f90_low -> Draw("SAME"); f90_mid -> Draw("SAME"); f90_upp -> Draw("SAME");
 
-  f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/ Quality Cuts/f90 v Charge Distribution.png");
-  f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/ Quality Cuts/f90 v Charge Distribution.pdf");
+  if ( quality_cuts ){
+    f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/Quality Cuts/f90 v Charge Distribution (Quality Cuts).png");
+    f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/Quality Cuts/f90 v Charge Distribution (Quality Cuts).pdf");
+  } else {
+    f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/Quality Cuts/f90 v Charge Distribution (No Cuts).png");
+    f90vC_canvas -> SaveAs("plots/1220/Study of Monte Carlo/Quality Cuts/f90 v Charge Distribution (No Cuts).pdf");
+  }
 }
 
 void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool isMC ){
 
-  TH1F* f90cluster_hist = F90ClusterHist(Form("run_%d%s.root", run, isMC ? "_MCER":""), cluster);
+  TH1F* f90cluster_hist = F90ClusterHist(Form("runs/run_%d%s.root", run, isMC ? "_MCER":""), cluster);
   f90cluster_hist -> SetTitle("f90 Distribution (Cluster); f90");
 
   TH1F** f90sipm_hist = new TH1F*[number_of_sipm];
   for (Int_t i = 0; i < number_of_sipm; i++){
-    f90sipm_hist[i] = F90SIPMHist( Form("run_%d%s.root", run, isMC ? "_MCER":""), i );
+    f90sipm_hist[i] = F90SIPMHist( Form("runs/run_%d%s.root", run, isMC ? "_MCER":""), i );
   }
 
   Double_t y_size = 1000.;
@@ -164,7 +168,7 @@ void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool
   f90comparison_canvas -> cd(2);
   for (int i = 0; i < number_of_sipm; i++){
     f90sipm_hist[0] -> SetTitle("f90 Distribution (SIPMs); f90");
-    f90sipm_hist[i] -> Draw(i == 0 ? "hist":"same");
+    f90sipm_hist[i] -> Draw(i == 0 ? "hist":"SAME");
   }
 
   if ( isMC ){

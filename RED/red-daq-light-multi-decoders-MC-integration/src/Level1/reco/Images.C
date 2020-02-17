@@ -181,6 +181,7 @@ void GenerateF90comparisonCanvas( int run, int cluster, int number_of_sipm, bool
 
 }
 
+// ------------------------------------- Images MACRO ------------------------------------- //
 void Images( int run ){
 
   int cluster = 0;

@@ -59,30 +59,6 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
-// Function to generate mean F90 v Charge Plots
-void GenerateMeanF90vChargePlot( TGraph* data_graph, TGraph* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
-
-  TCanvas* mean_canvas = new TCanvas( Form("%s_mean_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_mean_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
-
-  TMultiGraph* mean_multigraph = new TMultiGraph();
-  mean_multigraph -> Add(data_graph); mean_multigraph -> Add(mc_graph);
-
-  mean_multigraph -> SetTitle( Form("Data and MC f90 Mean Comparision (1220, %s); Charge (PE); Mean", (ERorNR == 0)?"ER":"NR") );
-  mean_multigraph -> SetName( Form("f90MeanxCharge_total_%s_both", (ERorNR == 0)?"er":"nr") );
-  mean_multigraph -> Draw("ALP");
-
-  TLegend* er_mean_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  er_mean_legend -> AddEntry( data_graph, "Data",        "lep" );
-  er_mean_legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
-  er_mean_legend -> Draw();
-
-  directory -> WriteObject( mean_multigraph, Form("f90MeanxCharge_total_%s_both", (ERorNR == 0)?"er":"nr"), "OverWrite");
-
-  mean_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  mean_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
-
-}
-
 /* TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t option = 0 )
  *
  * Summary of GraphDiff function:
@@ -141,6 +117,74 @@ TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t optio
 
   TGraphErrors* graph_diff = new TGraphErrors(n_points1, x_value, y_diff, x_error, y_diff_error);
   return graph_diff;
+}
+
+// Function to generate mean F90 v Charge Plots
+void GenerateMeanF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+
+  TCanvas* mean_canvas = new TCanvas( Form("%s_mean_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_mean_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
+
+  TMultiGraph* mean_multigraph = new TMultiGraph();
+  mean_multigraph -> Add(data_graph); mean_multigraph -> Add(mc_graph);
+
+  mean_multigraph -> SetTitle( Form("Data and MC f90 Mean Comparision (1220, %s); Charge (PE); Mean", (ERorNR == 0)?"ER":"NR") );
+  mean_multigraph -> SetName( Form("f90MeanxCharge_total_%s_both", (ERorNR == 0)?"er":"nr") );
+  mean_multigraph -> Draw("ALP");
+
+  TLegend* mean_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  mean_legend -> AddEntry( data_graph, "Data",        "lep" );
+  mean_legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
+  mean_legend -> Draw();
+
+  directory -> WriteObject( mean_multigraph, Form("f90MeanxCharge_total_%s_both", (ERorNR == 0)?"er":"nr"), "OverWrite");
+
+  mean_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
+  mean_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
+}
+
+void GenerateMeanDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+
+  TCanvas* mean_diff_canvas = new TCanvas( Form("%s_mean_diff_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_mean_diff_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
+
+  TGraphErrors* mean_diff_graph = GraphDiff( data_graph, mc_graph, 1 );
+  mean_diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 Mean (1220, %s); Charge(PE); Difference", (ERorNR == 0)?"ER":"NR") );
+  mean_diff_graph -> SetName( Form("f90Mean_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr") );
+
+  int ms = 0;   if (ERorNR == 0){ ms = 22; } else { ms = 23; }
+
+  mean_diff_graph -> SetMarkerStyle(ms);
+  mean_diff_graph -> SetMarkerColor(46);
+  mean_diff_graph -> SetMarkerSize(1.5);
+  mean_diff_graph -> SetLineColor(46);
+
+  mean_diff_graph -> Draw();
+
+  directory -> WriteObject( mean_diff_graph, Form("f90Mean_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr"), "OverWrite" );
+
+  mean_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
+  mean_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
+}
+
+void GenerateRMSF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+
+  TCanvas* rms_canvas = new TCanvas( Form("%s_rms_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_rms_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
+
+  TMultiGraph* rms_multigraph = new TMultiGraph();
+  rms_multigraph -> Add(data_graph); rms_multigraph -> Add(mc_graph);
+
+  rms_multigraph -> SetTitle( Form("Data and MC f90 RMS Comparision (1220, %s); Charge (PE); RMS", (ERorNR == 0)?"ER":"NR") );
+  rms_multigraph -> SetName( Form("f90RMSxCharge_total_%s_both", (ERorNR == 0)?"er":"nr") );
+  rms_multigraph -> Draw("ALP");
+
+  TLegend* rms_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  rms_legend -> AddEntry( data_graph, "Data",        "lep" );
+  rms_legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
+  rms_legend -> Draw();
+
+  directory -> WriteObject( rms_multigraph, Form("f90RMSxCharge_total_%s_both", (ERorNR == 0)?"er":"nr"), "OverWrite");
+
+  rms_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
+  rms_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
 }
 
 /* TDirectory* MakeDirectory( const char* dir_name, const char* dir_title )
@@ -326,90 +370,17 @@ void PlotRMS(int run){
 
   GenerateMeanF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size );
 
-
-  /*TCanvas* nr_mean_canvas = new TCanvas("nr_mean_canvas", "nr_mean_canvas", x_size, y_size);
-
-  TMultiGraph* nr_mean_multigraph = new TMultiGraph();
-  nr_mean_multigraph -> Add(da_nr_mean_graph); nr_mean_multigraph -> Add(mc_nr_mean_graph);
-
-  nr_mean_multigraph -> SetTitle("Data and MC f90 Mean Comparision (1220, NR); Charge (PE); Mean");
-  nr_mean_multigraph -> SetName("f90MeanxCharge_total_nr_both");
-  nr_mean_multigraph -> Draw("ALP");
-
-  TLegend* nr_mean_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  nr_mean_legend -> AddEntry( da_nr_mean_graph, "Data", "lep" );
-  nr_mean_legend -> AddEntry( mc_nr_mean_graph, "Monte Carlo", "lep" );
-  nr_mean_legend -> Draw();
-
-  graphs_dir -> WriteObject ( nr_mean_multigraph, "f90MeanxCharge_total_nr_both", "OverWrite" );*/
-
   // Relative Difference of Mean x Charge Total Plots ---------------------------------------------------- //
 
-  TCanvas* er_mean_diff_canvas = new TCanvas("er_mean_diff_canvas", "er_mean_diff_canvas", x_size, y_size);
+  GenerateMeanDiffF90vChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size );
 
-  TGraphErrors* er_mean_diff_graph = GraphDiff( da_er_mean_graph, mc_er_mean_graph, 1 );
-  er_mean_diff_graph -> SetTitle("Relative Difference of MC and Data f90 Mean (1220, ER); Charge(PE); Difference");
-  er_mean_diff_graph -> SetName("f90Mean_diffxCharge_total_er");
-
-  er_mean_diff_graph -> SetMarkerStyle(22);
-  er_mean_diff_graph -> SetMarkerColor(46);
-  er_mean_diff_graph -> SetMarkerSize(1.5);
-  er_mean_diff_graph -> SetLineColor(46);
-
-  er_mean_diff_graph -> Draw();
-
-  graphs_dir -> WriteObject( er_mean_diff_graph, "f90Mean_diffxCharge_total_er", "OverWrite" );
-
-
-  TCanvas* nr_mean_diff_canvas = new TCanvas("nr_mean_diff_canvas", "nr_mean_diff_canvas", x_size, y_size);
-
-  TGraphErrors* nr_mean_diff_graph = GraphDiff( da_nr_mean_graph, mc_nr_mean_graph, 1 );
-  nr_mean_diff_graph -> SetTitle("Relative Difference of MC and Data f90 Mean (1220, NR); Charge(PE); Difference");
-  nr_mean_diff_graph -> SetName("f90Mean_diffxCharge_total_nr");
-
-  nr_mean_diff_graph -> SetMarkerStyle(23);
-  nr_mean_diff_graph -> SetMarkerColor(46);
-  er_mean_diff_graph -> SetMarkerSize(1.5);
-  nr_mean_diff_graph -> SetLineColor(46);
-
-  nr_mean_diff_graph -> Draw();
-
-  graphs_dir -> WriteObject( nr_mean_diff_graph, "f90Mean_diffxCharge_total_nr", "OverWrite" );
+  GenerateMeanDiffF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size );
 
   // RMS x Charge Total Plots ---------------------------------------------------------------------------- //
 
-  TCanvas* er_rms_canvas = new TCanvas("er_rms_canvas", "er_rms_canvas", x_size, y_size);
+  GenerateRMSF90vChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size );
 
-  TMultiGraph* er_rms_multigraph = new TMultiGraph();
-  er_rms_multigraph -> Add(da_er_rms_graph); er_rms_multigraph -> Add(mc_er_rms_graph);
-
-  er_rms_multigraph -> SetTitle("Data and MC f90 RMS Comparision (1220, ER); Charge (PE); RMS");
-  er_rms_multigraph -> SetName("f90RMSxCharge_total_er_both");
-  er_rms_multigraph -> Draw("ALP");
-
-  TLegend* er_rms_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  er_rms_legend -> AddEntry( da_er_rms_graph, "Data ", "lep" );
-  er_rms_legend -> AddEntry( mc_er_rms_graph, "Monte Carlo", "lep" );
-  er_rms_legend -> Draw();
-
-  graphs_dir -> WriteObject( er_rms_multigraph, "f90RMSxCharge_total_er_both", "OverWrite" );
-
-
-  TCanvas* nr_rms_canvas = new TCanvas("nr_rms_canvas", "nr_rms_canvas", x_size, y_size);
-
-  TMultiGraph* nr_rms_multigraph = new TMultiGraph();
-  nr_rms_multigraph -> Add(da_nr_rms_graph); nr_rms_multigraph -> Add(mc_nr_rms_graph);
-
-  nr_rms_multigraph -> SetTitle("Data and MC f90 RMS Comparision (1220, NR); Charge (PE); RMS");
-  nr_rms_multigraph -> SetName("f90RMSxCharge_total_nr_both");
-  nr_rms_multigraph -> Draw("ALP");
-
-  TLegend* nr_rms_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  nr_rms_legend -> AddEntry( da_nr_rms_graph, "Data", "lep" );
-  nr_rms_legend -> AddEntry( mc_nr_rms_graph, "Monte Carlo", "lep" );
-  nr_rms_legend -> Draw();
-
-  graphs_dir -> WriteObject( nr_rms_multigraph, "f90RMSxCharge_total_nr_both", "OverWrite" );
+  GenerateRMSF90vChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size );
 
   // Relative Difference of RMS x Charge Total Plots ----------------------------------------------------- //
 
@@ -446,21 +417,8 @@ void PlotRMS(int run){
 
   // Saving All Plots Generated -------------------------------------------------------------------------_ //
 
-  er_rms_canvas       -> SaveAs("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (ER).pdf");
-  er_rms_canvas       -> SaveAs("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (ER).png");
-  nr_rms_canvas       -> SaveAs("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (NR).pdf");
-  nr_rms_canvas       -> SaveAs("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (NR).png");
-
   er_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (ER).pdf");
   er_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (ER).png");
   nr_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (NR).pdf");
   nr_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (NR).png");
-
-  //nr_mean_canvas      -> SaveAs("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (NR).pdf");
-  //nr_mean_canvas      -> SaveAs("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (NR).png");
-
-  er_mean_diff_canvas -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (ER).pdf");
-  er_mean_diff_canvas -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (ER).png");
-  nr_mean_diff_canvas -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (NR).pdf");
-  nr_mean_diff_canvas -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (NR).png");
 }

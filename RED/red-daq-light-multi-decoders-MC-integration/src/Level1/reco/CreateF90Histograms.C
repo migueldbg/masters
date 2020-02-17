@@ -142,7 +142,7 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
 
 // WriteHistogram() function?
 
-void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000.){
+void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000., Double_t min_charge = 20.){
 
   TString file_name = Form("hist_%d.root", run);
   TFile* hist_file = CheckFile(file_name);
@@ -172,10 +172,10 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
   // Total -> f90_min - f90_max; ER only -> f90_min - f90_mid; NR only -> f90_mid - f90_max.
   Double_t f90_min = 0.2;
   Double_t f90_mid = 0.4;
-  Double_t f90_max = 0.65;
+  Double_t f90_max = 0.6;
 
   // These variables are used to determine the maximum number of bins, as well as saving the charge boundaries of a given bin.
-  int number_of_divisions = (int) max_charge / bin_size;
+  int number_of_divisions = (int) (max_charge - min_charge) / bin_size;
   Double_t charge_low = 0;
   Double_t charge_up  = 0;
 

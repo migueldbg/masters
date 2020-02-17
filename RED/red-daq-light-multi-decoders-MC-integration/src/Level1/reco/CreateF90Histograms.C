@@ -190,7 +190,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
     //--------------------------------------------------------------------------------------------------------------------------------------//
 
-    f90hist_data[i] = Generatef90Hist( Form("run_%d.root", run), charge_low, charge_up, f90_min, f90_max );
+    f90hist_data[i] = Generatef90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_min, f90_max );
     f90hist_data[i] -> SetName ( Form("f90_histogram_%d", i+1) );
     f90hist_data[i] -> SetTitle( Form("f90 Distribution (Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
@@ -198,7 +198,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
     //--------------------------------------------------------------------------------------------------------------------------------------//
 
-    f90hist_data_er[i] = Generatef90Hist( Form("run_%d.root", run), charge_low, charge_up, f90_min, f90_mid );
+    f90hist_data_er[i] = Generatef90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_min, f90_mid );
     f90hist_data_er[i] -> SetName ( Form("f90_histogram_er_%d", i+1) );
     f90hist_data_er[i] -> SetTitle( Form("f90 Distribution (ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
@@ -206,7 +206,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
     //--------------------------------------------------------------------------------------------------------------------------------------//
 
-    f90hist_data_nr[i] = Generatef90Hist( Form("run_%d.root", run), charge_low, charge_up, f90_mid, f90_max );
+    f90hist_data_nr[i] = Generatef90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_mid, f90_max );
     f90hist_data_nr[i] -> SetName ( Form("f90_histogram_nr_%d", i+1) );
     f90hist_data_nr[i] -> SetTitle( Form("f90 Distribution (NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
@@ -214,7 +214,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
     //--------------------------------------------------------------------------------------------------------------------------------------//
 
-    f90hist_mc_er[i] = Generatef90Hist( Form("run_%d_MCER.root", run), charge_low, charge_up, f90_min, f90_mid );
+    f90hist_mc_er[i] = Generatef90Hist( Form("runs/run_%d_MCER.root", run), charge_low, charge_up, f90_min, f90_mid );
     f90hist_mc_er[i] -> SetName ( Form("f90_histogram_mcer_%d", i+1) );
     f90hist_mc_er[i] -> SetTitle( Form("f90 Distribution (MC ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
@@ -222,7 +222,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
     //--------------------------------------------------------------------------------------------------------------------------------------//
 
-    f90hist_mc_nr[i] = Generatef90Hist( Form("run_%d_MCNR.root", run), charge_low, charge_up, f90_mid, f90_max );
+    f90hist_mc_nr[i] = Generatef90Hist( Form("runs/run_%d_MCNR.root", run), charge_low, charge_up, f90_mid, f90_max );
     f90hist_mc_nr[i] -> SetName ( Form("f90_histogram_mcnr_%d", i+1) );
     f90hist_mc_nr[i] -> SetTitle( Form("f90 Distribution (MC NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 

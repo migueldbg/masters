@@ -187,6 +187,29 @@ void GenerateRMSF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph
   rms_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
 }
 
+void GenerateRMSDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+
+  TCanvas* rms_diff_canvas = new TCanvas( Form("%s_rms_diff_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_rms_diff_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
+
+  TGraphErrors* rms_diff_graph = GraphDiff( data_graph, mc_graph, 1 );
+  rms_diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 RMS (1220, %s); Charge(PE); Difference", (ERorNR == 0)?"ER":"NR") );
+  rms_diff_graph -> SetName( Form("f90RMS_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr") );
+
+  int ms = 0;   if (ERorNR == 0){ ms = 22; } else { ms = 23; }
+
+  rms_diff_graph -> SetMarkerStyle(ms);
+  rms_diff_graph -> SetMarkerColor(46);
+  rms_diff_graph -> SetMarkerSize(1.5);
+  rms_diff_graph -> SetLineColor(46);
+
+  rms_diff_graph -> Draw();
+
+  directory -> WriteObject( rms_diff_graph, Form("f90RMS_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr"), "OverWrite" );
+
+  rms_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
+  rms_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
+}
+
 /* TDirectory* MakeDirectory( const char* dir_name, const char* dir_title )
  *
  * Summary of MakeDirectory function:
@@ -361,64 +384,17 @@ void PlotRMS(int run){
 
   // ******************************************* CONSTRUCTING THE DESIRED PLOTS ******************************************* //
 
-  Double_t y_size = 1000.;
-  Double_t x_size = 1.61803398875 * y_size;
-
-  // Mean x Charge Total Plots --------------------------------------------------------------------------- //
+  Double_t y_size = 1000.;    Double_t x_size = 1.61803398875 * y_size;
 
   GenerateMeanF90vChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size );
-
   GenerateMeanF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size );
 
-  // Relative Difference of Mean x Charge Total Plots ---------------------------------------------------- //
-
   GenerateMeanDiffF90vChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size );
-
   GenerateMeanDiffF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size );
 
-  // RMS x Charge Total Plots ---------------------------------------------------------------------------- //
-
   GenerateRMSF90vChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size );
-
   GenerateRMSF90vChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size );
 
-  // Relative Difference of RMS x Charge Total Plots ----------------------------------------------------- //
-
-  TCanvas* er_rms_diff_canvas = new TCanvas("er_rms_diff_canvas", "er_rms_diff_canvas", x_size, y_size);
-
-  TGraphErrors* er_rms_diff_graph = GraphDiff( da_er_rms_graph, mc_er_rms_graph, 1 );
-  er_rms_diff_graph -> SetTitle("Relative Difference of MC and Data f90 RMS (1220, ER); Charge(PE); Difference");
-  er_rms_diff_graph -> SetName("f90RMS_diffxCharge_total_er");
-
-  er_rms_diff_graph -> SetMarkerStyle(22);
-  er_rms_diff_graph -> SetMarkerColor(46);
-  er_rms_diff_graph -> SetMarkerSize(1.5);
-  er_rms_diff_graph -> SetLineColor(46);
-
-  er_rms_diff_graph -> Draw();
-
-  graphs_dir -> WriteObject( er_rms_diff_graph, "f90RMS_diffxCharge_total_er", "OverWrite" );
-
-
-  TCanvas* nr_rms_diff_canvas = new TCanvas("nr_rms_diff_canvas", "nr_rms_diff_canvas", x_size, y_size);
-
-  TGraphErrors* nr_rms_diff_graph = GraphDiff( da_nr_rms_graph, mc_nr_rms_graph, 1 );
-  nr_rms_diff_graph -> SetTitle("Relative Difference of MC and Data f90 RMS (1220, NR); Charge(PE); Difference");
-  nr_rms_diff_graph -> SetName("f90RMS_diffxCharge_total_nr");
-
-  nr_rms_diff_graph -> SetMarkerStyle(23);
-  nr_rms_diff_graph -> SetMarkerColor(46);
-  er_rms_diff_graph -> SetMarkerSize(1.5);
-  nr_rms_diff_graph -> SetLineColor(46);
-
-  nr_rms_diff_graph -> Draw();
-
-  graphs_dir -> WriteObject( nr_rms_diff_graph, "f90RMS_diffxCharge_total_nr", "OverWrite" );
-
-  // Saving All Plots Generated -------------------------------------------------------------------------_ //
-
-  er_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (ER).pdf");
-  er_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (ER).png");
-  nr_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (NR).pdf");
-  nr_rms_diff_canvas  -> SaveAs ("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (NR).png");
+  GenerateRMSDiffF90vChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size  );
+  GenerateRMSDiffF90vChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size  );
 }

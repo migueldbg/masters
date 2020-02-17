@@ -111,20 +111,20 @@ TH1F* F90SIPMHist( TString file_name, int sipm_number ){
   return f90sipm_hist;
 }
 
-void GenerateF90vChargeCanvas( int run ){
+void GenerateF90vChargeCanvas( int run, bool quality_cuts ){
 
-  TH2F* f90vCharge_data  = F90vChargeHistogram( Form("run_%d.root",      run), false );  f90vCharge_data  -> SetTitle("f90 vs Charge (1220); Charge (PE); f90");
-  TH2F* f90vCharge_mc_er = F90vChargeHistogram( Form("run_%d_MCER.root", run), false );  f90vCharge_mc_er -> SetTitle("f90 vs Charge (1220, MC ER); Charge (PE); f90");
-  TH2F* f90vCharge_mc_nr = F90vChargeHistogram( Form("run_%d_MCNR.root", run), false );  f90vCharge_mc_nr -> SetTitle("f90 vs Charge (1220, MC NR); Charge (PE); f90");
+  TH2F* f90vCharge_data  = F90vChargeHistogram( Form("runs/run_%d.root",      run), quality_cuts );  f90vCharge_data  -> SetTitle("f90 vs Charge (1220); Charge (PE); f90");
+  TH2F* f90vCharge_mc_er = F90vChargeHistogram( Form("runs/run_%d_MCER.root", run), quality_cuts );  f90vCharge_mc_er -> SetTitle("f90 vs Charge (1220, MC ER); Charge (PE); f90");
+  TH2F* f90vCharge_mc_nr = F90vChargeHistogram( Form("runs/run_%d_MCNR.root", run), quality_cuts );  f90vCharge_mc_nr -> SetTitle("f90 vs Charge (1220, MC NR); Charge (PE); f90");
 
   f90vCharge_data  -> SetMarkerStyle(8);    f90vCharge_data  -> SetMarkerSize(0.5);
   f90vCharge_mc_er -> SetMarkerStyle(8);    f90vCharge_mc_er -> SetMarkerSize(0.3);   f90vCharge_mc_er -> SetMarkerColorAlpha(30, 0.5);
   f90vCharge_mc_nr -> SetMarkerStyle(8);    f90vCharge_mc_nr -> SetMarkerSize(0.3);   f90vCharge_mc_nr -> SetMarkerColor(46);
 
   // This lines may not be necessary if I instead generate another image with all the quality cuts.
-  TLine* f90_low = new TLine(0., 0.2,  1050., 0.2);    f90_low -> SetLineStyle(10);  f90_low -> SetLineWidth(3); f90_low -> SetLineColor(13);
-  TLine* f90_mid = new TLine(0., 0.4,  1050., 0.4);    f90_mid -> SetLineStyle(10);  f90_mid -> SetLineWidth(3); f90_mid -> SetLineColor(13);
-  TLine* f90_upp = new TLine(0., 0.65, 1050., 0.65);   f90_upp -> SetLineStyle(10);  f90_upp -> SetLineWidth(3); f90_upp -> SetLineColor(13);
+  TLine* f90_low = new TLine(0., 0.2, 1050., 0.2);  f90_low -> SetLineStyle(10);  f90_low -> SetLineWidth(3);  f90_low -> SetLineColor(13);
+  TLine* f90_mid = new TLine(0., 0.4, 1050., 0.4);  f90_mid -> SetLineStyle(10);  f90_mid -> SetLineWidth(3);  f90_mid -> SetLineColor(13);
+  TLine* f90_upp = new TLine(0., 0.6,  900., 0.6);  f90_upp -> SetLineStyle(10);  f90_upp -> SetLineWidth(3);  f90_upp -> SetLineColor(13);
 
   Double_t y_size = 1000.;
   Double_t x_size = 2 * 1.61803398875 * y_size;
@@ -186,9 +186,9 @@ void Images( int run ){
   int cluster = 0;
   int number_of_sipm = 28;
 
-  GenerateF90vChargeCanvas( run );
+  GenerateF90vChargeCanvas( run, false );
+  GenerateF90vChargeCanvas( run, true );
 
   GenerateF90comparisonCanvas( run, cluster, number_of_sipm, false );
-
   GenerateF90comparisonCanvas( run, cluster, number_of_sipm, true );
 }

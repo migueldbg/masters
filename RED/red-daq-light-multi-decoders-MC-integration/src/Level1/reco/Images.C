@@ -25,7 +25,7 @@ TH2F* F90vChargeHistogram( TString file_name, bool quality_cuts ){
   if (quality_cuts){
     TCut cut_f90_min         = "clusters[0].f90 > 0.2";
     TCut cut_f90_max         = "clusters[0].f90 < 0.6";
-    TCut cut_charge_min      = "clusters[0].charge > 0.";
+    TCut cut_charge_min      = "clusters[0].charge > 20.";
     TCut cut_charge_max      = "clusters[0].charge < 1000.";
     TCut cut_cluster_number  = "number_of_clusters == 1";
     TCut cut_rep             = "clusters[0].rep == 1";

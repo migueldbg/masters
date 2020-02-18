@@ -59,6 +59,25 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
+/* Double_t GetPeak( TH1* histogram )
+ *
+ *  Summary of Function:
+ *
+ *    The function takes a histogram and finds the position in the x-axis corresponding to the maximum value of the
+ *    histogram. It then returns this value.
+ *
+ *  Parameters   : histogram -> the histogram from witch the maximum value position will be obtained.
+ *
+ *  Return Value : peak -> the position in the x-axis of the maxium value.
+ */
+Double_t GetPeak( TH1* histogram ){
+
+  Int_t bin_peak = histogram -> GetMaximumBin();
+  Double_t peak = histogram -> GetXaxis() -> GetBinCenter(bin_peak);
+
+  return peak;
+}
+
 /* TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t option = 0 )
  *
  * Summary of GraphDiff function:

@@ -79,6 +79,17 @@ Double_t GetPeak( TH1* histogram ){
   return peak;
 }
 
+/* Double_t GetPeakError( TH1* histogram )
+ *
+ *  Summary of function
+ *
+ *    Calculates the error associated with the position of the peak of the histogram. Here, I've defined this error to be
+ *    half the width of the bin with maximum value. The function then returns this value.
+ *
+ *  Parameters   : histogram -> the histogram for witch you wish to determine the peak position error.
+ *
+ *  Return Value : Double_t peak_err.
+ */
 Double_t GetPeakError( TH1* histogram ){
 
   Int_t bin_peak = histogram -> GetMaximumBin();
@@ -236,9 +247,10 @@ TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t*
  *
  *  Summary of Function:
  *
- *    Generates a plot containing two graphs, one generated from acquired data and another from MC simulated data. The x-axis is the total charge of the event signal,
- *    while the y-axis dependes on the value of 'parameter' and can be one of three: the mean value, the peak position or the rms, all with respect to a f90 histogram.
- *    This plot is then writen into the given directory and the constructed canvas is saved in two file formats: pdf and png.
+ *    Generates a plot containing two graphs, one generated from acquired data and another from MC simulated data. The x-axis
+ *    is the total charge of the event signal, while the y-axis dependes on the value of 'parameter' and can be one of three:
+ *    the mean value, the peak position or the rms, all with respect to a f90 histogram. This plot is then written into the
+ *    given directory and the constructed canvas is saved in two file formats: pdf and png.
  *
  *  Parameters   : data_graph >> contains the graph generated from the actual data.
  *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
@@ -292,9 +304,10 @@ void GenerateF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, i
  *
  *  Summary of Function:
  *
- *    Takes two TGraphErrors object, one containing actual data and the other MC simulated data. It then calculates the relative difference between them using the
- *    GraphDiff() function defined above and plots the resulting graph. The x-axis is equal to the total charge of the event signal, while the y-axis depends on the
- *    value of 'parameter' and can be one of three: he mean value, the peak position or the rms, all with respect to the f90 histogram. The graph is then writen
+ *    Takes two TGraphErrors object, one containing actual data and the other MC simulated data. It then calculates the
+ *    relative difference between them using the GraphDiff() function defined above and plots the resulting graph. The x-axis
+ *    is equal to the total charge of the event signal, while the y-axis depends on the value of 'parameter' and can be one of
+ *    three: the mean value, the peak position or the rms, all with respect to the f90 histogram. The graph is then writen
  *    into the given directory and the constructed canvas is saved in two file formats: pdf and png.
  *
  *  Parameters   : data_graph >> contains the graph generated from the actual data.

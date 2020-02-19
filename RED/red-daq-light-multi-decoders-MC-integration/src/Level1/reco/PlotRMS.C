@@ -19,6 +19,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <stdlib.h>
 
@@ -78,6 +79,17 @@ Double_t GetPeak( TH1* histogram ){
   return peak;
 }
 
+/* Double_t GetPeakError( TH1* histogram )
+ *
+ *  Summary of function
+ *
+ *    Calculates the error associated with the position of the peak of the histogram. Here, I've defined this error to be
+ *    half the width of the bin with maximum value. The function then returns this value.
+ *
+ *  Parameters   : histogram -> the histogram for witch you wish to determine the peak position error.
+ *
+ *  Return Value : Double_t peak_err.
+ */
 Double_t GetPeakError( TH1* histogram ){
 
   Int_t bin_peak = histogram -> GetMaximumBin();
@@ -231,12 +243,14 @@ TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t*
   return graph;
 }
 
-/* void GenerateMeanF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size )
+/* void GenerateF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter )
  *
  *  Summary of Function:
  *
- *    Generates a plot containing two TGraphErrors objects, with x-axis equal to total charge and y-axis equal to f90 mean. It then writes it in
- *    the appropriate directory and saves it in two files: a pdf and a png.
+ *    Generates a plot containing two graphs, one generated from acquired data and another from MC simulated data. The x-axis
+ *    is the total charge of the event signal, while the y-axis dependes on the value of 'parameter' and can be one of three:
+ *    the mean value, the peak position or the rms, all with respect to a f90 histogram. This plot is then written into the
+ *    given directory and the constructed canvas is saved in two file formats: pdf and png.
  *
  *  Parameters   : data_graph >> contains the graph generated from the actual data.
  *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
@@ -244,41 +258,57 @@ TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t*
  *                 directory  >> directory where the multigraph is writen to.
  *                 x_size     >> width of the canvas.
  *                 y_size     >> height of the canvas.
+ *                 parameter  >> indicates witch parameter from the f90 histogram will be plotted.
  *
  *  Return Value : void.
  */
-void GenerateMeanF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+void GenerateF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter ){
 
   if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
 
-  TCanvas* mean_canvas = new TCanvas( Form("%s_mean_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_mean_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
+  string param_name;
+  string param_title;
 
-  TMultiGraph* mean_multigraph = new TMultiGraph();
-  mean_multigraph -> Add(data_graph); mean_multigraph -> Add(mc_graph);
+  if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
+    param_name = "mean";   param_title = "Mean";
+  } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
+    param_name = "peak";   param_title = "Peak";
+  } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
+    param_name = "rms";    param_title = "RMS";
+  } else {
+    exit(EXIT_FAILURE);
+  }
 
-  mean_multigraph -> SetTitle( Form("Data and MC f90 Mean Comparision (1220, %s); Charge (PE); Mean", (ERorNR == 0)?"ER":"NR") );
-  mean_multigraph -> SetName( Form("f90MeanxCharge_total_%s_both", (ERorNR == 0)?"er":"nr") );
-  mean_multigraph -> Draw("ALP");
+  TCanvas* canvas = new TCanvas( Form("%s_%s_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), x_size, y_size );
 
-  TLegend* mean_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  mean_legend -> AddEntry( data_graph, "Data",        "lep" );
-  mean_legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
-  mean_legend -> Draw();
+  TMultiGraph* multigraph = new TMultiGraph();
+  multigraph -> Add(data_graph);    multigraph -> Add(mc_graph);
 
-  directory -> WriteObject( mean_multigraph, Form("f90MeanxCharge_total_%s_both", (ERorNR == 0)?"er":"nr"), "OverWrite");
+  multigraph -> SetTitle( Form("Data and MC f90 %s Comparision (1220, %s); Charge (PE); %s", param_title.c_str(), (ERorNR == 0)?"ER":"NR", param_title.c_str()) );
+  multigraph -> SetName( Form("f90%s_v_charge_total_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
+  multigraph -> Draw("ALP");
 
-  mean_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  mean_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Mean v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
+  TLegend* legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+  legend -> AddEntry( data_graph, "Data",        "lep" );
+  legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
+  legend -> Draw();
+
+  directory -> WriteObject( multigraph, Form("f90%s_v_charge_total_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
+
+  canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).pdf", param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).png", param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+
 }
 
-/* void GenerateMeanDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size )
+/* void GenerateF90DiffvChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter )
  *
  *  Summary of Function:
  *
- *    Takes two TGraphErrors object, one containing actual data and the other MC simulated data. It then calculates the relative difference
- *    between them using the GraphDiff() functio defined above and plots the resulting TGraphErros object, with x-axis equal to the total
- *    charge and y-axis equal to the relative difference of the f90 mean value. It then writes the graph to the appropriate directory and
- *    saves the canvas generated in two files: a pdf and a png.
+ *    Takes two TGraphErrors object, one containing actual data and the other MC simulated data. It then calculates the
+ *    relative difference between them using the GraphDiff() function defined above and plots the resulting graph. The x-axis
+ *    is equal to the total charge of the event signal, while the y-axis depends on the value of 'parameter' and can be one of
+ *    three: the mean value, the peak position or the rms, all with respect to the f90 histogram. The graph is then writen
+ *    into the given directory and the constructed canvas is saved in two file formats: pdf and png.
  *
  *  Parameters   : data_graph >> contains the graph generated from the actual data.
  *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
@@ -286,190 +316,46 @@ void GenerateMeanF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_grap
  *                 directory  >> directory where the multigraph is writen to.
  *                 x_size     >> width of the canvas.
  *                 y_size     >> height of the canvas.
+ *                 parameter  >> indicates witch parameter from the f90 histogram will be plotted.
  *
  *  Return Value : void.
  */
-void GenerateMeanDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+void GenerateF90DiffvChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter ){
 
   if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
 
-  TCanvas* mean_diff_canvas = new TCanvas( Form("%s_mean_diff_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_mean_diff_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
+  string param_name;
+  string param_title;
 
-  TGraphErrors* mean_diff_graph = GraphDiff( data_graph, mc_graph, 1 );
-  mean_diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 Mean (1220, %s); Charge(PE); Difference", (ERorNR == 0)?"ER":"NR") );
-  mean_diff_graph -> SetName( Form("f90Mean_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr") );
+  if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
+    param_name = "mean";   param_title = "Mean";
+  } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
+    param_name = "peak";   param_title = "Peak";
+  } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
+    param_name = "rms";    param_title = "RMS";
+  } else {
+    exit(EXIT_FAILURE);
+  }
 
-  int ms = 0;   if (ERorNR == 0){ ms = 22; } else { ms = 23; }
+  TCanvas* canvas = new TCanvas( Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), x_size, y_size );
 
-  mean_diff_graph -> SetMarkerStyle(ms);
-  mean_diff_graph -> SetMarkerColor(46);
-  mean_diff_graph -> SetMarkerSize(2.5);
-  mean_diff_graph -> SetLineColor(46);
+  TGraphErrors* diff_graph = GraphDiff( data_graph, mc_graph, 0 );
+  diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 %s (1220, %s); Charge(PE); Difference", param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  diff_graph -> SetName( Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
 
-  mean_diff_graph -> Draw();
+  int ms = 0;  if (ERorNR == 0){ ms = 22; } else { ms = 23; }
 
-  directory -> WriteObject( mean_diff_graph, Form("f90Mean_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr"), "OverWrite" );
+  diff_graph -> SetMarkerStyle(ms);
+  diff_graph -> SetMarkerColor(46);
+  diff_graph -> SetMarkerSize(2.5);
+  diff_graph -> SetLineColor(46);
 
-  mean_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  mean_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Mean Diff. v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
-}
+  diff_graph -> Draw();
 
-/* void GeneratePeakF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size )
- *
- *  Summary of Function:
- *
- *    Same as GenerateMeanF90vChargePlot(), but it instead plots the F90 peak position in the y-axis.
- *
- *  Parameters   : data_graph >> contains the graph generated from the actual data.
- *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
- *                 ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
- *                 directory  >> directory where the multigraph is writen to.
- *                 x_size     >> width of the canvas.
- *                 y_size     >> height of the canvas.
- *
- *  Return Value : void.
- */
-void GeneratePeakF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
+  directory -> WriteObject( diff_graph, Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
 
-  if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
-
-  TCanvas* peak_canvas = new TCanvas( Form("%s_peak_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_peak_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
-
-  TMultiGraph* peak_multigraph = new TMultiGraph();
-  peak_multigraph -> Add(data_graph); peak_multigraph -> Add(mc_graph);
-
-  peak_multigraph -> SetTitle( Form("Data and MC f90 Peak Comparision (1220, %s); Charge (PE); Peak", (ERorNR == 0)?"ER":"NR") );
-  peak_multigraph -> SetName( Form("f90PeakxCharge_total_%s_both", (ERorNR == 0)?"er":"nr") );
-  peak_multigraph -> Draw("ALP");
-
-  TLegend* peak_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  peak_legend -> AddEntry( data_graph, "Data",        "lep" );
-  peak_legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
-  peak_legend -> Draw();
-
-  directory -> WriteObject( peak_multigraph, Form("f90PeakxCharge_total_%s_both", (ERorNR == 0)?"er":"nr"), "OverWrite");
-
-  peak_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Peak v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  peak_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 Peak v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
-}
-
-/* void GeneratePeakDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size )
- *
- *  Summary of Function:
- *
- *    Same as GenerateMeanDiffF90vChargePlot(), but it instead plots the relative difference of the F90 peak position on the y-axis.
- *
- *  Parameters   : data_graph >> contains the graph generated from the actual data.
- *                mc_graph   >> contains the graph generated from a Monte Carlo simulation.
- *                ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
- *                directory  >> directory where the multigraph is writen to.
- *                x_size     >> width of the canvas.
- *                y_size     >> height of the canvas.
- *
- *  Return Value : void.
- */
-void GeneratePeakDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
-
-  if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
-
-  TCanvas* peak_diff_canvas = new TCanvas( Form("%s_peak_diff_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_peak_diff_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
-
-  TGraphErrors* peak_diff_graph = GraphDiff( data_graph, mc_graph, 1 );
-  peak_diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 Peak (1220, %s); Charge(PE); Difference", (ERorNR == 0)?"ER":"NR") );
-  peak_diff_graph -> SetName( Form("f90Peak_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr") );
-
-  int ms = 0;   if (ERorNR == 0){ ms = 22; } else { ms = 23; }
-
-  peak_diff_graph -> SetMarkerStyle(ms);
-  peak_diff_graph -> SetMarkerColor(46);
-  peak_diff_graph -> SetMarkerSize(2.5);
-  peak_diff_graph -> SetLineColor(46);
-
-  peak_diff_graph -> Draw();
-
-  directory -> WriteObject( peak_diff_graph, Form("f90Peak_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr"), "OverWrite" );
-
-  peak_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Peak Diff. v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  peak_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 Peak Diff. v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
-}
-
-/* void GenerateRMSF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size )
- *
- *  Summar of Function:
- *
- *    Same as GenerateMeanF90vChargePlot(), but it instead plots the F90 RMS on the y-axis.
- *
- *  Parameters   : data_graph >> contains the graph generated from the actual data.
- *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
- *                 ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
- *                 directory  >> directory where the multigraph is writen to.
- *                 x_size     >> width of the canvas.
- *                 y_size     >> height of the canvas.
- *
- *  Return Value : void.
- */
-void GenerateRMSF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
-
-  if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
-
-  TCanvas* rms_canvas = new TCanvas( Form("%s_rms_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_rms_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
-
-  TMultiGraph* rms_multigraph = new TMultiGraph();
-  rms_multigraph -> Add(data_graph); rms_multigraph -> Add(mc_graph);
-
-  rms_multigraph -> SetTitle( Form("Data and MC f90 RMS Comparision (1220, %s); Charge (PE); RMS", (ERorNR == 0)?"ER":"NR") );
-  rms_multigraph -> SetName( Form("f90RMSxCharge_total_%s_both", (ERorNR == 0)?"er":"nr") );
-  rms_multigraph -> Draw("ALP");
-
-  TLegend* rms_legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  rms_legend -> AddEntry( data_graph, "Data",        "lep" );
-  rms_legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
-  rms_legend -> Draw();
-
-  directory -> WriteObject( rms_multigraph, Form("f90RMSxCharge_total_%s_both", (ERorNR == 0)?"er":"nr"), "OverWrite");
-
-  rms_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  rms_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/f90 RMS v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
-}
-
-/* void GenerateRMSDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size )
- *
- *  Summary of Function:
- *
- *    Same as GenerateMeanDiffF90vChargePlot(), but it instead plots the relative difference of the F90 RMS on the y-axis.
- *
- *  Parameters  : data_graph >> contains the graph generated from the actual data.
- *                mc_graph   >> contains the graph generated from a Monte Carlo simulation.
- *                ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
- *                directory  >> directory where the multigraph is writen to.
- *                x_size     >> width of the canvas.
- *                y_size     >> height of the canvas.
- *
- * Return Value : void.
- */
-void GenerateRMSDiffF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size ){
-
-  if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
-
-  TCanvas* rms_diff_canvas = new TCanvas( Form("%s_rms_diff_canvas", (ERorNR == 0)?"er":"nr"), Form("%s_rms_diff_canvas", (ERorNR == 0)?"er":"nr"), x_size, y_size);
-
-  TGraphErrors* rms_diff_graph = GraphDiff( data_graph, mc_graph, 1 );
-  rms_diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 RMS (1220, %s); Charge(PE); Difference", (ERorNR == 0)?"ER":"NR") );
-  rms_diff_graph -> SetName( Form("f90RMS_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr") );
-
-  int ms = 0;   if (ERorNR == 0){ ms = 22; } else { ms = 23; }
-
-  rms_diff_graph -> SetMarkerStyle(ms);
-  rms_diff_graph -> SetMarkerColor(46);
-  rms_diff_graph -> SetMarkerSize(2.5);
-  rms_diff_graph -> SetLineColor(46);
-
-  rms_diff_graph -> Draw();
-
-  directory -> WriteObject( rms_diff_graph, Form("f90RMS_diffxCharge_total_%s", (ERorNR == 0)?"er":"nr"), "OverWrite" );
-
-  rms_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (%s).pdf", (ERorNR == 0)?"ER":"NR") );
-  rms_diff_canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Mean and RMS/Relative f90 RMS Diff. v Charge (%s).png", (ERorNR == 0)?"ER":"NR") );
+  canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).pdf", param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  canvas -> SaveAs( Form("plots/1220/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).png", param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
 }
 
 // **************************************************** PlotRMS() MACRO **************************************************** //
@@ -478,7 +364,7 @@ void PlotRMS( int run, Double_t charge_min = 0. ){
   TString file_name = Form("hist_%d.root", run);
   TFile* hist_file = CheckFile(file_name);
 
-  // --------------------- CREATING NECESSARY DIRECTORIES ---------------------- //
+  // ---------------------- CREATING NECESSARY DIRECTORIES ----------------------- //
   hist_file -> cd();
   TDirectory* RMS_analysis_dir   = MakeDirectory("RMS_analysis", "RMS_analysis");
   TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
@@ -501,7 +387,7 @@ void PlotRMS( int run, Double_t charge_min = 0. ){
   monte_carlo_dir -> cd();
   TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
   TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
-  // --------------------------------------------------------------------------- //
+  // ----------------------------------------------------------------------------- //
 
   Int_t number_of_histograms = NumberOfHistograms(da_both_dir);
 
@@ -511,6 +397,7 @@ void PlotRMS( int run, Double_t charge_min = 0. ){
   Double_t MEANerr_da_er [number_of_histograms];      Double_t MEANerr_da_nr [number_of_histograms];
   Double_t PEAK_da_er    [number_of_histograms];      Double_t PEAK_da_nr    [number_of_histograms];
   Double_t PEAKerr_da_er [number_of_histograms];      Double_t PEAKerr_da_nr [number_of_histograms];
+
 
   Double_t RMS_mc_er     [number_of_histograms];      Double_t RMS_mc_nr     [number_of_histograms];
   Double_t RMSerr_mc_er  [number_of_histograms];      Double_t RMSerr_mc_nr  [number_of_histograms];
@@ -580,21 +467,21 @@ void PlotRMS( int run, Double_t charge_min = 0. ){
 
   Double_t y_size = 1000.;    Double_t x_size = 1.61803398875 * y_size;
 
-  GenerateMeanF90vChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size );
-  GenerateMeanF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size );
+  GenerateF90vChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
+  GenerateF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
 
-  GenerateMeanDiffF90vChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size );
-  GenerateMeanDiffF90vChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size );
+  GenerateF90DiffvChargePlot( da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
+  GenerateF90DiffvChargePlot( da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
 
-  GeneratePeakF90vChargePlot( da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size );
-  GeneratePeakF90vChargePlot( da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size );
+  GenerateF90vChargePlot( da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
+  GenerateF90vChargePlot( da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
 
-  GeneratePeakDiffF90vChargePlot( da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size );
-  GeneratePeakDiffF90vChargePlot( da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size );
+  GenerateF90DiffvChargePlot( da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
+  GenerateF90DiffvChargePlot( da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
 
-  GenerateRMSF90vChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size );
-  GenerateRMSF90vChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size );
+  GenerateF90vChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms" );
+  GenerateF90vChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms" );
 
-  GenerateRMSDiffF90vChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size  );
-  GenerateRMSDiffF90vChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size  );
+  GenerateF90DiffvChargePlot( da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms"  );
+  GenerateF90DiffvChargePlot( da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms"  );
 }

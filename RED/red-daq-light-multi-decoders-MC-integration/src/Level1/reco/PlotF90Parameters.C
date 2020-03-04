@@ -1,4 +1,4 @@
-/* File: PlotRMS.C (ROOT macro).
+/* File: PlotF90Parameters.C (ROOT macro).
  *
  * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).
  * Date of creation : February 5 2020.
@@ -359,7 +359,7 @@ void GenerateF90DiffvChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_grap
 }
 
 // **************************************************** PlotRMS() MACRO **************************************************** //
-void PlotRMS( int run, Double_t charge_min = 0. ){
+void PlotF90Parameters( int run, Double_t charge_min = 0. ){
 
   TString file_name = Form("hist_%d.root", run);
   TFile* hist_file = CheckFile(file_name);

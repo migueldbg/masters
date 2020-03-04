@@ -2,7 +2,6 @@
  *
  * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).
  * Date of creation : February 4 2020.
- * Last update      : February 5 2020.
  *
  * Summary of File:
  *
@@ -91,8 +90,8 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
  */
 TH1F* Generatef90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up ) {
 
-  TFile *file = new TFile(file_name);
-  TTree *reco; file -> GetObject("reco", reco);
+  TFile* file = new TFile(file_name);
+  TTree* reco; file -> GetObject("reco", reco);
 
   TCut cut_f90_min         = Form("clusters[0].f90 >= %f", f90_low);
   TCut cut_f90_max         = Form("clusters[0].f90 <= %f", f90_up);
@@ -141,6 +140,8 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
 }
 
 // WriteHistogram() function?
+
+// ------------------------------------------ MACRO::CreateF90Histograms ------------------------------------------ //
 
 void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000., Double_t min_charge = 20.){
 

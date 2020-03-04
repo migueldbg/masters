@@ -1,0 +1,16 @@
+*.root
+*.so
+*.d
+*.light
+*~
+*.pdf
+*.pcm
+*.png
+*.csv
+lsciefficiency/fit_parameters0.cfg
+lsciefficiency/fit_parameters_free.cfg
+lsciefficiency/fit_parameters_kb.cfg
+testbeam/fit_parameters0.cfg
+testbeam/fit_parameters_free.cfg
+testbeam/fit_parameters_kb.cfg
+*.out

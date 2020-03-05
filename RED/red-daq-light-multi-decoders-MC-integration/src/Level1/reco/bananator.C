@@ -22,7 +22,7 @@
 void bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, int ymax=20000){
 //run numbers, bin number, xmin, xmax, ymin, ymax
 
-    TFile *f = new TFile(Form("run_%d.root", run), "read");
+    TFile *f = new TFile(Form("runs/run_%d.root", run), "read");
 
 
     TTree *data = (TTree*)f->Get("reco");
@@ -44,7 +44,7 @@ void bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, in
 
     TH2F *h = new TH2F("h",title,nbin,xmin,xmax,nbin,ymin,ymax);
 
-    data->Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31] + baseline_mean[30] - ymin[30] >>h");
+    data->Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31]>>h");
 
     h->GetXaxis()->SetTitle("E [ADC counts]");
     h->GetXaxis()->SetTitleOffset(1.16);

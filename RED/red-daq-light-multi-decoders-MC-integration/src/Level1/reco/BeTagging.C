@@ -6,7 +6,7 @@
 
 #define UNDEF -100
 
-//  E=28 MeV
+//  E = 28 MeV
 
 //  Goal : 1) Determine which Be are giving coincidences in the TPC and PMT for different positions
 //         2) Benchmark the LowBe blob energy cut
@@ -34,11 +34,11 @@ void BeTaggingSlave()
 
   int color[4]={kBlue, kRed, kGreen+2, kOrange };
 
-  nF=nF_in;
+  nF=nF_in;   // nF -> Defined in "Utils.C", indicates the actual number of runs.
   for (int iF=0;iF<nF;iF++)
     {
       iF_plot.push_back(iF);
-      frun_i[iF]=run_i[iF]; ftime_i[iF]=10.;  IsTPC=(iF==1?false:true);
+      frun_i[iF] = run_i[iF];   ftime_i[iF] = 10.;  IsTPC = (iF==1?false:true);
 
       TTree *t;
       std::string FileName=Form("runs/run_%d.root",run_i[iF]);

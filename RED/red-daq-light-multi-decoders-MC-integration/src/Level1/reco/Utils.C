@@ -11,20 +11,20 @@
 
 // SER -> Run  670
 
-const double u     =931.4940954;        // Atomic Mass Unit (in MeV).
-const double m_e   =0.000548579909 *u;
-const double m_n   =1.00866491588  *u;
-const double m_p   =1.007276466879 *u;
+const double u    = 931.4940954;        // Atomic Mass Unit (in MeV).
+const double m_e  = 0.000548579909 *u;
+const double m_n  = 1.00866491588  *u;
+const double m_p  = 1.007276466879 *u;
 
 // Nuclear masses (in MeV)
-const Double_t m_Li=7.0160034366*u-3.*m_e;        // 7Li
-const double   m_C =12.000000000*u-12*m_e;        // 12C
-const double   m_Au=196.96656879*u-79*m_e;        // 197Au
-const double   m_Be= 7.016928717*u-4.*m_e ;       // 7Be
-const double   m_BeEx= m_Be+0.454 ;               // 7Be
+const Double_t m_Li   = 7.0160034366*u-3.*m_e;        // 7Li
+const double   m_C    = 12.000000000*u-12*m_e;        // 12C
+const double   m_Au   = 196.96656879*u-79*m_e;        // 197Au
+const double   m_Be   = 7.016928717*u-4.*m_e ;       // 7Be
+const double   m_BeEx = m_Be+0.454 ;               // 7Be
 
-const int nChannels=5;
-std::string ChannelName[nChannels]={ "Li+C ->Li+C" ,"Li+Au ->Li+Au", "Li+p ->Be+n","Li+p ->Li+p", "Li+p ->Be^{ex}+n"};
+const int nChannels = 5;
+std::string ChannelName[nChannels] = { "Li+C ->Li+C" ,"Li+Au ->Li+Au", "Li+p ->Be+n","Li+p ->Li+p", "Li+p ->Be^{ex}+n"};
 
 //  Simone 2D fits   E0=28 MeV  (I believe these are bi-gaussian fits to the deltaE vs E plot)
 /*
@@ -408,12 +408,12 @@ void Summary(TTree *t,  int iF )
   fRateNorm[iF]  = rate[3]/rate[4];
   efRateNorm[iF] = erate[3]/rate[4];
 
-  printf("Run = %d  N = %d/%5.0lf[s] (%5.2lf Hz)   |   %5d (Be)  %5d (Neutron)  %5d (dT)   |   Monitor (%5d %5d) ELi = %5.2lf Epeak = %5.2lf\n",
+  printf("Run = %d  N = %d/%5.0lf [s] (%5.2lf Hz)   |   %5d (Be)  %5d (Neutron)  %5d (dT)   |   Monitor (%5d %5d)  ELi = %5.2lf  Epeak = %5.2lf\n",
          run, N[0], time, rate[0], N[1], N[2], N[3], N[4], Nmonit_range, ELi, Epeak_Monit);
   printf("                           Rate  %5.3lf (C)  %5.3lf (M) [Hz]\n", rate[3], rate[4] );
   printf("                           RateNorm  %5.3lf  [Hz/Hz_mon]\n",fRateNorm[iF] );
   printf("                           Coin/Monitor  %5.3lf   |   Coin/Be %5.3lf \n", double(N[3])/double(N[4]), double(N[3])/double(N[1]) );
-  printf("---------------------------------------------\n");
+  printf("********************************************\n");
 
 
 

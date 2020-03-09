@@ -28,7 +28,7 @@ void BeTaggingSlave()
   SetStyle();
   std::string NameSet[3]={   "TPC 4 spaces up C1 ", "PMT0 close central C0" };
   const int nF_in=2;
-  const int run_i[3]={  717, 645 };
+  const int run_i[2]={717, 645};
 
   TH1F   *hTime[nF_in], *hSiE[2][nF_in], *hSiTel[2][nF_in];
 
@@ -124,8 +124,8 @@ void BeTaggingSlave()
       {
         if ( ipad == 2 && ii == 1 ) continue;
         TH1F *h0;
-        if (ipad == 0)      h0 = hSiE[ii][iF];
-        else if (ipad == 1) h0 = hSiTel[ii][iF];
+        if (ipad == 0)      h0 = hSiE[ii][iF];      // ii = 0 corresponds to all events in the BE band.
+        else if (ipad == 1) h0 = hSiTel[ii][iF];    // ii = 1 corresponds to events in the BE band with a PMT/TPC detected neutron.
         else if (ipad == 2) h0 = hTime[iF];
         Rate[ii] = h0->Integral();
       }

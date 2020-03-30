@@ -41,7 +41,7 @@ void BeTaggingSlave()
     frun_i[iF] = run_i[iF];   ftime_i[iF] = 10.;  IsTPC = (iF==1?false:true);
 
     TTree *t;
-    std::string FileName = Form("runs/run_%d.root", run_i[iF]);
+    std::string FileName = Form("../runs/run_%d.root", run_i[iF]);
     TFile *f = new TFile(FileName.c_str());
     f -> GetObject("reco", t);
     Summary(t,iF);
@@ -216,7 +216,7 @@ void BeTaggingCoincidence()
       frun_i[iF]=run_i[iF]; ftime_i[iF]=10.;  IsTPC=false;
 
       TTree *t;
-      std::string FileName=Form("runs/run_%d.root",run_i[iF]);
+      std::string FileName=Form("../runs/run_%d.root",run_i[iF]);
       TFile *f=new TFile(FileName.c_str());
       f->GetObject("reco",t);
       Summary(t,iF);

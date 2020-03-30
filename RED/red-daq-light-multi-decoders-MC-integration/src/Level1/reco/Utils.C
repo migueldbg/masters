@@ -20,8 +20,8 @@ const double m_p  = 1.007276466879 *u;
 const Double_t m_Li   = 7.0160034366*u-3.*m_e;        // 7Li
 const double   m_C    = 12.000000000*u-12*m_e;        // 12C
 const double   m_Au   = 196.96656879*u-79*m_e;        // 197Au
-const double   m_Be   = 7.016928717*u-4.*m_e ;       // 7Be
-const double   m_BeEx = m_Be+0.454 ;               // 7Be
+const double   m_Be   = 7.016928717*u-4.*m_e ;        // 7Be
+const double   m_BeEx = m_Be+0.454 ;                  // 7Be (excited)
 
 const int nChannels = 5;
 std::string ChannelName[nChannels] = { "Li+C ->Li+C" ,"Li+Au ->Li+Au", "Li+p ->Be+n","Li+p ->Li+p", "Li+p ->Be^{ex}+n"};

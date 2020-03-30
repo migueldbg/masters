@@ -13,8 +13,8 @@
 
 double GetEdep(double E0) // Edep in the 20 um Silicon detector from Lise++ (corrected so adc/keV agrees with alpha )
 {
-  double A=3.00, alpha=-0.77;
-  return A*pow(E0/20.,alpha);  
+  double A = 3.00, alpha = -0.77;
+  return A*pow(E0/20., alpha);
 }
 
 
@@ -22,25 +22,25 @@ void PlotEdep()
 {
   SetStyle();
   //
-  const double t=20.; //um
-  const double mLi=7.0160034366; // u
-  double E[5]   ={ 2.250*mLi, 2.50*mLi, 3.00*mLi, 4.03*mLi, 5.4*mLi  };// MeV/u
-  double Edep[5]={ 0.254*t  , 0.228*t , 0.200*t,  0.161*t,  0.1287*t };// MeV/um
-  
+  const double t   = 20.;  //um (micrometro)
+  const double mLi = 7.0160034366;  //u
+  double E[5]      = { 2.250*mLi, 2.50*mLi, 3.00*mLi, 4.03*mLi, 5.4*mLi  };  // MeV/u
+  double Edep[5]   = { 0.254*t  , 0.228*t , 0.200*t ,  0.161*t, 0.1287*t };  // MeV/um
+
   TGraph tg(5,E,Edep);
-  tg.GetXaxis()->SetTitle("E_{Li} [MeV]");
-  tg.GetYaxis()->SetTitle("E_{dep} [MeV]");
+  tg.GetXaxis() -> SetTitle("E_{Li} [MeV]");
+  tg.GetYaxis() -> SetTitle("E_{dep} [MeV]");
 
   tg.DrawClone("AP");
-  gPad->SetLogx();
-  gPad->SetLogy();
-  
-  TF1 *f=new TF1("f","[0]*pow(x/20.,[1])",1.,50.);
-  tg.Fit(f,"QN","");
-  f->DrawCopy("SAME");
-  l.DrawLatex(0.2,0.2,Form("%5.2lf #mu m",t));
-  l.DrawLatex(0.2,0.3,Form("%5.2lf %5.2lf",f->GetParameter(0),f->GetParameter(1) ));
-    
+  gPad -> SetLogx();
+  gPad -> SetLogy();
+
+  TF1 *f = new TF1("f", "[0]*pow(x/20.,[1])", 1., 50.);
+  tg.Fit(f, "QN", "");
+  f -> DrawCopy("SAME");
+  l.DrawLatex(0.2, 0.2, Form("%5.2lf #mu m", t));
+  l.DrawLatex(0.2, 0.3, Form("%5.2lf %5.2lf", f->GetParameter(0), f->GetParameter(1)));
+
 }
 
 
@@ -58,7 +58,7 @@ double BiGaus(double *v,double *par)
 
   double meanY=par[2];
   double sigmaY=par[3];
-  
+
   double rho=par[4];
   double norm=par[5];
 
@@ -66,7 +66,7 @@ double BiGaus(double *v,double *par)
 
   double val=1./(2*TMath::Pi()*sigmaX*sigmaY*sqrt(1.-rho*rho))*exp(-z/2/(1-rho*rho));
   return val*norm;
-  
+
 }
 
 
@@ -83,7 +83,7 @@ double AsymGaus(double *v,double *par)
   double x0=(x-mean)/sigma;
   double val=norm*TMath::Gaus(x0,0,1.)*(TMath::Erf(alpha*x0)+1.) +cte;
   return val;
-  
+
 }
 
 
@@ -99,16 +99,16 @@ void FitCalib(vector<Double_t> MeanE, vector<Double_t> eMeanE, vector<Double_t> 
       Double_t f=0;
       for (size_t i=0;i<MeanE.size();i++) {
 	Double_t expectedEnergy = E0[i];
-       
+
 	Double_t p1 = (par[0] + par[1]*MeanDE[i]+par[2]*MeanE[i] -
 		       expectedEnergy);
 	Double_t errorsquare = (  (eMeanDE[i]/MeanDE[i])*(eMeanDE[i]/MeanDE[i]) +
 				  (eMeanE[i]/MeanE[i])*(eMeanE[i]/MeanE[i]) )  *expectedEnergy*expectedEnergy;
 	f += p1*p1/errorsquare; //minimization!
-      }   
+      }
       return f;
     };
-  
+
   ROOT::Math::Functor fcn(chi2Function,3);
   ROOT::Fit::Fitter  fitter;
   double pStart[3] = {0,1,1};
@@ -121,10 +121,10 @@ void FitCalib(vector<Double_t> MeanE, vector<Double_t> eMeanE, vector<Double_t> 
   bool ok = fitter.FitFCN();
   if (!ok) {
     Error("line3Dfit","Line3D Fit failed");
-  }   
+  }
   const ROOT::Fit::FitResult & result = fitter.Result();
   result.Print(std::cout);
-  
+
   Double_t a = result.Parameter(0);
   Double_t b = result.Parameter(1);
   Double_t c = result.Parameter(2);
@@ -141,12 +141,12 @@ void FitCalib(vector<Double_t> MeanE, vector<Double_t> eMeanE, vector<Double_t> 
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-// Derive energy calibration using Li-Au/Li-C elastic scattering at different energies (weak dependence on thetaSi ) 
+// Derive energy calibration using Li-Au/Li-C elastic scattering at different energies (weak dependence on thetaSi )
 //                                Collimator 0
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void CalibGold() 
+void CalibGold()
 {
   SetStyle();
 
@@ -156,17 +156,17 @@ void CalibGold()
   const int nPeaks=nF_in;
   const int Collimator=0;
 
-  int runRef[nPeaks]={635,628,621 /*Gold*/, 632,630,624};  //CH2    
+  int runRef[nPeaks]={635,628,621 /*Gold*/, 632,630,624};  //CH2
   const double  Erange[nPeaks][2]={ {5600., 5900.}, {9050., 9350.}, { 9885, 10185.} /*Gold*/,    {5425.,5725.}, {8900.,9200.}, {9750.,10050.} /*CH2*/};
   const double dErange[nPeaks][2]={ {3800., 4800.}, {2600., 3600.}, {2500.,  3500.} /*Gold*/,    {3750.,4750.}, {2700.,3700.}, {2500.,3500.} /*CH2*/};
-  
+
   //----------------------------------------------------------------------------------
   TH2F   *h2D[nF_in];
   TH1F   *h1D[nF_in];
   TGraph *t2D[nF_in];
 
   int color[6]={kBlue, kRed, kGreen+2, kBlue, kRed, kGreen+2};
-  
+
   nF=nF_in;
   for (int iF=0;iF<nF;iF++)
     {
@@ -184,21 +184,21 @@ void CalibGold()
       int nbins=(iF/3==0?100:50);
       h2D[iF]=new TH2F(hname,hname,nbins,Erange[iF][0],Erange[iF][1],nbins,dErange[iF][0],dErange[iF][1] );
       h2D[iF]->Sumw2();
-      
+
       std::string x=  SiESlow;
       std::string y=  SidESlow;
-      
-      std::string Sel=Form("%s > %5.2lf && %s < %5.2lf && %s>%5.2lf && %s <%5.2lf ", 
+
+      std::string Sel=Form("%s > %5.2lf && %s < %5.2lf && %s>%5.2lf && %s <%5.2lf ",
 			   SiESlow.c_str() , Erange[iF][0] , SiESlow.c_str(), Erange[iF][1],
 			   SidESlow.c_str(), dErange[iF][0], SidESlow.c_str(), dErange[iF][1] );
 
       int nn=t->Project(hname,Form("%s:%s", y.c_str(),x.c_str()), Sel.c_str() );
 
       double *v2=t->GetV2();
-      double *v1=t->GetV1(); 
+      double *v1=t->GetV1();
       t2D[iF]=new TGraph(nn,v2,v1);
 
-      h2D[iF]->SetDirectory(0);	    
+      h2D[iF]->SetDirectory(0);
       h2D[iF]->Scale(100./h2D[iF]->Integral());
 
       //-------------------
@@ -209,27 +209,27 @@ void CalibGold()
       x=Form("(%s*%e+%s*%e)-%e",SidESlow.c_str(), B_Conv[Collimator][0],  SiESlow.c_str(), B_Conv[Collimator][1],E0[iF] );
       nn=t->Project(hname1D,x.c_str(), Sel.c_str() );
       cout << x << endl;
-      h1D[iF]->SetDirectory(0);	    
+      h1D[iF]->SetDirectory(0);
       h1D[iF]->Scale(1./h1D[iF]->Integral());
-      
+
 
       f->Close();
     }
-  
+
 
   //----------------------------------------------------------------------------------
 
   TGraphErrors tg[2][4]; //[Gold/CH2][mean E/rms E/mean dE/rms dE]
   vector<Double_t> MeanE,  eMeanE,  MeanDE,  eMeanDE,  fE0, SigmaE;
-	 
+
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,2.*wh);
   cc[canvas]->Divide(3,2);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   for (int iF=0;iF<nF;iF++)
     {
       cc[canvas]->cd(iF+1);
-      
+
       TH2F *h0=h2D[iF];
       h0->GetXaxis()->SetTitle("E [adc]");
       h0->GetYaxis()->SetTitle("#DeltaE [adc]");
@@ -246,7 +246,7 @@ void CalibGold()
       double cont[2]={0.01,0.1};
       f2->SetContour(2,cont);
       f2->Draw("cont3 same");
-      
+
       MeanE.push_back(f2->GetParameter(0));   eMeanE.push_back(10.);//f2->GetParError(0));
       MeanDE.push_back(f2->GetParameter(2));  eMeanDE.push_back(10.);//f2->GetParError(2));
       SigmaE.push_back(f2->GetParameter(1)/f2->GetParameter(0));
@@ -255,7 +255,7 @@ void CalibGold()
 
       l.DrawLatex(0.2,0.25,NameSet[iF].c_str());
       int iTarget=iF/3;
-      for (int ipar=0;ipar<npar;ipar++) 
+      for (int ipar=0;ipar<npar;ipar++)
 	{
 	  if ( ipar>3 ) continue;
 	  TGraphErrors *t0=&tg[iTarget][ipar];
@@ -265,18 +265,18 @@ void CalibGold()
       printf("\n");
     }
   canvas++;
-  
+
   //-------------------------------------------------------------
 
   std::string name[4]={ "<E> [adc]", "#sigma_{E}/<E> ", "<#Delta E> [adc]", "#sigma_{#Delta E}/<#Delta E> "};
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",1.5*ww,1.5*wh);
   cc[canvas]->Divide(2,2);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
-    for (int ipar=0;ipar<4;ipar++) 
+    for (int ipar=0;ipar<4;ipar++)
     {
       double x0=0.65,y0=0.25;
-      TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.15);  
+      TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.15);
 
       cc[canvas]->cd(ipar+1);
       for (int iTarget=0;iTarget<2;iTarget++)
@@ -288,19 +288,19 @@ void CalibGold()
 	  t0->GetYaxis()->SetTitle(name[ipar].c_str());
 	  t0->GetXaxis()->SetTitle("E_{^{7}Li} [MeV]");
 	  if ( ipar==1 ) { t0->SetMaximum(0.01); t0->SetMinimum(0.002); }
-	  t0->DrawClone((iTarget==0?"ALP":"LP"));      
+	  t0->DrawClone((iTarget==0?"ALP":"LP"));
 	  leg->AddEntry(t0,(iTarget==0?"Li+Au":"Li+C"),"P");
 	}
       if ( ipar==0 ) leg->DrawClone();
     }
   canvas++;
-  
+
   FitCalib(MeanE,eMeanE,MeanDE,eMeanDE,fE0);
 
 
   //-------------------------------------------------------------
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.5*wh);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   TH2D *hFrame=new TH2D("hXS","",1000, -1., 1.,1000,0.,0.2);
   hFrame->GetXaxis()->SetTitle("E_{rec}-E_{true} [MeV]");
@@ -308,9 +308,9 @@ void CalibGold()
   hFrame->DrawCopy();
 
   double x0=0.65,y0=0.55;
-  TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.35);  
-    
-  for (int iF=0;iF<nF_in;iF++) 
+  TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.35);
+
+  for (int iF=0;iF<nF_in;iF++)
     {
       TH1F *h0=h1D[iF];
       h0->SetLineColor(color[iF]);
@@ -319,7 +319,7 @@ void CalibGold()
       h0->SetMarkerColor(color[iF]);
       h0->DrawCopy("E1SAME");
       leg->AddEntry(h0,NameSet[iF].c_str(),"P");
-      
+
       h0->Fit("gaus","Q0");
       h0->GetFunction("gaus")->SetLineColor(color[iF]);
       h0->GetFunction("gaus")->SetLineStyle(iF/3==0?1:2);
@@ -330,7 +330,7 @@ void CalibGold()
     }
   leg->DrawClone();
   canvas++;
-  
+
 }
 
 
@@ -350,7 +350,7 @@ void CalibGold()
   624 / 676   Coll 0/1  (Low thresh CH2)
   621 / 691   Coll 0/1  ( Gold )
 */
-void CrossCalibGold() 
+void CrossCalibGold()
 {
   SetStyle();
   const int nF_in=4;
@@ -359,14 +359,14 @@ void CrossCalibGold()
   const int nPeaks=nF_in;
 
 
-  int runRef[nPeaks]={ 621, 691 /*Gold*/, 624,676 };  //CH2    
+  int runRef[nPeaks]={ 621, 691 /*Gold*/, 624,676 };  //CH2
   const double  Erange[nPeaks][2]={  { 9885, 10185.},{ 9600, 9800.} /*Gold*/,     {9750.,10050.},{9400.,9800.} /*CH2*/};
   const double dErange[nPeaks][2]={  {2500.,  3500.},{2500.,  3500.} /*Gold*/,     {2500., 3500.},{2500., 3500.} /*CH2*/};
-  
+
   //----------------------------------------------------------------------------------
   TH2F   *h2D[nF_in];
   int color[6]={kBlue, kRed, kGreen+2, kBlue, kRed, kGreen+2};
-  
+
   nF=nF_in;
 
   for (int iF=0;iF<nF;iF++)
@@ -385,36 +385,36 @@ void CrossCalibGold()
       int nbins=50;
       h2D[iF]=new TH2F(hname,hname,nbins,Erange[iF][0],Erange[iF][1],nbins,dErange[iF][0],dErange[iF][1] );
       h2D[iF]->Sumw2();
-      
+
       std::string x=  SiESlow;
       std::string y=  SidESlow;
-      
-      std::string Sel=Form("%s > %5.2lf && %s < %5.2lf && %s>%5.2lf && %s <%5.2lf ", 
+
+      std::string Sel=Form("%s > %5.2lf && %s < %5.2lf && %s>%5.2lf && %s <%5.2lf ",
 			   SiESlow.c_str() , Erange[iF][0] , SiESlow.c_str(), Erange[iF][1],
 			   SidESlow.c_str(), dErange[iF][0], SidESlow.c_str(), dErange[iF][1] );
 
       int nn=t->Project(hname,Form("%s:%s", y.c_str(),x.c_str()), Sel.c_str() );
 
-      h2D[iF]->SetDirectory(0);	    
+      h2D[iF]->SetDirectory(0);
       h2D[iF]->Scale(100./h2D[iF]->Integral());
-      
+
 
       f->Close();
     }
-  
+
 
   //----------------------------------------------------------------------------------
 
   vector<Double_t> MeanE,  eMeanE,  MeanDE,  eMeanDE,  fE0, SigmaE;
-	 
+
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,2.*wh);
   cc[canvas]->Divide(2,2);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   for (int iF=0;iF<nF;iF++)
     {
       cc[canvas]->cd(iF+1);
-      
+
       TH2F *h0=h2D[iF];
       h0->GetXaxis()->SetTitle("E [adc]");
       h0->GetYaxis()->SetTitle("#DeltaE [adc]");
@@ -452,11 +452,11 @@ void CrossCalibGold()
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void CalibCH2(  bool FitBand=false ) 
+void CalibCH2(  bool FitBand=false )
 {
   SetStyle();
   const int nF_in=3;
-  int runRef[nF_in]={632,630,624};  //CH2 
+  int runRef[nF_in]={632,630,624};  //CH2
   const double E0[nF_in]={18.,26.,28.};
   double thetaSi[nF_in]={ 5.5, 5.5, 5.5 };
 
@@ -466,7 +466,7 @@ void CalibCH2(  bool FitBand=false )
   TProfile *hP[2][nF_in];
 
   int color[4]={kBlue, kRed, kGreen+2,kBlack};
-  
+
   nF=nF_in;
 
   for (int iF=0;iF<nF;iF++)
@@ -484,16 +484,16 @@ void CalibCH2(  bool FitBand=false )
       const char *hname=Form("h2D%d",iF);
       h2D[iF]=new TH2F(hname,hname,300,5.,28.,300,1.5,7.5);
       h2D[iF]->Sumw2();
-      
+
       std::string Sel="1";
 
       int nn=t->Project(hname,Form("%s:%s", SidE_dep.c_str(),SiE_dep.c_str()), Sel.c_str() );
 
       double *v2=t->GetV2();
-      double *v1=t->GetV1(); 
+      double *v1=t->GetV1();
       t2D[iF]=new TGraph(nn,v2,v1);
 
-      h2D[iF]->SetDirectory(0);	    
+      h2D[iF]->SetDirectory(0);
       h2D[iF]->Scale(100./h2D[iF]->Integral());
 
       //----------------------
@@ -503,7 +503,7 @@ void CalibCH2(  bool FitBand=false )
 	  const char *hnameP=Form("hprof%d%d",iF,iBand);
 	  hP[iBand][iF]=new TProfile(hnameP,hnameP,100,(iBand==0?5.:10.),(iBand==0?30.:20.) );
 	  hP[iBand][iF]->Sumw2();
-	  hP[iBand][iF]->SetDirectory(0);	    
+	  hP[iBand][iF]->SetDirectory(0);
 	  for (int ii=0;ii<nn;ii++)
 	    {
 	      double E=v2[ii];
@@ -522,33 +522,33 @@ void CalibCH2(  bool FitBand=false )
 	  const char *hname1D=Form("h1D_%d%d",iF,iBand);
 	  h1D[iBand][iF]=new TH1F(hname1D,hname1D,(iBand==0?300:100.),15.,(iBand==0?30.:25.));
 	  h1D[iBand][iF]->Sumw2();
-	  
+
 	  nn=t->Project(hname1D,SiEnergy.c_str(), (iBand==0?IsLiBand.c_str():IsBeBand.c_str()) );
-	  h1D[iBand][iF]->SetDirectory(0);	    
+	  h1D[iBand][iF]->SetDirectory(0);
 	  h1D[iBand][iF]->Scale(1./h1D[iBand][iF]->Integral());
 	}
       f->Close();
-      
+
 
     }
-  
+
 
   //----------------------------------------------------------------------------------
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.*wh);
   cc[canvas]->Divide(3,1);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
 
   for (int iF=0;iF<nF;iF++)
     {
       cc[canvas]->cd(iF+1);
-      
+
       TH2F *h0=h2D[iF];
       h0->GetXaxis()->SetTitle("E [MeV]");
       h0->GetYaxis()->SetTitle("#DeltaE [MeV]");
       h0->DrawCopy("COLZ");
       gPad->SetLogz();
-      
+
       l.DrawLatex(0.5,0.85,Form("E_{beam}=%5.2lf",E0[iF]));
 
       for (int iBand=0;iBand<2;iBand++)
@@ -556,7 +556,7 @@ void CalibCH2(  bool FitBand=false )
 	  TF1 *f=new TF1("f","([0]+[1]*(log10(x/10.)))*[2]",0.,30.);
 	  f->SetLineWidth(2);
 	  if ( FitBand )
-	    { 
+	    {
 	      TProfile *h1=hP[iBand][iF];
 	      h1->DrawCopy("SAME");
 	      f->FixParameter(2,1.); f->SetParameter(0,4.);
@@ -573,7 +573,7 @@ void CalibCH2(  bool FitBand=false )
 		  f->SetLineStyle(ii==0?1:2);
 		  f->DrawCopy("SAME");
 		}
-	      
+
 	    }
 	}
     }
@@ -583,7 +583,7 @@ void CalibCH2(  bool FitBand=false )
   //-------------------------------------------------------------
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.5*wh);
   cc[canvas]->Divide(2,1);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
 
   double RangeLowBe [nF_in][2] ={ { UNDEF, UNDEF }, {17.5, 19.0}, {18.5,20.5} };
@@ -592,7 +592,7 @@ void CalibCH2(  bool FitBand=false )
   double RangeLowLiP[nF_in][2]   ={ { UNDEF, UNDEF }, {15.0, 16.0}, {16.5,17.5} };
   double RangeHighLiP[nF_in][2]   ={ { 16.0, 17.0  }, {23.8, 24.8}, {25.2,26.5} };
   double RangeLiC[nF_in][2]   ={ { 17.4, 18.4 }, {25.0, 26.0}, {27.0,28.0} };
-  
+
   TGraphErrors tTheta[nF_in][3];
 
   for (int iBand=0;iBand<2;iBand++)
@@ -603,8 +603,8 @@ void CalibCH2(  bool FitBand=false )
       hFrame->GetXaxis()->SetTitle("E_{rec} [MeV]");
       hFrame->GetYaxis()->SetTitle("A.U");
       hFrame->DrawCopy();
-      
-      for (int iF=0;iF<nF_in;iF++) 
+
+      for (int iF=0;iF<nF_in;iF++)
 	{
 	  if ( iBand==1 && iF==0 ) continue;
 	  TH1F *h0=h1D[iBand][iF];
@@ -641,13 +641,13 @@ void CalibCH2(  bool FitBand=false )
 	      f->DrawCopy("SAME");
 
 	      double mean=f->GetMaximumX(), err=0.2; //In the asymmetric gaussian the mean is not the peak position.
-	      printf("%d %d peak=%5.2lf (p0=%5.2lf) alpha=%5.2lf\n",iBand,ipeak, mean,f->GetParameter(0),f->GetParameter(3));	      
+	      printf("%d %d peak=%5.2lf (p0=%5.2lf) alpha=%5.2lf\n",iBand,ipeak, mean,f->GetParameter(0),f->GetParameter(3));
 
 	      int iSet;
 	      if (iBand==0 && ipeak==2 ) iSet=0; // LiC
 	      else if (iBand==0        ) iSet=1; // LiP
 	      if (iBand==1 )             iSet=2; // Be
-	      
+
 	      TGraphErrors *t0=&tTheta[iF][iSet];
 	      int ipoint=t0->GetN();
 	      t0->SetPoint(ipoint,thetaSi[iF],mean);
@@ -661,12 +661,12 @@ void CalibCH2(  bool FitBand=false )
   //-------------------------------------------------------------
 
   int colorC[nChannels-1]={kGreen, kOrange, kRed, kBlue  };
-  
+
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.*wh);
   cc[canvas]->Divide(3,1);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
-  for (int iF=0;iF<nF_in;iF++) 
+  for (int iF=0;iF<nF_in;iF++)
     {
       cc[canvas]->cd(iF+1);
       double beamEne=E0[iF];
@@ -678,7 +678,7 @@ void CalibCH2(  bool FitBand=false )
 	      GetEnergy(beamEne,ichan,SelForward,tg,10.);
 	      if ( tg->GetN()==0 ) continue;
 	      //printf("%s  | Forward=%d | theta=%5.2lf ke=%5.2lf \n", ChannelName[ichan].c_str(),SelForward,5.,tg->Eval(5.));
-	      
+
 	      tg->SetMaximum(30.);
 	      tg->SetMinimum(10.);
 	      tg->SetLineColor(colorC[ichan]);
@@ -698,7 +698,7 @@ void CalibCH2(  bool FitBand=false )
 	      int Set=UNDEF;
 	      if ( ichan==0     ) Set=0;
 	      else if (ichan==2 ) Set=2;
-	      else if (ichan==3 ) Set=1;	     	      
+	      else if (ichan==3 ) Set=1;
 	      TGraphErrors *t0=&tTheta[iF][Set];
 	      t0->SetMarkerColor(colorC[ichan]);
 	      t0->DrawClone("P");
@@ -720,11 +720,11 @@ void CalibCH2(  bool FitBand=false )
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void CompareCollimators() 
+void CompareCollimators()
 {
   SetStyle();
   const int nF_in=2;
-  int runRef[nF_in]={624,676};  //CH2 
+  int runRef[nF_in]={624,676};  //CH2
   double time_i[nF_in]={581.,110.};
   const double E0[nF_in]={28.,28.};
   std::string NameSet[2]={ "Collimator 0  28 MeV","Collimator 0 Inv  28 MeV"};
@@ -737,7 +737,7 @@ void CompareCollimators()
   TProfile *hP[2][nF_in];
 
   int color[4]={kBlue, kRed, kGreen+2,kBlack};
-  
+
   nF=nF_in;
 
   for (int iF=0;iF<nF;iF++)
@@ -755,16 +755,16 @@ void CompareCollimators()
       const char *hname=Form("h2D%d",iF);
       h2D[iF]=new TH2F(hname,hname,300,5.,28.,300,1.5,7.5);
       h2D[iF]->Sumw2();
-      
+
       std::string Sel="1";
 
       int nn=t->Project(hname,Form("%s:%s", SidE_dep.c_str(),SiE_dep.c_str()), Sel.c_str() );
 
       double *v2=t->GetV2();
-      double *v1=t->GetV1(); 
+      double *v1=t->GetV1();
       t2D[iF]=new TGraph(nn,v2,v1);
 
-      h2D[iF]->SetDirectory(0);	    
+      h2D[iF]->SetDirectory(0);
       h2D[iF]->Scale(100./h2D[iF]->Integral());
 
       //----------------------
@@ -774,7 +774,7 @@ void CompareCollimators()
 	  const char *hnameP=Form("hprof%d%d",iF,iBand);
 	  hP[iBand][iF]=new TProfile(hnameP,hnameP,100,(iBand==0?5.:13.),(iBand==0?30.:20.) );
 	  hP[iBand][iF]->Sumw2();
-	  hP[iBand][iF]->SetDirectory(0);	    
+	  hP[iBand][iF]->SetDirectory(0);
 	  for (int ii=0;ii<nn;ii++)
 	    {
 	      double E=v2[ii];
@@ -785,42 +785,42 @@ void CompareCollimators()
 	      if ( dE/dE_p<0.85 || dE/dE_p>1.15) continue;
 	      hP[iBand][iF]->Fill(E,dE);
 	    }
-	
+
 	  //-------------------
 	  const char *hname1D=Form("h1D_%d%d",iF,iBand);
 	  h1D[iBand][iF]=new TH1F(hname1D,hname1D,(iBand==0?300:100.),15.,(iBand==0?30.:25.));
 	  h1D[iBand][iF]->Sumw2();
-	  
+
 	  nn=t->Project(hname1D,SiEnergy.c_str(), (iBand==0?IsLiBand.c_str():IsBeBand.c_str()) );
-	  h1D[iBand][iF]->SetDirectory(0);	    
+	  h1D[iBand][iF]->SetDirectory(0);
 	  h1D[iBand][iF]->Scale(1./h1D[iBand][iF]->Integral());
 
 	  //-------------------
 	  const char *hname1D_SiE=Form("h1D_SiE_%d%d",iF,iBand);
 	  h1D_SiE[iBand][iF]=new TH1F(hname1D_SiE,hname1D_SiE,(iBand==0?100:50),SiE_Range[0],SiE_Range[1]);
 	  h1D_SiE[iBand][iF]->Sumw2();
-	  
+
 	  nn=t->Project(hname1D_SiE,SiE_dep.c_str(), (iBand==0?IsLiBand.c_str():IsBeBand.c_str()) );
-	  h1D_SiE[iBand][iF]->SetDirectory(0);	    
+	  h1D_SiE[iBand][iF]->SetDirectory(0);
 	  h1D_SiE[iBand][iF]->Scale(1./h1D_SiE[iBand][iF]->Integral());
 
 	}
       f->Close();
-      
+
     }
 
 
   //----------------------------------------------------------------------------------
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.*wh);
   cc[canvas]->Divide(2,1);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   bool Fit=false;
 
   for (int iF=0;iF<nF;iF++)
     {
       cc[canvas]->cd(iF+1);
-      
+
       TH2F *h0=h2D[iF];
       h0->GetXaxis()->SetTitle("E [MeV]");
       h0->GetYaxis()->SetTitle("#DeltaE [MeV]");
@@ -846,15 +846,15 @@ void CompareCollimators()
 
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.5*wh);
   cc[canvas]->Divide(2,1);
-  cc[canvas]->Draw();  
-  
+  cc[canvas]->Draw();
+
   double RangeLowBe [nF_in][2] ={  {18.5,20.5},   {18.0,19.5} };
   double RangeHighBe[nF_in][2] ={  {22.0,24.0}, {23.0,24.5} };
 
   double RangeLowLiP[nF_in][2]   ={  {16.5,17.5}, {16.2,17.0} };
   double RangeHighLiP[nF_in][2]   ={  {25.2,26.5},{26.,26.5} };
   double RangeLiC[nF_in][2]   ={  {27.0,28.0}, {27.0,28.0} };
-  
+
   TGraphErrors tTheta[nF_in][3];
 
   for (int iBand=0;iBand<2;iBand++)
@@ -865,8 +865,8 @@ void CompareCollimators()
       hFrame->GetXaxis()->SetTitle("E_{rec} [MeV]");
       hFrame->GetYaxis()->SetTitle("A.U");
       hFrame->DrawCopy();
-      
-      for (int iF=0;iF<nF_in;iF++) 
+
+      for (int iF=0;iF<nF_in;iF++)
 	{
 	  TH1F *h0=h1D[iBand][iF];
 	  h0->SetLineColor(color[iF]);
@@ -893,7 +893,7 @@ void CompareCollimators()
 	      h0->Fit(f,"QN","",range[0],range[1]);
 	      f->SetLineColor(color[iF]);
 	      f->SetLineWidth(1);
-	      f->DrawCopy("SAME");	      	      
+	      f->DrawCopy("SAME");
 	      double mean=f->GetMaximumX(), err=0.2; //In the asymmetric gaussian the mean is not the peak position.
 	      printf("%d %d peak=%5.2lf (p0=%5.2lf) alpha=%5.2lf\n",iBand,ipeak, mean,f->GetParameter(0),f->GetParameter(3));
 
@@ -901,7 +901,7 @@ void CompareCollimators()
 	      if (iBand==0 && ipeak==2 ) iSet=0; // LiC
 	      else if (iBand==0        ) iSet=1; // LiP
 	      if (iBand==1 )             iSet=2; // Be
-	      
+
 	      TGraphErrors *t0=&tTheta[iF][iSet];
 	      int ipoint=t0->GetN();
 	      t0->SetPoint(ipoint,thetaSi[iF],mean);
@@ -920,9 +920,9 @@ void CompareCollimators()
   //----------------------------------------------------------------
 
   int colorC[nChannels-1]={kGreen, kOrange, kRed, kBlue  };
-  
+
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",1.5*ww,1.5*wh);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   double beamEne=28.;
 
@@ -935,10 +935,10 @@ void CompareCollimators()
 	  GetEnergy(beamEne,ichan,SelForward,tg,10.);
 	  if ( tg->GetN()==0 ) continue;
 	  printf("%s  | Forward=%d | theta=%5.2lf ke=%5.2lf \n", ChannelName[ichan].c_str(),SelForward,5.,tg->Eval(5.));
-	  
+
 	  tg->SetMaximum(30.);
 	  tg->SetMinimum(10.);
-	  tg->SetLineColor(colorC[ichan]);	  
+	  tg->SetLineColor(colorC[ichan]);
 	  tg->SetLineStyle(SelForward==1?20:24);
 	  tg->GetXaxis()->SetTitle("#theta_{Si Detector}");
 	  tg->GetYaxis()->SetTitle("KE [MeV]");
@@ -952,12 +952,12 @@ void CompareCollimators()
 	    }
 	}
       if ( ichan==1 ) continue;
-      for (int iF=0;iF<nF_in;iF++) 
+      for (int iF=0;iF<nF_in;iF++)
 	{
 	  int Set;
 	  if ( ichan==0     ) Set=0;
 	  else if (ichan==2 ) Set=2;
-	  else if (ichan==3 ) Set=1;	     	      
+	  else if (ichan==3 ) Set=1;
 	  TGraphErrors *t0=&tTheta[iF][Set];
 	  t0->SetMarkerColor(colorC[ichan]);
 	  t0->SetMarkerStyle(iF==0?20:24);
@@ -971,7 +971,7 @@ void CompareCollimators()
   //----------------------------------------------------------------------------------
   // Write histos to file
   TFile *f1 = new TFile( "bananas.root"  ,  "RECREATE" );
-  for (int iF=0;iF<nF;iF++)  
+  for (int iF=0;iF<nF;iF++)
     {
       h2D[iF]->Write();
       for (int iBand=0;iBand<2;iBand++)
@@ -991,23 +991,23 @@ void CompareCollimators()
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-void CalibMonitor() 
+void CalibMonitor()
 {
   SetStyle();
-  
+
   const int nF_in=7;
   const double E0[nF_in]={18.,26.,28.,18.,26.,28.,28.};
   const double thetaSi=23.;
 
   int runRef[nF_in]   ={636,627, 622, /*Gold */ 634, 629,623, 715 /*CH2*/};
-  double time_i[nF_in]={701,4285,702,           891, 5149,1214. ,1481    }; 
+  double time_i[nF_in]={701,4285,702,           891, 5149,1214. ,1481    };
   std::string NameSet[nF_in]={ "Li+Au 18 [MeV]", "Li+Au 26 [MeV]", "Li+Au 28 [MeV]", "Li+C 18 [MeV]", "Li+C 26 [MeV]", "Li+C 28 [MeV]", "Li+C 28 [MeV]" };
 
   //----------------------------------------------------------------------------------
   TH1F   *h1D[nF_in],*h1D_E[nF_in];
- 
+
   int color[7]={kBlue, kRed, kGreen+2,kBlue, kRed, kGreen+2,kOrange};
-  
+
   nF=nF_in;
 
   for (int iF=0;iF<nF;iF++)
@@ -1025,13 +1025,13 @@ void CalibMonitor()
       const char *hname1D=Form("h1D_%d",iF);
       h1D[iF]=new TH1F(hname1D,hname1D,(iF/3==0?300:50),395,430.);
       h1D[iF]->Sumw2();
-      
+
       int channel=(iF/3==0?1:0);
-      double ELi=GetEnergyAtSi( E0[iF],  channel, true, thetaSi );	    
+      double ELi=GetEnergyAtSi( E0[iF],  channel, true, thetaSi );
 
       std::string Sel="1";//Form("%s>%e && %s<%e",monit.c_str(),range[iF][0],monit.c_str(),range[iF][1]);
       int nn=t->Project(hname1D,Form("%s/%e",monit.c_str(),ELi),Sel.c_str() );
-      h1D[iF]->SetDirectory(0);	    
+      h1D[iF]->SetDirectory(0);
       h1D[iF]->Scale(1./h1D[iF]->Integral());
 
 
@@ -1042,19 +1042,19 @@ void CalibMonitor()
 
       nn=t->Project(hname1D_E,Form("%s-%e",MonitEnergy.c_str(),ELi));
 
-      h1D_E[iF]->SetDirectory(0);	    
+      h1D_E[iF]->SetDirectory(0);
       h1D_E[iF]->Scale(1./h1D_E[iF]->Integral());
 
       f->Close();
     }
-  
+
   //----------------------------------------------------------------------------------
 
   TGraphErrors tgMean[3]; //[mean][Gold/CH2/CH2 post]
 
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.*wh);
   cc[canvas]->Divide(2,1);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   for (int ipad=0;ipad<2;ipad++)
     {
@@ -1067,19 +1067,19 @@ void CalibMonitor()
 	  hFrame->DrawCopy();
 
 	  double x0=0.35,y0=0.55;
-	  TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.35);  
-      
-	  for (int iF=0;iF<nF_in;iF++) 
+	  TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.35);
+
+	  for (int iF=0;iF<nF_in;iF++)
 	    {
 	      if ( iF==nF-1 ) continue;
 
 	      int color_i=color[iF];
 	      int style_i=iF/3+1, mstyle_i=(iF/3==0?20:24);
 	      TH1F *h0=h1D[iF];
-	      h0->SetLineColor(color_i);   h0->SetLineStyle(style_i);	      
-	      h0->SetMarkerColor(color_i); h0->SetMarkerStyle(mstyle_i);	      
+	      h0->SetLineColor(color_i);   h0->SetLineStyle(style_i);
+	      h0->SetMarkerColor(color_i); h0->SetMarkerStyle(mstyle_i);
 	      h0->DrawCopy("E1SAME");
-      
+
 	      double peak=h0->GetBinCenter(h0->GetMaximumBin());
 	      if ( iF==3 ) peak-=2;
 	      double dx=(iF/3==0?0.5:5.);
@@ -1091,28 +1091,28 @@ void CalibMonitor()
 		  double y=h0->GetBinContent(ibin);
 		  rate+=y;
 		}
-	      
+
 	      TF1 *f=new TF1("f",AsymGaus,peak-dx, peak+dx,5);
 	      f->SetNpx(1000);
 	      double par[5]={ peak , 100. , h0->GetMaximum(), 0., 0.};
 	      f->SetParameters(par);
-	      f->FixParameter(4,0.); f->FixParameter(3,0.);      
+	      f->FixParameter(4,0.); f->FixParameter(3,0.);
 	      h0->Fit(f,"QN","",peak-dx, peak+dx);
-	      if ( iF/3==0 ) f->ReleaseParameter(3);      
+	      if ( iF/3==0 ) f->ReleaseParameter(3);
 	      h0->Fit(f,"QN","",peak-dx, peak+dx);
 	      f->SetLineColor(color_i);  	      f->SetLineWidth(2);
-	      f->DrawCopy("SAME");	      	      
+	      f->DrawCopy("SAME");
 	      peak=f->GetMaximumX(); //In the asymmetric gaussian the mean is not the peak position.
-	      double err=10.; 
+	      double err=10.;
 	      printf("iF=%d peak=%5.2lf (mean AG=%5.2lf) %5.2lf rate=%5.2lf \n",iF, peak,f->GetParameter(0),err,rate);
 	      leg->AddEntry(h0,NameSet[iF].c_str(),"LP");
-	      
+
 	      int channel=(iF<3?1:0);
-	      double ELi=GetEnergyAtSi( E0[iF],  channel, true, thetaSi );	    
+	      double ELi=GetEnergyAtSi( E0[iF],  channel, true, thetaSi );
 	      TGraphErrors *t0=&tgMean[(iF==(nF_in-1)?2:channel)];
 	      int ipoint=t0->GetN();
 	      t0->SetPoint(ipoint, peak*ELi, ELi );
-	      t0->SetPointError(ipoint, err, 0.2 );	      
+	      t0->SetPointError(ipoint, err, 0.2 );
 	    }
 	  leg->DrawClone();
 	  l.DrawLatex(0.65,0.85,Form("#theta_{Si}=%5.2lf",thetaSi));
@@ -1123,7 +1123,7 @@ void CalibMonitor()
 	  hFrame->GetYaxis()->SetTitle("E_{^{7}Li} [MeV]");
 	  hFrame->GetXaxis()->SetTitle("Si Monitor [adc]");
 	  hFrame->DrawCopy();
-	  
+
 	  for (int channel=0;channel<3;channel++)
 	    {
 	      TGraphErrors *t0=&tgMean[channel];
@@ -1148,11 +1148,11 @@ void CalibMonitor()
     }
   canvas++;
 
- 
+
   //-------------------------------------------------------------
 
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",2.5*ww,1.5*wh);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   TH2D *hFrame=new TH2D("hXSS","",1000, -1.75, 0.5,1000,0.0,0.4);
   hFrame->GetXaxis()->SetTitle("E_{rec}-E_{true} [MeV]");
@@ -1160,9 +1160,9 @@ void CalibMonitor()
   hFrame->DrawCopy();
 
   double x0=0.25,y0=0.55;
-  TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.35);  
-    
-  for (int iF=0;iF<nF_in;iF++) 
+  TLegend *leg=new TLegend(x0,y0,x0+0.2,y0+0.35);
+
+  for (int iF=0;iF<nF_in;iF++)
     {
       TH1F *h0=h1D_E[iF];
       h0->SetLineColor(color[iF]);
@@ -1173,8 +1173,8 @@ void CalibMonitor()
       leg->AddEntry(h0,NameSet[iF].c_str(),"LP");
 
     }
-  
+
   leg->DrawClone();
   canvas++;
-  
+
 }

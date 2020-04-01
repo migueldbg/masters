@@ -139,7 +139,35 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
   return directory;
 }
 
-// WriteHistogram() function?
+/* void WriteF90Hist ( int run, TDirectory* save_dir, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TString hist_name, TString hist_title )
+ *
+ *  Summary of Function:
+ *
+ *    The function receives a run number, from witch a f90 histogram is generated using the GenerateF90Hist() function.
+ *    The resulting histogram then receives a name, a title and is then saved into the specified directory.
+ *
+ *  Parameters   : run        >> run number.
+ *                 save_dir   >> directory were the generated histogram will be written to.
+ *                 charge_low >> lower boundary on the S1 charge value.
+ *                 charge_up  >> upper boundary on the S1 charge value.
+ *                 f90_low    >> lower boundary on the f90 parameter.
+ *                 f90_up    s >> upper boundary on the f90 parameter.
+ *                 hist_name  >> name of the histogram to be generated.
+ *                 hist_title >> title of the histogram to be generated.
+ *
+ *  Return Value : void.
+ *
+ */
+void WriteF90Hist( int run, TDirectory* save_dir, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TString hist_name, TString hist_title ){
+
+  TH1F* hist = GenerateF90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_low, f90_up);
+
+  hist -> SetName(hist_name);
+  hist -> SetTitle(hist_title);
+
+  save_dir -> WriteObject( hist, hist_name, "OverWrite" );
+
+}
 
 // ------------------------------------------ MACRO::CreateF90Histograms ------------------------------------------ //
 
@@ -182,52 +210,23 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
 
   TH1F** f90hist_data    = new TH1F*[number_of_divisions];
   TH1F** f90hist_data_er = new TH1F*[number_of_divisions];    TH1F** f90hist_data_nr = new TH1F*[number_of_divisions];
-  /*TH1F** f90hist_mc_er   = new TH1F*[number_of_divisions];*/  TH1F** f90hist_mc_nr   = new TH1F*[number_of_divisions];
+  TH1F** f90hist_mc_er   = new TH1F*[number_of_divisions];    TH1F** f90hist_mc_nr   = new TH1F*[number_of_divisions];
 
   for (int i = 0; i < number_of_divisions; i++){
+
     // Calculate the boundaries of the current bin.
     charge_low = ( i       * bin_size ) + min_charge;
     charge_up  = ( (i + 1) * bin_size ) + min_charge;
 
-    //--------------------------------------------------------------------------------------------------------------------------------------//
+    WriteF90Hist(run, da_both_dir, charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_%d", i+1),      Form("f90 Distribution (Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
-    f90hist_data[i] = GenerateF90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_min, f90_max );
-    f90hist_data[i] -> SetName ( Form("f90_histogram_%d", i+1) );
-    f90hist_data[i] -> SetTitle( Form("f90 Distribution (Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
+    WriteF90Hist(run, da_er_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_er_%d", i+1),   Form("f90 Distribution (ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
-    da_both_dir -> WriteObject( f90hist_data[i], Form("f90_histogram_%d", i+1), "OverWrite" );
+    WriteF90Hist(run, da_nr_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_nr_%d", i+1),   Form("f90 Distribution (NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up));
 
-    //--------------------------------------------------------------------------------------------------------------------------------------//
+    WriteF90Hist(run, mc_er_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_mcer_%d", i+1), Form("f90 Distribution (MC ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up))
 
-    f90hist_data_er[i] = GenerateF90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_min, f90_mid );
-    f90hist_data_er[i] -> SetName ( Form("f90_histogram_er_%d", i+1) );
-    f90hist_data_er[i] -> SetTitle( Form("f90 Distribution (ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
-
-    da_er_dir -> WriteObject( f90hist_data_er[i], Form("f90_histogram_er_%d", i+1), "OverWrite" );
-
-    //--------------------------------------------------------------------------------------------------------------------------------------//
-
-    f90hist_data_nr[i] = GenerateF90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_mid, f90_max );
-    f90hist_data_nr[i] -> SetName ( Form("f90_histogram_nr_%d", i+1) );
-    f90hist_data_nr[i] -> SetTitle( Form("f90 Distribution (NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
-
-    da_nr_dir -> WriteObject( f90hist_data_nr[i], Form("f90_histogram_nr_%d", i+1), "OverWrite" );
-
-    //--------------------------------------------------------------------------------------------------------------------------------------//
-    /*
-    f90hist_mc_er[i] = GenerateF90Hist( Form("runs/run_%d_MCER.root", run), charge_low, charge_up, f90_min, f90_mid );
-    f90hist_mc_er[i] -> SetName ( Form("f90_histogram_mcer_%d", i+1) );
-    f90hist_mc_er[i] -> SetTitle( Form("f90 Distribution (MC ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
-
-    mc_er_dir -> WriteObject( f90hist_mc_er[i], Form("f90_histogram_mcer_%d", i+1), "OverWrite" );
-    */
-    //--------------------------------------------------------------------------------------------------------------------------------------//
-
-    f90hist_mc_nr[i] = GenerateF90Hist( Form("runs/run_%d_MCNR.root", run), charge_low, charge_up, f90_mid, f90_max, true );
-    f90hist_mc_nr[i] -> SetName ( Form("f90_histogram_mcnr_%d", i+1) );
-    f90hist_mc_nr[i] -> SetTitle( Form("f90 Distribution (MC NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
-
-    mc_nr_dir -> WriteObject( f90hist_mc_nr[i], Form("f90_histogram_mcnr_%d", i+1), "OverWrite" );
+    WriteF90Hist(run, mc_nr_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_mcnr_%d", i+1), Form("f90 Distribution (MC NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up))
 
   }
 

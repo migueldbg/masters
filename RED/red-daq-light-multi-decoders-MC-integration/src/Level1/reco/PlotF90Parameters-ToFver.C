@@ -277,6 +277,7 @@ void GenerateF90vChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc
   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
     param_name = "rms";    param_title = "RMS";
   } else {
+    std::cout << "Invalid 'parameter' value.";
     exit(EXIT_FAILURE);
   }
 
@@ -336,6 +337,7 @@ void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors
   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
     param_name = "rms";    param_title = "RMS";
   } else {
+    std::cout << "Invalid 'parameter' value.";
     exit(EXIT_FAILURE);
   }
 

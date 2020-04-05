@@ -16,6 +16,7 @@
  */
 
 #include <array>
+#include <cstring>
 
 #include <TCut.h>
 #include <TFile.h>
@@ -72,7 +73,7 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
   return normalized_hist;
 }
 
-/* TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up )
+/* TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut* quality_cuts )
  *
  * Summary of GenerateF90Hist function:
  *
@@ -80,19 +81,20 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
  *    user. The user also determines the boundaries of the f90 range to be considered, as well as the boundaries of
  *    the charge values to be considered. The function then returns a normalized histogram.
  *
- * Parameters   : file_name  >> the name of the file containing the events from which to construct the histogram.
- *                charge_low >> the lower boundary of the charge value (in PE).
- *                charge_up >> the upper boundary of the charge value (in PE).
- *                f90_low    >> the lower boundary of the f90 value.
- *                f90_up    >> the upper boundary of the f90 value.
+ * Parameters   : file_name    >> the name of the file containing the events from which to construct the histogram.
+ *                charge_low   >> the lower boundary of the charge value (in PE).
+ *                charge_up    >> the upper boundary of the charge value (in PE).
+ *                f90_low      >> the lower boundary of the f90 value.
+ *                f90_up       >> the upper boundary of the f90 value.
+ *                quality_cuts >> contain the cuts to applied when generating the histogram.
  *
  * Return value : TH1F* f90_hist
  */
-TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, bool isMC=false ) {
+TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut* quality_cuts ) {
 
   TFile* file = new TFile(file_name);
   TTree* reco; file -> GetObject("reco", reco);
-
+  /*
   TCut cut_f90_min         = Form("clusters[0].f90 >= %f", f90_low);
   TCut cut_f90_max         = Form("clusters[0].f90 <= %f", f90_up);
   TCut cut_charge_min      = Form("clusters[0].charge >= %f", charge_low);

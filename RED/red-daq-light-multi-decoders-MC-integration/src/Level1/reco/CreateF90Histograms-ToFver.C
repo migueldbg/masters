@@ -103,7 +103,7 @@ TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_u
   TCut cut_rep             = "clusters[0].rep == 1";
 
   TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
-
+  */
   reco -> Draw("clusters[0].f90 >> hist", cut_all, "goff");
   TH1F* f90_hist = (TH1F*)gDirectory -> Get("hist");
 
@@ -171,7 +171,38 @@ void WriteF90Hist( int run, TDirectory* save_dir, Double_t charge_low, Double_t 
 
 }
 
-// ------------------------------------------ MACRO::CreateF90Histograms ------------------------------------------ //
+void CreateERF90Histograms ( int run, const char* data_type, Int_t number_of_bins = 50, Double_t max_charge = 1000., Double_t min_charge = 0., bool tof_cut = false ){
+
+  TFile* output_file = CheckFile( Form("analysis_%d.root", run) );
+
+  // --------------------------- CREATING NECESSARY DIRECTORIES ---------------------------- //
+  output_file -> cd();
+  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
+
+  histograms_dir -> cd();
+  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
+
+  f90_histograms_dir -> cd();
+  if ( std::strncmp( data_type, "data", 4 ) == 0 || std::strncmp( data_type, "DATA", 4 ) == 0 || std::strncmp( data_type, "Data", 4 ) == 0 ){
+    type_dir = MakeDirectory( "data", "data" );
+  } else if ( std::strncmp( data_type, "mc", 4 ) == 0 || std::strncmp( data_type, "MC", 4 ) == 0 ){
+    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
+  }
+
+  type_dir -> cd();
+  TDirectory* er_dir = MakeDirectory("ER","ER")
+  // --------------------------------------------------------------------------------------- //
+
+  if ( tof_cut ){
+    Double_t f90_min = 0.0;
+    Double_t f90_max = 1.0;
+  } else {
+    Double_t f90_min = 0.2;
+    Double_t f90_max = 0.4;
+  }
+
+
+}
 
 void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000., Double_t min_charge = 20.){
 

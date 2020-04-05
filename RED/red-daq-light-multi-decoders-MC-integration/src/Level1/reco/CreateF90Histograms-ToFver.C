@@ -208,10 +208,6 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
   Double_t charge_low = 0;
   Double_t charge_up  = 0;
 
-  TH1F** f90hist_data    = new TH1F*[number_of_divisions];
-  TH1F** f90hist_data_er = new TH1F*[number_of_divisions];    TH1F** f90hist_data_nr = new TH1F*[number_of_divisions];
-  TH1F** f90hist_mc_er   = new TH1F*[number_of_divisions];    TH1F** f90hist_mc_nr   = new TH1F*[number_of_divisions];
-
   for (int i = 0; i < number_of_divisions; i++){
 
     // Calculate the boundaries of the current bin.

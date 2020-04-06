@@ -194,7 +194,7 @@ void WriteF90Hist( int run, TDirectory* save_dir, Double_t charge_low, Double_t 
 
 }
 
-void CreateERF90Histograms ( int run, const char* data_type, Int_t number_of_bins = 50, Double_t max_charge = 1000., Double_t min_charge = 0., bool tof_cut = false ){
+void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.){
 
   TFile* output_file = CheckFile( Form("analysis_%d.root", run) );
 

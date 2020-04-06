@@ -51,6 +51,31 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
+TCut DefineCuts(Int_t experiment_cfg, Double_t tof_low, Double_t tof_up){
+
+  TCut number_of_clusters = "";
+  TCut rep = "";
+  TCut tof = "";
+
+  if ( experiment_cfg == 1 ){
+    number_of_clusters = "number_of_clusters == 1";
+    rep = "clusters[0].rep == 1";
+  } else if ( experiment_cfg == 2 ){
+    number_of_clusters = "number_of_clusters == 2";
+    rep = "clusters[0].rep == 1 && clusters[1].rep == 1";
+  }
+
+  if ( tof_low == tof_up ){
+    tof = "";
+  } else if ( tof_up > tof_low ) {
+    tof = "xmin[30] - clusters[0].min_x <= 50 && xmin[30] - clusters[0].min_x >= 0";
+  }
+
+  TCut final_cut = number_of_clusters && rep && tof;
+
+  return final_cut;
+}
+
 /* TH1* NormalizeHist( TH1* hist, Double_t norm = 1. )
  *
  * Summary of NormalizeHist function:

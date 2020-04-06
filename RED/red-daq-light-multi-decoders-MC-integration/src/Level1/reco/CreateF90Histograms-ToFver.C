@@ -249,7 +249,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
   TDirectory* da_nr_dir           = MakeDirectory("NR","NR");
 
   monte_carlo_dir -> cd();
-  //TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
+  TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
   TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
   // --------------------------------------------------------------------------- //
 
@@ -269,7 +269,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
     // Calculate the boundaries of the current bin.
     charge_low = ( i       * bin_size ) + min_charge;
     charge_up  = ( (i + 1) * bin_size ) + min_charge;
-
+    /*
     WriteF90Hist(run, da_both_dir, charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_%d", i+1),      Form("f90 Distribution (Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
 
     WriteF90Hist(run, da_er_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_er_%d", i+1),   Form("f90 Distribution (ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up) );
@@ -279,7 +279,7 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
     WriteF90Hist(run, mc_er_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_mcer_%d", i+1), Form("f90 Distribution (MC ER, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up))
 
     WriteF90Hist(run, mc_nr_dir,   charge_low, charge_up, f90_min, f90_max, Form("f90_histogram_mcnr_%d", i+1), Form("f90 Distribution (MC NR, Charge Interval: %d - %d PE); f90", (int) charge_low, (int) charge_up))
-
+    */
   }
 
   hist_file -> Close();

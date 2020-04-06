@@ -115,20 +115,18 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
  *
  * Return value : TH1F* f90_hist
  */
-TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut* quality_cuts ) {
+TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut quality_cuts ) {
 
   TFile* file = new TFile(file_name);
   TTree* reco; file -> GetObject("reco", reco);
-  /*
+
   TCut cut_f90_min         = Form("clusters[0].f90 >= %f", f90_low);
   TCut cut_f90_max         = Form("clusters[0].f90 <= %f", f90_up);
   TCut cut_charge_min      = Form("clusters[0].charge >= %f", charge_low);
   TCut cut_charge_max      = Form("clusters[0].charge <= %f", charge_up);
-  TCut cut_cluster_number  = "number_of_clusters == 1";
-  TCut cut_rep             = "clusters[0].rep == 1";
 
-  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && cut_cluster_number && cut_rep;
-  */
+  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && quality_cuts;
+
   reco -> Draw("clusters[0].f90 >> hist", cut_all, "goff");
   TH1F* f90_hist = (TH1F*)gDirectory -> Get("hist");
 
@@ -185,9 +183,9 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
  *  Return Value : void.
  *
  */
-void WriteF90Hist( int run, TDirectory* save_dir, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TString hist_name, TString hist_title ){
+void WriteF90Hist( int run, TDirectory* save_dir, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut quality_cuts, TString hist_name, TString hist_title ){
 
-  TH1F* hist = GenerateF90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_low, f90_up);
+  TH1F* hist = GenerateF90Hist( Form("runs/run_%d.root", run), charge_low, charge_up, f90_low, f90_up, quality_cuts);
 
   hist -> SetName(hist_name);
   hist -> SetTitle(hist_title);

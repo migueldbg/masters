@@ -206,30 +206,125 @@ void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool
   TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
 
   f90_histograms_dir -> cd();
-  if ( std::strncmp( data_type, "data", 4 ) == 0 || std::strncmp( data_type, "DATA", 4 ) == 0 || std::strncmp( data_type, "Data", 4 ) == 0 ){
+  TDirectory* type_dir;
+  bool isMC;
+
+  if ( std::strncmp( data_type, "data", 4 ) == 0 || std::strncmp( data_type, "DATA", 4 ) == 0 || std::strncmp( data_type, "Data", 4 ) == 0 || std::strncmp( data_type, "d", 1 ) == 0 ){
     type_dir = MakeDirectory( "data", "data" );
-  } else if ( std::strncmp( data_type, "mc", 4 ) == 0 || std::strncmp( data_type, "MC", 4 ) == 0 ){
+    isMC = false;
+  } else if ( std::strncmp( data_type, "mc", 4 ) == 0 || std::strncmp( data_type, "MC", 4 ) == 0 || std::strncmp( data_type, "m", 1 ) == 0 ){
     type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
+    isMC = true;
   }
 
   type_dir -> cd();
-  TDirectory* er_dir = MakeDirectory("ER","ER")
+  TDirectory* er_dir = MakeDirectory("ER","ER");
+  er_dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
   // --------------------------------------------------------------------------------------- //
 
+  // Parameters used to define wether an event is qualified as an Electron Recoil. In the case were ToF cuts are applied, the f90
+  // values are simply boundary conditions to make sure no weird coincidence events are selected.:
+  Double_t f90_min = 0.0; Double_t f90_max = 1.0;
+  Double_t tof_min = 0.0; Double_t tof_max = 0.0; // If the ToF border values are equal, the code doesn't apply a ToF cut.
+
   if ( tof_cut ){
-    Double_t f90_min = 0.0;
-    Double_t f90_max = 1.0;
+    f90_min = 0.0;  f90_max = 1.0;
+    tof_min = 0.0;  tof_max = 50;
   } else {
-    Double_t f90_min = 0.2;
-    Double_t f90_max = 0.4;
+    f90_min = 0.2;  f90_max = 0.4;
+    tof_min = 0.0;  tof_max = 0.0;  // The same applies here.
   }
 
+  TCut quality_cuts = DefineCuts( exp_cfg, tof_min, tof_max );
 
+  Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
+  Double_t charge_low; Double_t charge_up;
+
+  TString hist_name; TString hist_title;
+
+  for (int i = 0; i < number_of_bins; i++){
+
+    // Calculate the boundaries of the current bin.
+    charge_low = ( i       * bin_size ) + min_charge;
+    charge_up  = ( (i + 1) * bin_size ) + min_charge;
+
+    hist_name  = Form( "f90_histogram_%ser_%d", (isMC)?"mc":"", i+1 );
+    hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) charge_low, (int) charge_up );
+
+    WriteF90Hist(run, er_dir, charge_low, charge_up, f90_min, f90_max, quality_cuts, hist_name, hist_title);
+
+  }
+
+  output_file -> Close();
+}
+
+void CreateNRF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.){
+
+  TFile* output_file = CheckFile( Form("hist_%d.root", run) );
+
+  // --------------------------- CREATING NECESSARY DIRECTORIES ---------------------------- //
+  output_file -> cd();
+  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
+
+  histograms_dir -> cd();
+  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
+
+  f90_histograms_dir -> cd();
+  TDirectory* type_dir;
+  bool isMC;
+
+  if ( std::strncmp( data_type, "data", 4 ) == 0 || std::strncmp( data_type, "DATA", 4 ) == 0 || std::strncmp( data_type, "Data", 4 ) == 0 || std::strncmp( data_type, "d", 1 ) == 0 ){
+    type_dir = MakeDirectory( "data", "data" );
+    isMC = false;
+  } else if ( std::strncmp( data_type, "mc", 4 ) == 0 || std::strncmp( data_type, "MC", 4 ) == 0 || std::strncmp( data_type, "m", 1 ) == 0 ){
+    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
+    isMC = true;
+  }
+
+  type_dir -> cd();
+  TDirectory* er_dir = MakeDirectory("NR","NR");
+  er_dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
+  // --------------------------------------------------------------------------------------- //
+
+  // Parameters used to define wether an event is qualified as an Electron Recoil. In the case were ToF cuts are applied, the f90
+  // values are simply boundary conditions to make sure no weird coincidence events are selected.:
+  Double_t f90_min; Double_t f90_max;
+  Double_t tof_min; Double_t tof_max; // If the ToF border values are equal, the code doesn't apply a ToF cut.
+
+  if ( tof_cut ){
+    f90_min = 0.1;  f90_max = 1.0;
+    tof_min = 0.0;  tof_max = 50;
+  } else if ( !tof_cut ) {
+    f90_min = 0.4;  f90_max = 0.7;
+    tof_min = 0.0;  tof_max = 0.0;  // The same applies here.
+  }
+
+  TCut quality_cuts = DefineCuts( exp_cfg, tof_min, tof_max );
+
+  Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
+  Double_t charge_low; Double_t charge_up;
+
+  TString hist_name; TString hist_title;
+
+  for (int i = 0; i < number_of_bins; i++){
+
+    // Calculate the boundaries of the current bin.
+    charge_low = ( i       * bin_size ) + min_charge;
+    charge_up  = ( (i + 1) * bin_size ) + min_charge;
+
+    hist_name  = Form( "f90_histogram_%snr_%d", (isMC)?"mc":"", i+1 );
+    hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC NR":"NR", (int) charge_low, (int) charge_up );
+
+    WriteF90Hist(run, er_dir, charge_low, charge_up, f90_min, f90_max, quality_cuts, hist_name, hist_title);
+
+  }
+
+  output_file -> Close();
 }
 
 void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000., Double_t min_charge = 20.){
 
-  TString file_name = Form("hist_%d.root", run);
+  TString file_name = Form("analysis_%d.root", run);
   TFile* hist_file = CheckFile(file_name);
 
   // --------------------- CREATING NECESSARY DIRECTORIES ---------------------- //

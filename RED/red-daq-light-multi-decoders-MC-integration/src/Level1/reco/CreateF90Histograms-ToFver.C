@@ -51,11 +51,58 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
-TCut DefineCuts(Int_t experiment_cfg, Double_t tof_low, Double_t tof_up){
+TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
+
+  TCut f90_range;
+
+  if ( f90_low > f90_up ) {
+    std::cout << "Invalid f90 range: lower boundary is greater than upper boundary.";
+    exit(EXIT_FAILURE);
+  } else if ( f90_low == f90_up ) {
+    f90_range = "";
+  } else {
+    f90_range = Form( "clusters[0].f90 >= %f && clusters[0].f90 <= %f", f90_low, f90_up );
+  }
+
+  return f90_range;
+}
+
+TCut DefineS1ChargeRange( Double_t charge_low, Double_t charge_up ){
+
+  TCut charge_range;
+
+  if ( charge_low > charge_up ) {
+    std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary.";
+    exit(EXIT_FAILURE);
+  } else if ( charge_low == charge_up ) {
+    charge_range = "";
+  } else {
+    charge_range = Form( "clusters[0].charge >= %f && clusters[0].charge <= %f", charge_low, charge_up );
+  }
+
+  return charge_range;
+}
+
+TCut DefineToFRange( Double_t tof_low, Double_t tof_up ){
+
+  TCut tof_range;
+
+  if ( tof_low > tof_up ) {
+    std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary.";
+    exit(EXIT_FAILURE);
+  } else if ( tof_low == tof_up ) {
+    tof_range = "";
+  } else {
+    tof_range = Form( "xmin[30] - clusters[0].min_x >= %f && xmin[30] - clusters[0].min_x <= %f", tof_low, tof_up );
+  }
+
+  return tof_range;
+}
+
+TCut DefineQualityCuts( Int_t experiment_cfg ){
 
   TCut number_of_clusters = "";
   TCut rep = "";
-  TCut tof = "";
 
   if ( experiment_cfg == 1 ){
     number_of_clusters = "number_of_clusters == 1";
@@ -65,15 +112,39 @@ TCut DefineCuts(Int_t experiment_cfg, Double_t tof_low, Double_t tof_up){
     rep = "clusters[0].rep == 1 && clusters[1].rep == 1";
   }
 
-  if ( tof_low == tof_up ){
-    tof = "";
-  } else if ( tof_up > tof_low ) {
-    tof = "xmin[30] - clusters[0].min_x <= 50 && xmin[30] - clusters[0].min_x >= 0";
-  }
+  TCut quality_cut = number_of_clusters && rep;
 
-  TCut final_cut = number_of_clusters && rep && tof;
+  return quality_cut;
+}
 
-  return final_cut;
+/* DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t charge_low, Double_t charge_up, Double_t tof_low, Double_t tof_up )
+ *
+ *  Summary of Function:
+ *
+ *    This function expects that the following functions are defined: DefineF90Range(), DefineS1ChargeRange(), DefineToFRange() and
+ *    DefineQualityCuts(). It then call each one with the appropriate parameters and constructs a TCut object that is the sum of
+ *    all cuts. The function then return the TCut.
+ *
+ *  Parameters   : cfg        >> indicates if the data set is from a single phase (1) or dual phase (2) run.
+ *                 f90_low    >> lower boundary for the f90 parameter.
+ *                 f90_up     >> upper boundary fo the f90 parameter.
+ *                 charge_low >> lower boundary for the S1 charge.
+ *                 charge_up  >> upper boundary for the S1 charge.
+ *                 tof_low    >> lower boundary for the time of flight parameter.
+ *                 tof_up     >> upper boundary for the time of flight parameter.
+ *
+ *  Return Value : TCut final_cut.
+ */
+TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t charge_low, Double_t charge_up, Double_t tof_low = 0., Double_t tof_up = 0. ){
+
+  TCut quality_cuts = DefineQualityCuts( cfg );
+  TCut charge_range = DefineS1ChargeRange( charge_low, charge_up );
+  TCut f90_range    = DefineF90Range( f90_low, f90_up );
+  TCut tof_range    = DefineToFRange( tof_low, tof_up );
+
+  TCut total_cut = quality_cuts && charge_range && f90_range && tof_range;
+
+  return total_cut;
 }
 
 /* TH1* NormalizeHist( TH1* hist, Double_t norm = 1. )
@@ -98,7 +169,7 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
   return normalized_hist;
 }
 
-/* TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut* quality_cuts )
+/* TH1F* GenerateF90Hist( TString file_name, TCut histogram_cuts )
  *
  * Summary of GenerateF90Hist function:
  *

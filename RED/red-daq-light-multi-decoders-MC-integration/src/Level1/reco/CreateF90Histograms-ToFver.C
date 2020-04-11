@@ -250,16 +250,29 @@ void WriteF90Hist( TDirectory* save_dir, TString file_name, TCut histogram_cuts,
   save_dir -> WriteObject( hist, hist_name, "OverWrite" );
 
 }
-/* void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.)
+
+/* void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.)
  *
  *  Summary of Function:
  *
  *    This function constructs a number of electron recoil f90 histograms within a total S1 charge range defined by the user. The
  *    determination of wether an event is classified as an ER can be done by f90 cuts (tof_cut = false) or ToF cuts (tof_cut = true).
  *    Changing both of these values must be done within the code. The function can also take into consideration wether the run is
- *    single phase or dual phase and call for the appropriate quality cuts.
+ *    single phase or dual phase and call for the appropriate quality cuts. The resulting histograms are then saved in a root file
+ *    named analysis_#run number#.root.
+ *
+ *  Parameters   : run >> run number.
+ *                 data_type >> in dicates if the source is taken from data or MC simulation.
+ *                 exp_cfg >> indicates if the run was single phase or dual phase.
+ *                 tof_cut >> indicates wheter ToF cuts are to be applied for ER event selection.
+ *                 number_of_bins >> total number of histograms that will be generated, each for a different charge range.
+ *                 min_charge >> the lower boundary of the S1 total charge range to be considered.
+ *                 max_charge >> the upper boundary of the S1 total charge range to be considered.
+ *
+ *  Return Value : void.
  */
-void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.){
+void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t number_of_bins = 50,
+                             Double_t min_charge = 0., Double_t max_charge = 1000.){
 
   TFile* output_file = CheckFile( Form("analysis_%d.root", run) );
 
@@ -272,26 +285,24 @@ void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool
 
   f90_histograms_dir -> cd();
   TDirectory* type_dir;
-  bool isMC;
+  TString run_file_name;
 
-  if ( std::strncmp( data_type, "data", 4 ) == 0 || std::strncmp( data_type, "DATA", 4 ) == 0 || std::strncmp( data_type, "Data", 4 ) == 0 || std::strncmp( data_type, "d", 1 ) == 0 ){
+  if ( !isMC ) {
     type_dir = MakeDirectory( "data", "data" );
-    isMC = false;
-    TString run_file_name = Form("runs/run_%d.root");
-  } else if ( std::strncmp( data_type, "mc", 4 ) == 0 || std::strncmp( data_type, "MC", 4 ) == 0 || std::strncmp( data_type, "m", 1 ) == 0 ){
+    run_file_name = Form("runs/run_%d.root", run);
+  } else if ( isMC ){
     type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
-    isMC = true;
-    TString run_file_name = Form("runs/run_%d_MCER.root");
+    run_file_name = Form("runs/run_%d_MCER.root", run);
   }
 
   type_dir -> cd();
-  TDirectory* er_dir = MakeDirectory("ER","ER");
-  er_dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
+  TDirectory* dir = MakeDirectory("ER","ER");
+  dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
   // --------------------------------------------------------------------------------------- //
 
   // ELECTRON RECOIL EVENT SELECTION PARAMETERS //
-  Double_t f90_min = 0.0; Double_t f90_max = 1.0;
-  Double_t tof_min = 0.0; Double_t tof_max = 0.0; // If the ToF border values are equal, the code doesn't apply a ToF cut.
+  Double_t f90_min; Double_t f90_max;
+  Double_t tof_min; Double_t tof_max; // If the ToF border values are equal, the code doesn't apply a ToF cut.
   // ------------------------------------------ //
 
   if ( tof_cut ){
@@ -302,12 +313,10 @@ void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool
     tof_min = 0.0;  tof_max = 0.0;
   }
 
-  TCut quality_cuts = DefineCuts( exp_cfg, tof_min, tof_max );
-
   Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
-  Double_t charge_low; Double_t charge_up;
-
-  TString hist_name; TString hist_title;
+  Double_t charge_low;   Double_t charge_up;
+  TString hist_name;     TString hist_title;
+  TCut histogram_cuts;
 
   for (int i = 0; i < number_of_bins; i++){
 
@@ -315,19 +324,41 @@ void CreateERF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool
     charge_low = ( i       * bin_size ) + min_charge;
     charge_up  = ( (i + 1) * bin_size ) + min_charge;
 
+    histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, charge_low, charge_up, tof_min, tof_max);
+
     hist_name  = Form( "f90_histogram_%ser_%d", (isMC)?"mc":"", i+1 );
     hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) charge_low, (int) charge_up );
 
-    WriteF90Hist(run, er_dir, run_file_name, charge_low, charge_up, f90_min, f90_max, quality_cuts, hist_name, hist_title);
-
+    WriteF90Hist( dir, run_file_name, histogram_cuts, hist_name, hist_title );
   }
 
   output_file -> Close();
 }
 
-void CreateNRF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.){
+/* void CreateF90NRHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.)
+ *
+ *  Summary of Function:
+ *
+ *    This function constructs a number of nuclear recoil f90 histograms within a total S1 charge range defined by the user. The
+ *    determination of whether an event is classified as an NR can be done by f90 cuts (tof_cut = false) or ToF cuts (tof_cut = true).
+ *    Changing both of these values must be done within the code. The function can also take into consideration wether the run is
+ *    single phase or dual phase and call for the appropriate quality cuts. The resulting histograms are then saved in a root file
+ *    named analysis_#run number#.root.
+ *
+ *  Parameters   : run >> run number.
+ *                 data_type >> in dicates if the source is taken from data or MC simulation.
+ *                 exp_cfg >> indicates if the run was single phase or dual phase.
+ *                 tof_cut >> indicates wheter ToF cuts are to be applied for ER event selection.
+ *                 number_of_bins >> total number of histograms that will be generated, each for a different charge range.
+ *                 min_charge >> the lower boundary of the S1 total charge range to be considered.
+ *                 max_charge >> the upper boundary of the S1 total charge range to be considered.
+ *
+ *  Return Value : void.
+ */
+void CreateF90NRHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t number_of_bins = 50,
+                             Double_t min_charge = 0., Double_t max_charge = 1000.){
 
-  TFile* output_file = CheckFile( Form("hist_%d.root", run) );
+  TFile* output_file = CheckFile( Form("analysis_%d.root", run) );
 
   // --------------------------- CREATING NECESSARY DIRECTORIES ---------------------------- //
   output_file -> cd();
@@ -338,42 +369,38 @@ void CreateNRF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool
 
   f90_histograms_dir -> cd();
   TDirectory* type_dir;
-  bool isMC;
+  TString run_file_name;
 
-  if ( std::strncmp( data_type, "data", 4 ) == 0 || std::strncmp( data_type, "DATA", 4 ) == 0 || std::strncmp( data_type, "Data", 4 ) == 0 || std::strncmp( data_type, "d", 1 ) == 0 ){
+  if ( !isMC ) {
     type_dir = MakeDirectory( "data", "data" );
-    isMC = false;
-    TString run_file_name = Form("runs/run_%d.root");
-  } else if ( std::strncmp( data_type, "mc", 4 ) == 0 || std::strncmp( data_type, "MC", 4 ) == 0 || std::strncmp( data_type, "m", 1 ) == 0 ){
+    run_file_name = Form("runs/run_%d.root", run);
+  } else if ( isMC ){
     type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
-    isMC = true;
-    TString run_file_name = Form("runs/run_%d_MCNR.root");
+    run_file_name = Form("runs/run_%d_MCER.root", run);
   }
 
   type_dir -> cd();
-  TDirectory* er_dir = MakeDirectory("NR","NR");
-  er_dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
+  TDirectory* dir = MakeDirectory("NR","NR");
+  dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
   // --------------------------------------------------------------------------------------- //
 
-  // Parameters used to define wether an event is qualified as an Electron Recoil. In the case were ToF cuts are applied, the f90
-  // values are simply boundary conditions to make sure no weird coincidence events are selected.:
+  // NUCLEAR RECOIL EVENT SELECTION PARAMETERS //
   Double_t f90_min; Double_t f90_max;
   Double_t tof_min; Double_t tof_max; // If the ToF border values are equal, the code doesn't apply a ToF cut.
+  // ----------------------------------------- //
 
   if ( tof_cut ){
-    f90_min = 0.1;  f90_max = 1.0;
+    f90_min = 0.0;  f90_max = 1.0;
     tof_min = 0.0;  tof_max = 50;
   } else if ( !tof_cut ) {
     f90_min = 0.4;  f90_max = 0.7;
-    tof_min = 0.0;  tof_max = 0.0;  // The same applies here.
+    tof_min = 0.0;  tof_max = 0.0;
   }
 
-  TCut quality_cuts = DefineCuts( exp_cfg, tof_min, tof_max );
-
   Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
-  Double_t charge_low; Double_t charge_up;
-
-  TString hist_name; TString hist_title;
+  Double_t charge_low;   Double_t charge_up;
+  TString hist_name;     TString hist_title;
+  TCut histogram_cuts;
 
   for (int i = 0; i < number_of_bins; i++){
 
@@ -381,11 +408,12 @@ void CreateNRF90Histograms ( int run, const char* data_type, Int_t exp_cfg, bool
     charge_low = ( i       * bin_size ) + min_charge;
     charge_up  = ( (i + 1) * bin_size ) + min_charge;
 
+    histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, charge_low, charge_up, tof_min, tof_max);
+
     hist_name  = Form( "f90_histogram_%snr_%d", (isMC)?"mc":"", i+1 );
     hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC NR":"NR", (int) charge_low, (int) charge_up );
 
-    WriteF90Hist(run, er_dir, run_file_name, charge_low, charge_up, f90_min, f90_max, quality_cuts, hist_name, hist_title);
-
+    WriteF90Hist( dir, run_file_name, histogram_cuts, hist_name, hist_title );
   }
 
   output_file -> Close();

@@ -106,28 +106,17 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
  *    user. The user also determines the boundaries of the f90 range to be considered, as well as the boundaries of
  *    the charge values to be considered. The function then returns a normalized histogram.
  *
- * Parameters   : file_name    >> the name of the file containing the events from which to construct the histogram.
- *                charge_low   >> the lower boundary of the charge value (in PE).
- *                charge_up    >> the upper boundary of the charge value (in PE).
- *                f90_low      >> the lower boundary of the f90 value.
- *                f90_up       >> the upper boundary of the f90 value.
- *                quality_cuts >> contain the cuts to applied when generating the histogram.
+ * Parameters   : file_name      >> the name of the file containing the events from which to construct the histogram.
+ *                histogram_cuts >> contain the cuts to applied when generating the histogram.
  *
  * Return value : TH1F* f90_hist
  */
-TH1F* GenerateF90Hist( TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TCut quality_cuts ) {
+TH1F* GenerateF90Hist( TString file_name, TCut histogram_cuts ) {
 
   TFile* file = new TFile(file_name);
   TTree* reco; file -> GetObject("reco", reco);
 
-  TCut cut_f90_min         = Form("clusters[0].f90 >= %f", f90_low);
-  TCut cut_f90_max         = Form("clusters[0].f90 <= %f", f90_up);
-  TCut cut_charge_min      = Form("clusters[0].charge >= %f", charge_low);
-  TCut cut_charge_max      = Form("clusters[0].charge <= %f", charge_up);
-
-  TCut cut_all = cut_f90_min && cut_f90_max && cut_charge_max && cut_charge_min && quality_cuts;
-
-  reco -> Draw("clusters[0].f90 >> hist", cut_all, "goff");
+  reco -> Draw("clusters[0].f90 >> hist", histogram_cuts, "goff");
   TH1F* f90_hist = (TH1F*)gDirectory -> Get("hist");
 
   if (f90_hist -> GetSumw2N() == 0) f90_hist -> Sumw2(kTRUE);
@@ -164,29 +153,25 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
   return directory;
 }
 
-/* void WriteF90Hist ( int run, TDirectory* save_dir, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up, TString hist_name, TString hist_title )
+/* void WriteF90Hist ( TDirectory* save_dir, TString file_name, TCut histogram_cuts, TString hist_name, TString hist_title )
  *
  *  Summary of Function:
  *
  *    The function receives a run number, from witch a f90 histogram is generated using the GenerateF90Hist() function.
  *    The resulting histogram then receives a name, a title and is then saved into the specified directory.
  *
- *  Parameters   : run        >> run number.
- *                 save_dir   >> directory were the generated histogram will be written to.
- *                 charge_low >> lower boundary on the S1 charge value.
- *                 charge_up  >> upper boundary on the S1 charge value.
- *                 f90_low    >> lower boundary on the f90 parameter.
- *                 f90_up    s >> upper boundary on the f90 parameter.
+ *  Parameters   : save_dir   >> directory were the generated histogram will be written to.
+ *                 file_name  >> name of the file were the data used to generate the histogram is located.
+ *                 histogram_cuts >> cuts to be used when constructing the histogram.
  *                 hist_name  >> name of the histogram to be generated.
  *                 hist_title >> title of the histogram to be generated.
  *
  *  Return Value : void.
  *
  */
-void WriteF90Hist( int run, TDirectory* save_dir, TString file_name, Double_t charge_low, Double_t charge_up, Double_t f90_low, Double_t f90_up,
-                   TCut quality_cuts, TString hist_name, TString hist_title ){
+void WriteF90Hist( TDirectory* save_dir, TString file_name, TCut histogram_cuts, TString hist_name, TString hist_title ){
 
-  TH1F* hist = GenerateF90Hist( file_name, charge_low, charge_up, f90_low, f90_up, quality_cuts );
+  TH1F* hist = GenerateF90Hist( file_name, histogram_cuts );
 
   hist -> SetName(hist_name);
   hist -> SetTitle(hist_title);

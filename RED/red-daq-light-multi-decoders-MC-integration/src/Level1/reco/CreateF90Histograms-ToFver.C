@@ -51,6 +51,70 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
+/* TDirectory* MakeDirectory( const char* dir_name, const char* dir_title )
+ *
+ * Summary of MakeDirectory function:
+ *
+ *    The MakeDirectory function checks wether a given directory currently exists. If it does, it returns a
+ *    pointer to it. If it doesn't, the function creates the directory with the given name in the current
+ *    path and returns a pointer to it.
+ *
+ * Parameters   : dir_name  >> name of the desired directory.
+ *                dir_title >> title of the directory, for bookeeping purpouses.
+ *
+ * Return value : TDirectory* directory.
+ */
+TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
+
+  TDirectory *directory = gDirectory -> GetDirectory(dir_name);
+  if (!directory) directory = gDirectory -> mkdir(dir_name, dir_title);
+
+  return directory;
+}
+
+/* TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR )
+ *
+ *  Summary of Function:
+ *
+ *    The function creates the desire directory structure to save the histograms to be generated. It considers
+ *    if the source data is from a MC simulation or not, and also creates different folder names depending if
+ *    the selected events are electron or nuclear recoils.
+ *
+ *  Parameters   : file >> file were the structure will be created in.
+ *                 isMC >> indicates if the source data comes from a MC simulation or not.
+ *                 ERorNR >> indicates the recoil type (0 for ER, 1 for NR).
+ *
+ *  Return value : TDirectory* directory
+ */
+TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR ){
+
+  file -> cd();
+  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
+
+  histograms_dir -> cd();
+  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
+
+  f90_histograms_dir -> cd();
+  TDirectory* type_dir;
+
+  if ( !isMC ) {
+    type_dir = MakeDirectory( "data", "data" );
+  } else if ( isMC ){
+    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
+  }
+
+  type_dir -> cd();
+  TDirectory* directory;
+  if ( ERorNR == 0 ) { directory = MakeDirectory("ER","ER"); }
+  else if ( ERorNR == 1 ) { directory = MakeDirectory("NR","NR"); }
+
+  directory -> Delete("*;*"); // Clears the directory in case there are objects already there.
+
+  return directory;
+}
+
+
+
 TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
 
   TCut f90_range;
@@ -203,68 +267,6 @@ TH1F* GenerateF90Hist( TString file_name, TCut histogram_cuts ) {
   return f90_hist;
 }
 
-/* TDirectory* MakeDirectory( const char* dir_name, const char* dir_title )
- *
- * Summary of MakeDirectory function:
- *
- *    The MakeDirectory function checks wether a given directory currently exists. If it does, it returns a
- *    pointer to it. If it doesn't, the function creates the directory with the given name in the current
- *    path and returns a pointer to it.
- *
- * Parameters   : dir_name  >> name of the desired directory.
- *                dir_title >> title of the directory, for bookeeping purpouses.
- *
- * Return value : TDirectory* directory.
- */
-TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
-
-  TDirectory *directory = gDirectory -> GetDirectory(dir_name);
-  if (!directory) directory = gDirectory -> mkdir(dir_name, dir_title);
-
-  return directory;
-}
-
-/* TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR )
- *
- *  Summary of Function:
- *
- *    The function creates the desire directory structure to save the histograms to be generated. It considers
- *    if the source data is from a MC simulation or not, and also creates different folder names depending if
- *    the selected events are electron or nuclear recoils.
- *
- *  Parameters   : file >> file were the structure will be created in.
- *                 isMC >> indicates if the source data comes from a MC simulation or not.
- *                 ERorNR >> indicates the recoil type (0 for ER, 1 for NR).
- *
- *  Return value : TDirectory* directory
- */
-TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR ){
-
-  file -> cd();
-  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
-
-  histograms_dir -> cd();
-  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
-
-  f90_histograms_dir -> cd();
-  TDirectory* type_dir;
-
-  if ( !isMC ) {
-    type_dir = MakeDirectory( "data", "data" );
-  } else if ( isMC ){
-    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
-  }
-
-  type_dir -> cd();
-  TDirectory* directory;
-  if ( ERorNR == 0 ) { directory = MakeDirectory("ER","ER"); }
-  else if ( ERorNR == 1 ) { directory = MakeDirectory("NR","NR"); }
-
-  directory -> Delete("*;*"); // Clears the directory in case there are objects already there.
-
-  return directory;
-}
-
 /* void WriteF90Hist ( TDirectory* save_dir, TString file_name, TCut histogram_cuts, TString hist_name, TString hist_title )
  *
  *  Summary of Function:
@@ -290,6 +292,8 @@ void WriteF90Hist( TDirectory* save_dir, TString file_name, TCut histogram_cuts,
 
   save_dir -> WriteObject( hist, hist_name, "OverWrite" );
 }
+
+
 
 
 

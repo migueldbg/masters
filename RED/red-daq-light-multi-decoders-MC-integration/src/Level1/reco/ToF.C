@@ -1,15 +1,3 @@
-/* File: ToF.C
- *
- * Author: Miguel Del Ben Galdiano]
- * Date of Creation: March 3 2020.
- *
- * Summary of File:
- *
- *    The goal of this macro is to create a 2D histogram with y-axis equal to f90 and x-axis equal to a parameter to be
- *    defined in the code, the so called "time of flight" (TOF). This parameter will be used to apply a cut, such as to
- *    extract nuclear recoils from background events.
- */
-
 #include <TCut.h>
 #include <TFile.h>
 #include <TH1.h>
@@ -17,6 +5,19 @@
 #include <TString.h>
 #include <TSystem.h>
 #include <TTree.h>
+
+/* ************************************************************************************************************************
+ * File: ToF.C                                                                                                            *
+ *                                                                                                                        *
+ * Author: Miguel Del Ben Galdiano                                                                                        *
+ * Date of Creation: March 3 2020.                                                                                        *
+ *                                                                                                                        *
+ * Summary of File:                                                                                                       *
+ *                                                                                                                        *
+ *    The goal of this macro is to create a 2D histogram with y-axis equal to f90 and x-axis equal to a parameter to be   *
+ *    defined in the code, the so called "time of flight" (TOF). This parameter will be used to apply a cut, such as to   *
+ *    extract nuclear recoils from background events.                                                                     *
+ * ************************************************************************************************************************ /
 
 /* TFile* CheckFile( TString path_name )
   *

@@ -224,6 +224,47 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
   return directory;
 }
 
+/* TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR )
+ *
+ *  Summary of Function:
+ *
+ *    The function creates the desire directory structure to save the histograms to be generated. It considers
+ *    if the source data is from a MC simulation or not, and also creates different folder names depending if
+ *    the selected events are electron or nuclear recoils.
+ *
+ *  Parameters   : file >> file were the structure will be created in.
+ *                 isMC >> indicates if the source data comes from a MC simulation or not.
+ *                 ERorNR >> indicates the recoil type (0 for ER, 1 for NR).
+ *
+ *  Return value : TDirectory* directory
+ */
+TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR ){
+
+  file -> cd();
+  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
+
+  histograms_dir -> cd();
+  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
+
+  f90_histograms_dir -> cd();
+  TDirectory* type_dir;
+
+  if ( !isMC ) {
+    type_dir = MakeDirectory( "data", "data" );
+  } else if ( isMC ){
+    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
+  }
+
+  type_dir -> cd();
+  TDirectory* directory;
+  if ( ERorNR == 0 ) { directory = MakeDirectory("ER","ER"); }
+  else if ( ERorNR == 1 ) { directory = MakeDirectory("NR","NR"); }
+
+  directory -> Delete("*;*"); // Clears the directory in case there are objects already there.
+
+  return directory;
+}
+
 /* void WriteF90Hist ( TDirectory* save_dir, TString file_name, TCut histogram_cuts, TString hist_name, TString hist_title )
  *
  *  Summary of Function:
@@ -248,8 +289,9 @@ void WriteF90Hist( TDirectory* save_dir, TString file_name, TCut histogram_cuts,
   hist -> SetTitle(hist_title);
 
   save_dir -> WriteObject( hist, hist_name, "OverWrite" );
-
 }
+
+
 
 /* void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.)
  *
@@ -276,29 +318,11 @@ void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
 
   TFile* output_file = CheckFile( Form("analysis_%d.root", run) );
 
-  // --------------------------- CREATING NECESSARY DIRECTORIES ---------------------------- //
-  output_file -> cd();
-  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
+  TDirectory* dir = MakeDirStruct( output_file, isMC, 0 );
 
-  histograms_dir -> cd();
-  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
-
-  f90_histograms_dir -> cd();
-  TDirectory* type_dir;
   TString run_file_name;
-
-  if ( !isMC ) {
-    type_dir = MakeDirectory( "data", "data" );
-    run_file_name = Form("runs/run_%d.root", run);
-  } else if ( isMC ){
-    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
-    run_file_name = Form("runs/run_%d_MCER.root", run);
-  }
-
-  type_dir -> cd();
-  TDirectory* dir = MakeDirectory("ER","ER");
-  dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
-  // --------------------------------------------------------------------------------------- //
+  if ( !isMC ) { run_file_name = Form("runs/run_%d.root", run); }
+  else if ( isMC ) { run_file_name = Form("runs/run_%d_MCER.root", run); }
 
   // ELECTRON RECOIL EVENT SELECTION PARAMETERS //
   Double_t f90_min; Double_t f90_max;
@@ -360,29 +384,11 @@ void CreateF90NRHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
 
   TFile* output_file = CheckFile( Form("analysis_%d.root", run) );
 
-  // --------------------------- CREATING NECESSARY DIRECTORIES ---------------------------- //
-  output_file -> cd();
-  TDirectory* histograms_dir  = MakeDirectory("histograms", "histograms");
+  TDirectory* dir = MakeDirStruct( output_file, isMC, 1 );
 
-  histograms_dir -> cd();
-  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
-
-  f90_histograms_dir -> cd();
-  TDirectory* type_dir;
   TString run_file_name;
-
-  if ( !isMC ) {
-    type_dir = MakeDirectory( "data", "data" );
-    run_file_name = Form("runs/run_%d.root", run);
-  } else if ( isMC ){
-    type_dir = MakeDirectory( "monte_carlo", "monte_carlo" );
-    run_file_name = Form("runs/run_%d_MCER.root", run);
-  }
-
-  type_dir -> cd();
-  TDirectory* dir = MakeDirectory("NR","NR");
-  dir -> Delete("*;*"); // Clears the directory in case there are objects already there.
-  // --------------------------------------------------------------------------------------- //
+  if ( !isMC ) { run_file_name = Form("runs/run_%d.root", run); }
+  else if ( isMC ) { run_file_name = Form("runs/run_%d_MCNR.root", run); }
 
   // NUCLEAR RECOIL EVENT SELECTION PARAMETERS //
   Double_t f90_min; Double_t f90_max;

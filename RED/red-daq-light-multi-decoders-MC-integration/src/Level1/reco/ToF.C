@@ -64,28 +64,63 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
   return directory;
 }
 
-TH2* GenerateTOFHist( TString file_name ){
+TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
+
+  TCut f90_range;
+
+  if ( f90_low > f90_up ) {
+    std::cout << "Invalid f90 range: lower boundary is greater than upper boundary.";
+    exit(EXIT_FAILURE);
+  } else if ( f90_low == f90_up ) {
+    f90_range = "";
+  } else {
+    f90_range = Form( "clusters[0].f90 >= %f && clusters[0].f90 <= %f", f90_low, f90_up );
+  }
+
+  return f90_range;
+}
+
+TCut DefineQualityCuts( Int_t experiment_cfg ){
+
+  TCut number_of_clusters = "";
+  TCut rep = "";
+
+  if ( experiment_cfg == 1 ){
+    number_of_clusters = "number_of_clusters == 1";
+    rep = "clusters[0].rep == 1";
+  } else if ( experiment_cfg == 2 ){
+    number_of_clusters = "number_of_clusters == 2";
+    rep = "clusters[0].rep == 1 && clusters[1].rep == 1";
+  }
+
+  TCut quality_cut = number_of_clusters && rep;
+
+  return quality_cut;
+}
+
+
+TH1* GenerateTOFHist( TString file_name ){
 
   TFile* file = new TFile(file_name);
   TTree* reco; file -> GetObject("reco", reco);
 
-  TCut cut_f90_min = "clusters[0].f90 >= 0.0";
-  TCut cut_f90_max = "clusters[0].f90 <= 1.0";
-  TCut cut_rep     = "clusters[0].rep == 1";
+  TCut f90_cut     = DefineF90Range(0.2, 1.);
+  TCut quality_cut = DefineQualityCuts(2);
+  TCut final_cut = f90_cut + quality_cut;
 
-  TCut all_cuts = cut_f90_min + cut_f90_max + cut_rep;
+  std::string ToF = "2*(xmin[30] - clusters[0].min_x)";
+  std::string histogram = " >> hist(100, -100, 100)";
+  std::string expression = ToF + histogram;
 
-  const char* expression = "clusters[0].f90:clusters[0].start_time - start_time[30] >> hist(120, -2000, 40000, 120, 0, 1)";
+  reco -> Draw(expression.c_str(), final_cut, "goff");
+  TH1* ToF_hist = (TH1*) gDirectory -> Get("hist");
 
-  reco -> Draw(expression, all_cuts, "goff");
-  TH2* TOFvf90_hist = (TH2*) gDirectory -> Get("hist");
-
-  TOFvf90_hist -> SetOption("colz");
-  TOFvf90_hist -> SetDirectory(0);
+  //ToF_hist -> SetOption("colz");
+  ToF_hist -> SetDirectory(0);
 
   file -> Close();
 
-  return TOFvf90_hist;
+  return ToF_hist;
 }
 
 // ---------------------------------------------------- MACRO::ToF ---------------------------------------------------- //
@@ -103,7 +138,7 @@ void ToF ( int run ){
   TDirectory* tof_dir = MakeDirectory("time_of_flight", "time_of_flight");
   // -------------------------------------------------------------------------------- //
 
-  TH2F* hist = (TH2F*) GenerateTOFHist( Form("runs/run_%d.root", run) );
+  TH1F* hist = (TH1F*) GenerateTOFHist( Form("runs/run_%d.root", run) );
 
   hist -> Draw();
 

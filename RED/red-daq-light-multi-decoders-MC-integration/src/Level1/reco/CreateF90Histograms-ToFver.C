@@ -325,8 +325,8 @@ void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
   TDirectory* dir = MakeDirStruct( output_file, isMC, 0 );
 
   TString run_file_name;
-  if ( !isMC ) { run_file_name = Form("runs/run_%d.root", run); }
-  else if ( isMC ) { run_file_name = Form("runs/run_%d_MCER.root", run); }
+  if      ( !isMC ) { run_file_name = Form("runs/run_%d.root", run); }
+  else if ( isMC )  { run_file_name = Form("runs/run_%d_MCER.root", run); }
 
   // ELECTRON RECOIL EVENT SELECTION PARAMETERS //
   Double_t f90_min; Double_t f90_max;
@@ -349,8 +349,8 @@ void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
   for (int i = 0; i < number_of_bins; i++){
 
     // Calculate the boundaries of the current bin.
-    charge_low = ( i       * bin_size ) + min_charge;
-    charge_up  = ( (i + 1) * bin_size ) + min_charge;
+    charge_low = ( i      * bin_size ) + min_charge;
+    charge_up  = ((i + 1) * bin_size ) + min_charge;
 
     histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, charge_low, charge_up, tof_min, tof_max);
 

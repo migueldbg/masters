@@ -6,18 +6,18 @@
 #include <TSystem.h>
 #include <TTree.h>
 
-/* ************************************************************************************************************************
- * File: ToF.C                                                                                                            *
- *                                                                                                                        *
- * Author: Miguel Del Ben Galdiano                                                                                        *
- * Date of Creation: March 3 2020.                                                                                        *
- *                                                                                                                        *
- * Summary of File:                                                                                                       *
- *                                                                                                                        *
- *    The goal of this macro is to create a 2D histogram with y-axis equal to f90 and x-axis equal to a parameter to be   *
- *    defined in the code, the so called "time of flight" (TOF). This parameter will be used to apply a cut, such as to   *
- *    extract nuclear recoils from background events.                                                                     *
- * ************************************************************************************************************************ /
+/* *********************************************************************************************************************** *
+ * File: ToF.C                                                                                                             *
+ *                                                                                                                         *
+ * Author: Miguel Del Ben Galdiano                                                                                         *
+ * Date of Creation: March 3 2020.                                                                                         *
+ *                                                                                                                         *
+ * Summary of File:                                                                                                        *
+ *                                                                                                                         *
+ *    The goal of this macro is to create a 2D histogram with y-axis equal to f90 and x-axis equal to a parameter to be    *
+ *    defined in the code, the so called "time of flight" (TOF). This parameter will be used to apply a cut, such as to    *
+ *    extract nuclear recoils from background events.                                                                      *
+ * *********************************************************************************************************************** */
 
 /* TFile* CheckFile( TString path_name )
   *
@@ -99,18 +99,51 @@ TCut DefineQualityCuts( Int_t experiment_cfg ){
   return quality_cut;
 }
 
+TCut DefineS1ChargeRange( Double_t charge_low, Double_t charge_up ){
+
+  TCut charge_range;
+
+  if ( charge_low > charge_up ) {
+    std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary.";
+    exit(EXIT_FAILURE);
+  } else if ( charge_low == charge_up ) {
+    charge_range = "";
+  } else {
+    charge_range = Form( "clusters[0].charge >= %f && clusters[0].charge <= %f", charge_low, charge_up );
+  }
+
+  return charge_range;
+}
+
+TCut DefineToFRange( Double_t tof_low, Double_t tof_up ){
+
+  TCut tof_range;
+
+  if ( tof_low > tof_up ) {
+    std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary.";
+    exit(EXIT_FAILURE);
+  } else if ( tof_low == tof_up ) {
+    tof_range = "";
+  } else {
+    tof_range = Form( "2*(xmin[30] - clusters[0].min_x) >= %f && 2*(xmin[30] - clusters[0].min_x) <= %f", tof_low, tof_up );
+  }
+
+  return tof_range;
+}
 
 TH1* GenerateTOFHist( TString file_name ){
 
   TFile* file = new TFile(file_name);
   TTree* reco; file -> GetObject("reco", reco);
 
-  TCut f90_cut     = DefineF90Range(0.2, 1.);
+  TCut f90_cut     = DefineF90Range(0., 1);
+  TCut charge_cut  = DefineS1ChargeRange(80., 1000.);
   TCut quality_cut = DefineQualityCuts(2);
-  TCut final_cut = f90_cut + quality_cut;
+  TCut tof_cut     = DefineToFRange(-100, 100);
+  TCut final_cut = f90_cut && quality_cut && tof_cut && charge_cut;
 
   std::string ToF = "2*(xmin[30] - clusters[0].min_x)";
-  std::string histogram = " >> hist(100, -100, 100)";
+  std::string histogram = " >> hist(100)";
   std::string expression = ToF + histogram;
 
   reco -> Draw(expression.c_str(), final_cut, "goff");
@@ -141,6 +174,7 @@ void ToF ( int run ){
 
   TH1F* hist = (TH1F*) GenerateTOFHist( Form("runs/run_%d.root", run) );
 
+  hist -> SetTitle(Form("Time of Flight Distribution; ToF (ns)"));
   hist -> Draw();
 
 }

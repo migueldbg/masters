@@ -197,10 +197,10 @@ void CheckRunFieldOnF90(){
 
 void CheckRunFieldOn(bool s1 = true, bool s2 = true, bool drift_time = true, bool f90 = true){
 
-  if ( s1 )        CheckRunFieldOnS1();
-  if ( s2 )        CheckRunFieldOnS2();
-  if ( drift_time) CheckRunFieldOnDrift();
-  if ( f90 )       CheckRunFieldOnF90();
+  if ( s1 )         CheckRunFieldOnS1();
+  if ( s2 )         CheckRunFieldOnS2();
+  if ( drift_time ) CheckRunFieldOnDrift();
+  if ( f90 )        CheckRunFieldOnF90();
 }
 
 

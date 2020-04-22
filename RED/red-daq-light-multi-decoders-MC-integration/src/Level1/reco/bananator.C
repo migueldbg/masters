@@ -44,7 +44,7 @@ void bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, in
 
     TH2F *h = new TH2F("h",title,nbin,xmin,xmax,nbin,ymin,ymax);
 
-    data->Draw("baseline_mean[14]-ymin[14]:baseline_mean[15]-ymin[15]>>h");
+    data->Draw("baseline_mean[30]-ymin[30]:baseline_mean[31]-ymin[31]>>h");
 
     h->GetXaxis()->SetTitle("E [ADC counts]");
     h->GetXaxis()->SetTitleOffset(1.16);

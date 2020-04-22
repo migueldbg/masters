@@ -6,8 +6,8 @@
 #include "TClassTable.h"
 #include "TSystem.h"
 #include "TROOT.h"
-#include "red-daq/EvRec0.hh"
-#include "Root_Plot.cc"  
+#include "../../../../install/include/red-daq/EvRec0.hh"
+#include "Root_Plot.cc"
 
 
 
@@ -20,7 +20,7 @@ void Load(int run_in, bool UseStart )
 
 
   std::string FileName=Form("run_%d.root",run_in);
-      
+
   TFile *f=new TFile(FileName.c_str());
   t = (TTree*) f->Get("reco");
 
@@ -35,7 +35,7 @@ void Load(int run_in, bool UseStart )
   TH1F *hpsd[2];
   for (int ipsd=0;ipsd<2;ipsd++)
     hpsd[ipsd]=new TH1F(Form("hpsd%d",ipsd),"", 30,  0.15, 0.45 );
-  
+
   double chargeMin[2]={100.e3,200.e3},chargeMax[2]={200.e3,300.e3};
   int N[3]={0,0,0};
   for (int i=0;i<t->GetEntries();i++)
@@ -57,10 +57,10 @@ void Load(int run_in, bool UseStart )
 
       N[0]++;
 
-  
+
       // Select Time Coincidences
       double tSiTel=(UseStart?SiE_Fast->start[1]: SiE_Fast->xmin[1]); // Fast
-      RDChannel* lsci=e->GetLSci(0); 
+      RDChannel* lsci=e->GetLSci(0);
 
       bool ok=false;
       double charge=-100.,fprompt[2]={-100,-100},isSat=false;;
@@ -69,9 +69,9 @@ void Load(int run_in, bool UseStart )
 	  double tlsci=(UseStart?double(lsci->start[ipeak]):double(lsci->xmin[ipeak]));
 	  double dt=tlsci-tSiTel;
 	  if (1.-lsci->fprompt[ipeak]>0.2 ) hdt->Fill(dt);
-	  if ( dt>-50 && dt< 15.) 
+	  if ( dt>-50 && dt< 15.)
 	    {
-	      if ( lsci->charge[ipeak] > charge ) 
+	      if ( lsci->charge[ipeak] > charge )
 		{
 		  charge=lsci->charge[ipeak];
 		  fprompt[0]=1.-lsci->fprompt[ipeak];
@@ -84,7 +84,7 @@ void Load(int run_in, bool UseStart )
 	}
       if ( ok )
 	{
-	  if ( charge> 2000.) 
+	  if ( charge> 2000.)
 	    {
 	      for (int ifxx=0;ifxx<2;ifxx++)
 		{
@@ -103,7 +103,7 @@ void Load(int run_in, bool UseStart )
 
   cc[canvas]=new TCanvas(Form("c%d",canvas),"",1.5*ww,1.5*wh);
   cc[canvas]->Divide(2,2);
-  cc[canvas]->Draw();  
+  cc[canvas]->Draw();
 
   cc[canvas]->cd(1);
   tbanana[0].SetMarkerStyle(10);
@@ -113,7 +113,7 @@ void Load(int run_in, bool UseStart )
   tbanana[1].SetMarkerStyle(10);
   tbanana[1].SetMarkerColor(kRed);
   tbanana[1].DrawClone("P");
-  
+
   cc[canvas]->cd(2);
   hdt->GetYaxis()->SetTitle("A.U.");
   hdt->GetXaxis()->SetTitle("t_{lsci}-t_{SiTel} [sa]");
@@ -148,14 +148,14 @@ void Load(int run_in, bool UseStart )
   cc[canvas]->cd(4);
   for (int ipsd=0;ipsd<2;ipsd++)
     {
-      hpsd[ipsd]->Scale(1./hpsd[ipsd]->Integral());      
+      hpsd[ipsd]->Scale(1./hpsd[ipsd]->Integral());
       hpsd[ipsd]->SetMaximum(1.0);
       hpsd[ipsd]->SetLineColor(ipsd==0?kBlue:kRed); hpsd[ipsd]->SetMarkerColor(ipsd==0?kBlue:kRed);
       hpsd[ipsd]->GetYaxis()->SetTitle("A.U.");
       hpsd[ipsd]->GetXaxis()->SetTitle("LSci PSD");
-      
+
       hpsd[ipsd]->DrawCopy((ipsd==0?"E1":"E1SAME"));
-      
+
       hpsd[ipsd]->Fit("gaus","Q0");
       hpsd[ipsd]->GetFunction("gaus")->SetLineColor(ipsd==0?kBlue:kRed);
       hpsd[ipsd]->GetFunction("gaus")->DrawCopy("SAME");
@@ -167,4 +167,3 @@ void Load(int run_in, bool UseStart )
   gPad->SetLogy();
   canvas++;
 }
-

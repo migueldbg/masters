@@ -277,7 +277,7 @@ void GenerateF90vChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc
   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
     param_name = "rms";    param_title = "RMS";
   } else {
-    std::cout << "Invalid 'parameter' value.";
+    std::cout << "Invalid 'parameter' value. Valid values: 'mean', 'peak' and 'rms'.";
     exit(EXIT_FAILURE);
   }
 
@@ -337,7 +337,7 @@ void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors
   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
     param_name = "rms";    param_title = "RMS";
   } else {
-    std::cout << "Invalid 'parameter' value.";
+    std::cout << "Invalid 'parameter' value. Valid values: 'mean', 'peak' and 'rms'.";
     exit(EXIT_FAILURE);
   }
 
@@ -363,7 +363,7 @@ void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors
 }
 
 // **************************************************** PlotRMS() MACRO **************************************************** //
-void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 0. ){
+void PlotF90Parameters( int run, Double_t charge_min = 0. ){
 
   TString file_name = Form("hist_%d.root", run);
   TFile* hist_file = CheckFile(file_name);
@@ -389,7 +389,7 @@ void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 
   TDirectory* da_nr_dir           = MakeDirectory("NR","NR");
 
   monte_carlo_dir -> cd();
-  TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
+  //TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
   TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
   // ----------------------------------------------------------------------------- //
 
@@ -403,12 +403,12 @@ void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 
   Double_t PEAKerr_da_er [number_of_histograms];      Double_t PEAKerr_da_nr [number_of_histograms];
 
 
-  Double_t RMS_mc_er     [number_of_histograms];      Double_t RMS_mc_nr     [number_of_histograms];
-  Double_t RMSerr_mc_er  [number_of_histograms];      Double_t RMSerr_mc_nr  [number_of_histograms];
-  Double_t MEAN_mc_er    [number_of_histograms];      Double_t MEAN_mc_nr    [number_of_histograms];
-  Double_t MEANerr_mc_er [number_of_histograms];      Double_t MEANerr_mc_nr [number_of_histograms];
-  Double_t PEAK_mc_er    [number_of_histograms];      Double_t PEAK_mc_nr    [number_of_histograms];
-  Double_t PEAKerr_mc_er [number_of_histograms];      Double_t PEAKerr_mc_nr [number_of_histograms];
+  /*Double_t RMS_mc_er     [number_of_histograms];*/      Double_t RMS_mc_nr     [number_of_histograms];
+  /*Double_t RMSerr_mc_er  [number_of_histograms];*/      Double_t RMSerr_mc_nr  [number_of_histograms];
+  /*Double_t MEAN_mc_er    [number_of_histograms];*/      Double_t MEAN_mc_nr    [number_of_histograms];
+  /*Double_t MEANerr_mc_er [number_of_histograms];*/      Double_t MEANerr_mc_nr [number_of_histograms];
+  /*Double_t PEAK_mc_er    [number_of_histograms];*/      Double_t PEAK_mc_nr    [number_of_histograms];
+  /*Double_t PEAKerr_mc_er [number_of_histograms];*/      Double_t PEAKerr_mc_nr [number_of_histograms];
 
   Double_t charge_total[number_of_histograms];
 
@@ -426,10 +426,10 @@ void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 
     MEAN_da_nr[i] = htemp -> GetMean();  MEANerr_da_nr[i] = htemp -> GetMeanError();
     PEAK_da_nr[i] = GetPeak(htemp);      PEAKerr_da_nr[i] = GetPeakError(htemp);
 
-    htemp = (TH1F *)mc_er_dir -> Get( Form("f90_histogram_mcer_%d", i+1) );
+    /*htemp = (TH1F *)mc_er_dir -> Get( Form("f90_histogram_mcer_%d", i+1) );
     RMS_mc_er[i]  = htemp -> GetRMS();   RMSerr_mc_er[i]  = htemp -> GetRMSError();
     MEAN_mc_er[i] = htemp -> GetMean();  MEANerr_mc_er[i] = htemp -> GetMeanError();
-    PEAK_mc_er[i] = GetPeak(htemp);      PEAKerr_mc_er[i] = GetPeakError(htemp);
+    PEAK_mc_er[i] = GetPeak(htemp);      PEAKerr_mc_er[i] = GetPeakError(htemp);*/
 
     htemp = (TH1F *)mc_nr_dir -> Get( Form("f90_histogram_mcnr_%d", i+1) );
     RMS_mc_nr[i]  = htemp -> GetRMS();   RMSerr_mc_nr[i]  = htemp -> GetRMSError();
@@ -453,12 +453,12 @@ void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 
   TGraphErrors* da_nr_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_da_nr, 0, PEAKerr_da_nr,
                                               "Peak of f90 Histograms (NR); Charge (PE); F90 Peak",    "f90PeakxCharge_total_nr",   23, 40 );
 
-  TGraphErrors* mc_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er,  0, RMSerr_mc_er,
-                                              "RMS of f90 Histograms (MC ER); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcer",  22, 30 );
-  TGraphErrors* mc_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_er, 0, MEANerr_mc_er,
-                                              "Mean of f90 Histograms (MC ER); Charge (PE); F90 Mean", "f90MeanxCharge_total_mcer", 22, 30 );
-  TGraphErrors* mc_er_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_mc_er, 0, PEAKerr_mc_er,
-                                              "Peak of f90 Histograms (MC ER); Charge (PE); F90 Peak", "f90PeakxCharge_total_mcer", 22, 30 );
+  //TGraphErrors* mc_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er,  0, RMSerr_mc_er,
+                                              //"RMS of f90 Histograms (MC ER); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcer",  22, 30 );
+  //TGraphErrors* mc_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_er, 0, MEANerr_mc_er,
+                                              //"Mean of f90 Histograms (MC ER); Charge (PE); F90 Mean", "f90MeanxCharge_total_mcer", 22, 30 );
+  //TGraphErrors* mc_er_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_mc_er, 0, PEAKerr_mc_er,
+                                              //"Peak of f90 Histograms (MC ER); Charge (PE); F90 Peak", "f90PeakxCharge_total_mcer", 22, 30 );
 
   TGraphErrors* mc_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms,  charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
                                               "RMS of f90 Histograms (MC NR); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcnr",  23, 30 );
@@ -471,21 +471,21 @@ void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 
 
   Double_t y_size = 1000.;    Double_t x_size = 1.61803398875 * y_size;
 
-  GenerateF90vChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
+  //GenerateF90vChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
   GenerateF90vChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
 
-  GenerateF90DiffvChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
-  GenerateF90DiffvChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
+  //GenerateF90DiffvChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
+  //GenerateF90DiffvChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
 
-  GenerateF90vChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
+  //GenerateF90vChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
   GenerateF90vChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
 
-  GenerateF90DiffvChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
-  GenerateF90DiffvChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
+  //GenerateF90DiffvChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
+  //GenerateF90DiffvChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
 
-  GenerateF90vChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms" );
+  //GenerateF90vChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms" );
   GenerateF90vChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms" );
 
-  GenerateF90DiffvChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms"  );
-  GenerateF90DiffvChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms"  );
+  //GenerateF90DiffvChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms"  );
+  //GenerateF90DiffvChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms"  );
 }

@@ -120,22 +120,23 @@ void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
   }
 
   Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
-  Double_t charge_low;   Double_t charge_up;
+  Double_t s1_charge_low;   Double_t s1_charge_up;
   TString hist_name;     TString hist_title;
+
   TCut histogram_cuts;
 
   for (int i = 0; i < number_of_bins; i++){
 
     // Calculate the boundaries of the current bin.
-    charge_low = ( i      * bin_size ) + min_charge;
-    charge_up  = ((i + 1) * bin_size ) + min_charge;
+    s1_charge_low = ( i      * bin_size ) + min_charge;
+    s1_charge_up  = ((i + 1) * bin_size ) + min_charge;
 
-    histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, charge_low, charge_up, tof_min, tof_max);
+    histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, s1_charge_low, s1_charge_up, tof_min, tof_max);
 
     hist_name  = Form( "f90_histogram_%ser_%d", (isMC)?"mc":"", i+1 );
-    hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) charge_low, (int) charge_up );
+    hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) s1_charge_low, (int) s1_charge_up );
 
-    WriteF90Hist( dir, run_file_name, histogram_cuts, hist_name, hist_title );
+    WriteF90Histogram( dir, run_file_name, histogram_cuts, 100, f90_min, f90_max, false, hist_name, hist_title );
   }
 
   output_file -> Close();

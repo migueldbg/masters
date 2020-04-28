@@ -37,6 +37,7 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
+
 /* TDirectory* MakeDirectory()
   *
   * Summary of MakeDirectory function:
@@ -59,13 +60,40 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
 }
 
 
+/* void MergeRuns( std::vector<int> runs )
+ *
+ *  Summary of Function:
+ *
+ *    The function takes a set of root files and merges the 'reco' tree of each one into a single
+ *    TTree object. The resulting merged tree is then saved into a root file.
+ *
+ *  Parameters   : runs >> a vector of integers containing the number of each run to be merged.
+ *
+ *  Return Value : void.
+ */
+TFile* MergeRuns( std::vector<int> runs ){
+
+  TChain* reco_chain = new TChain("reco");
+  TString file_name;
+  for (Int_t i = 0; i < runs.size(); i++){
+    file_name = Form("runs/run_%d.root", runs.at(i));
+    reco_chain -> Add(file_name.Data());
+  }
+
+  TString output_file_name = Form("runs/run_%d%d.root", runs.front(), runs.back());
+  reco_chain -> Merge(output_file_name.Data(), "fast");
+
+  TFile* file = new TFile(output_file_name, "update");
+  return file;
+}
+
 
 TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
 
   TCut f90_range;
 
   if ( f90_low > f90_up ) {
-    std::cout << "Invalid f90 range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid f90 range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( f90_low == f90_up ) {
     f90_range = "";
@@ -76,12 +104,13 @@ TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
   return f90_range;
 }
 
+
 TCut DefineS1Range( Double_t s1_low, Double_t s1_up ){
 
   TCut s1_range;
 
   if ( s1_low > s1_up ) {
-    std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( s1_low == s1_up ) {
     s1_range = "";
@@ -92,12 +121,13 @@ TCut DefineS1Range( Double_t s1_low, Double_t s1_up ){
   return s1_range;
 }
 
+
 TCut DefineS2Range( Double_t s2_low, Double_t s2_up ){
 
   TCut s2_range;
 
   if ( s2_low > s2_up ) {
-    std::cout << "Invalid S2 charge range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid S2 charge range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( s2_low == s2_up ) {
     s2_range = "";
@@ -108,12 +138,13 @@ TCut DefineS2Range( Double_t s2_low, Double_t s2_up ){
   return s2_range;
 }
 
+
 TCut DefineToFRange( Double_t tof_low, Double_t tof_up ){
 
   TCut tof_range;
 
   if ( tof_low > tof_up ) {
-    std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( tof_low == tof_up ) {
     tof_range = "";
@@ -123,6 +154,7 @@ TCut DefineToFRange( Double_t tof_low, Double_t tof_up ){
 
   return tof_range;
 }
+
 
 TCut DefineQualityCuts( Int_t experiment_cfg ){
 
@@ -177,6 +209,7 @@ TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, 
 
 
 
+
 TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, int ymax=20000){
 
   TFile *file = new TFile( Form("runs/run_%d.root", run), "read" );
@@ -212,6 +245,8 @@ TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, i
   hist -> SetDirectory(0);
   return hist;
 }
+
+
 
 
 /* TH1* NormalizeHist()
@@ -272,6 +307,7 @@ TH1F* GenerateF90Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, D
 
     return f90_hist;
 }
+
 
 /* void WriteS1Histogram ()
  *
@@ -341,6 +377,7 @@ TH1F* GenerateS1Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, Do
     return s1_hist;
 }
 
+
 /* void WriteS1Histogram ()
  *
  *  Summary of Function:
@@ -408,6 +445,7 @@ TH1F* GenerateS2Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, Do
 
     return s2_hist;
 }
+
 
 /* void WriteS2Histogram ()
  *
@@ -478,6 +516,7 @@ TH1F* GenerateDriftTimeHistogram( TString file_name, TCut hist_cuts, Int_t num_b
     return dt_hist;
 }
 
+
 /* void WriteDriftTimeHistogram ()
  *
  *  Summary of Function:
@@ -546,6 +585,7 @@ void WriteDriftTimeHistogram( TDirectory* save_dir, TString file_name, TCut hist
 
   return tof_hist;
 }
+
 
 /* void WriteToFHistogram ()
  *

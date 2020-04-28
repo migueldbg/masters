@@ -1,3 +1,5 @@
+#include "sidutility.cc"
+
 #include <TCut.h>
 #include <TFile.h>
 #include <THStack.h>
@@ -7,64 +9,6 @@
 #include <TSystem.h>
 #include <TTree.h>
 
-/* TFile* CheckFile( TString path_name )
- *
- * Summary of CheckFile function:
- *
- *    The CheckFile function checks if a given file already exists and returns this information to the user.
- *    If the file exists, CheckFile returns it. If not, it creates it and then returns it.
- *
- * Parameters   : path_name >> The name of the desired file.
- *
- * Return value : TFile* file.
- */
-TFile* CheckFile( TString path_name ){
-
-  if (gSystem -> AccessPathName(path_name)) {
-    std::cout << "The " << path_name << " file does not exist. Creating it..." << std::endl;
-  } else {
-    std::cout << "Opening file: " << path_name << std::endl;
-  }
-
-  TFile *file = new TFile(path_name, "UPDATE");
-  if ( !(file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
-
-  return file;
-}
-
-TCut DefineCuts(){
-
-  TCut f90_min            = "clusters[0].f90 >= 0.";
-  TCut f90_max            = "clusters[0].f90 <= 1.";
-  TCut rep                = "clusters[0].rep == 1 && clusters[1].rep == 1";
-  TCut number_of_clusters = "number_of_clusters == 2";
-
-  TCut final_cut = f90_min && f90_max && rep && number_of_clusters;
-
-  return final_cut;
-}
-
-/* TH1* NormalizeHist( TH1* hist, Double_t norm = 1. )
- *
- * Summary of NormalizeHist function:
- *
- *    The NormalizeHist function takes a TH1* histogram, makes a copy and normalizes the copy to the
- *    desired value. It then returns the normalized copy of histogram.
- *
- * Parameters   : hist >> histogram to be normalized.
- *                norm >> value to normalize the histogram to (default = 1.0).
- *
- * Return value : TH1* normalized_hist.
- */
-TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
-
-  Double_t scale = norm / (hist -> Integral());
-
-  TH1* normalized_hist = (TH1*)hist -> Clone();
-  normalized_hist -> Scale(scale);
-
-  return normalized_hist;
-}
 
 void DrifTime(int run, const char* recoil_type ){
 

@@ -25,7 +25,7 @@ using namespace std;
 
 //class EvHeader;
 
-/* 
+/*
   This is the persistent Rec1 Event class
   it should be the event that is dispached to the EvRec0 observers.
 */
@@ -57,11 +57,11 @@ private:
   vector<RDPulseFit*> fits;
 
 public:
-  
+
   EvRec0();
   ~EvRec0(){delete evheader;};
 
-  // Copy constructor: default only with C++11 
+  // Copy constructor: default only with C++11
   //EvRec0(const EvRec0&);
 
   // set methods
@@ -77,12 +77,12 @@ public:
   void SetCharge(vector <double> q)     {charge = q;};
   void SetF90(vector<double> f)         {f90 = f;};
   void SetStartTime(vector <double> st) {start_time = st;};
-  void SetXmin(vector <double> val)    {xmin = val;};
-  void SetXmax(vector <double> val)    {xmax = val;};
-  void SetYmin(vector <double> val)    {ymin = val;};
-  void SetYmax(vector <double> val)    {ymax = val;};
+  void SetXmin(vector <double> val)     {xmin = val;};
+  void SetXmax(vector <double> val)     {xmax = val;};
+  void SetYmin(vector <double> val)     {ymin = val;};
+  void SetYmax(vector <double> val)     {ymax = val;};
   void SetBaselineMeanAll(double val)   {baseline_mean_all = val;};
-  void SetBaselineRMSAll(double val)    {baseline_rms_all = val;}; 
+  void SetBaselineRMSAll(double val)    {baseline_rms_all = val;};
   void AddCluster(RDCluster* aCluster);
   void AddFit(RDPulseFit* aFit);
 
@@ -92,7 +92,7 @@ public:
   double GetChargeTot()           {return charge_total;};
   double GetF90Tot()              {return f90_tot;};
   double GetChargeTotLSci()       {return charge_total_lsci;};
-  double GetLSciPSDTot()          {return lsci_psd_tot;};  
+  double GetLSciPSDTot()          {return lsci_psd_tot;};
   double GetBaselineMeanAll()     {return baseline_mean_all;};
   double GetBaselineRMSAll()      {return baseline_rms_all;};
   vector <double> GetBaseMean()   {return baseline_mean;};
@@ -121,9 +121,9 @@ public:
   void Init();
   void Clear();
   void Dump();
-  
+
   ClassDef( EvRec0, 6 );
-  
+
 };
 
 #endif

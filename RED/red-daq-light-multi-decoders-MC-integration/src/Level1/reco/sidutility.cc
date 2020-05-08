@@ -571,7 +571,7 @@ void WriteDriftTimeHistogram( TDirectory* save_dir, TString file_name, TCut hist
   TTree* reco; file -> GetObject("reco", reco);
 
   TH1F* tof_hist = new TH1F("tof_hist", "Time of Flight (TPC and SiTEL); Time (ns)", num_bins, tof_min, tof_max);
-  reco -> Project( "tof_hist", "2*(xmin[30] - clusters[0].min_x)", hist_cuts);
+  reco -> Project( "tof_hist", "2*(start_time[30] - clusters[0].cdf_time)", hist_cuts);
 
   if (tof_hist -> GetSumw2N() == 0) tof_hist -> Sumw2(kTRUE);
 

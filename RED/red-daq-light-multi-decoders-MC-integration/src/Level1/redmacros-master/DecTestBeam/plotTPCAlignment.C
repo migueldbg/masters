@@ -74,10 +74,10 @@ int plotTPCAlignment(Int_t runNb, Bool_t useLiveTime = false)
   //Open data file
   TFile* f = new TFile(filename);
   if ( !(f->IsOpen()) )
-    {
-      cout << "could not open file: " << filename << endl;
-      return 0;
-    }
+  {
+    cout << "could not open file: " << filename << endl;
+    return 0;
+  }
 
   vector<TString> *chanIDs = new vector<TString>;
   //Read metadata
@@ -97,105 +97,101 @@ int plotTPCAlignment(Int_t runNb, Bool_t useLiveTime = false)
 
   //Event loop
   for (Int_t iloop=0;iloop<reco->GetEntries();iloop++)
-    {
-      //if (!(iloop%1000000))
-      //	cout << "Processing event #" << iloop << "/" <<
-      //	  reco->GetEntries() << endl;
-      reco->GetEntry(iloop);
-      vector<double> f90 = evReco->GetF90();
-      vector<double> start_time = evReco->GetStartTime();
-      vector<double> charge = evReco->GetCharge();
-      vector<double> ymin = evReco->GetYmin();
-      vector<double> basemean = evReco->GetBaseMean();
-      vector<RDCluster*> clusters = evReco->GetClusters();
-      Double_t totCharge = evReco->GetChargeTot();
-      int nclu =  evReco->GetNClusters();
-      Double_t f90_fixed = evReco->GetF90Tot();
+  {
+    //if (!(iloop%1000000))
+    //	cout << "Processing event #" << iloop << "/" <<
+    //	  reco->GetEntries() << endl;
+    reco->GetEntry(iloop);
+    vector<double> f90 = evReco->GetF90();
+    vector<double> start_time = evReco->GetStartTime();
+    vector<double> charge = evReco->GetCharge();
+    vector<double> ymin = evReco->GetYmin();
+    vector<double> basemean = evReco->GetBaseMean();
+    vector<RDCluster*> clusters = evReco->GetClusters();
+    Double_t totCharge = evReco->GetChargeTot();
+    int nclu =  evReco->GetNClusters();
+    Double_t f90_fixed = evReco->GetF90Tot();
 
 
-      //This is the info of the Si detectors
-      Double_t deltaE = basemean.at(30)-ymin.at(30);
-      Double_t E = basemean.at(31)-ymin.at(31);
-      fBanana->Fill(E,deltaE);
+    //This is the info of the Si detectors
+    Double_t deltaE = basemean.at(30)-ymin.at(30);
+    Double_t E = basemean.at(31)-ymin.at(31);
+    fBanana->Fill(E,deltaE);
 
 
-      //Apply cuts
-      Bool_t isBe = false;
-      if (cut) { //The cut is found
-	       isBe = cut->IsInside(E,deltaE);
-      }
-      else {
-	       if (deltaE >1300 && deltaE<1600 && E>3500 && E<4400)
-	       isBe = true;
-	    }
+    //Apply cuts
+    Bool_t isBe = false;
+    if (cut) { //The cut is found
+	    isBe = cut->IsInside(E,deltaE);
+    }
+    else {
+	    if (deltaE >1300 && deltaE<1600 && E>3500 && E<4400)
+	     isBe = true;
+	  }
 
-      if (!isBe) continue;
+    if (!isBe) continue;
 
-      becounts++; //counts inside the Be window
+    becounts++; //counts inside the Be window
 
-      //FILL HISTOS
-      if (nclu == 0)
-	continue;
-
-
-      Double_t fprompt = 0;
-      Double_t time = clusters.at(0)->cdf_time;
-      Double_t S1 = -1000;
-      Double_t deltaT = (time-start_time.at(30))*2.; //ns
-      Int_t startT = clusters.at(0)->start_time;
+    //FILL HISTOS
+    if (nclu == 0) continue;
 
 
-      //Check for the presence of S1, in time
-      for (size_t icl=0;icl<clusters.size();icl++)
-	{
-	  Double_t atime = clusters.at(icl)->cdf_time;
-	  Double_t adeltaT = (atime-start_time.at(30))*2.; //ns
+    Double_t fprompt = 0;
+    Double_t time = clusters.at(0)->cdf_time;
+    Double_t S1 = -1000;
+    Double_t deltaT = (time-start_time.at(30))*2.; //ns
+    Int_t startT = clusters.at(0)->start_time;
 
 
-	  if (TMath::Abs(adeltaT)<200)
+    //Check for the presence of S1, in time
+    for (size_t icl=0;icl<clusters.size();icl++)
+	  {
+	    Double_t atime = clusters.at(icl)->cdf_time;
+	    Double_t adeltaT = (atime-start_time.at(30))*2.; //ns
+
+
+	    if (TMath::Abs(adeltaT)<200)
 	    {
 	      fprompt = clusters.at(icl)->f90;
 	      if (clusters.at(icl)->f90>0.4)
-		//found a good coupling: timing + neutron-like
-		{
-		  S1 = clusters.at(icl)->charge;
-		  time = clusters.at(icl)->cdf_time;
-		  deltaT = (time-start_time.at(30))*2.; //ns
-		  startT = clusters.at(icl)->start_time;
-		  //cout << "Trovato: " << deltaT << " " << S1 << " " << fprompt << " " << icl << endl;
-		}
+		    //found a good coupling: timing + neutron-like
+		    {
+		      S1 = clusters.at(icl)->charge;
+		      time = clusters.at(icl)->cdf_time;
+		      deltaT = (time-start_time.at(30))*2.; //ns
+		      startT = clusters.at(icl)->start_time;
+		      //cout << "Trovato: " << deltaT << " " << S1 << " " << fprompt << " " << icl << endl;
+		    }
 	      h90->Fill(fprompt);
 	    }
-	}
-      /*
-      if (totCharge > 20)
-	S1 = totCharge;
-      fprompt = f90_fixed;
-      Double_t deltaT = 0; //just for check
-      */
-      //No good matching found
-      if (S1 < 0)
-	continue;
+	  }
+
+    /*
+    if (totCharge > 20)
+	  S1 = totCharge;
+    fprompt = f90_fixed;
+    Double_t deltaT = 0; //just for check
+    */
+
+    //No good matching found
+    if (S1 < 0) continue;
 
 
 
-      dT->Fill(deltaT);
-      hS1->Fill(S1);
+    dT->Fill(deltaT);
+    hS1->Fill(S1);
 
-      if (TMath::Abs(deltaT)>50 &&
-	  TMath::Abs(deltaT)<200)
-	{
-	  counterBck++;
-	}
+    if (TMath::Abs(deltaT)>50 && TMath::Abs(deltaT)<200) counterBck++;
 
-      if (TMath::Abs(deltaT)<50)
-	{
-	  //	  cout << "Sono qui: " << fprompt << " " << deltaT << " " << E << " " << deltaE << endl;
-	  fCBanana->Fill(E,deltaE);
-	  counter++;
-	}
+    if (TMath::Abs(deltaT)<50)
+	  {
+	    //cout << "Sono qui: " << fprompt << " " << deltaT << " " << E << " " << deltaE << endl;
+	    fCBanana->Fill(E,deltaE);
+	    counter++;
+	  }
 
-    }
+  }
 
 
   //Now subtract background and fill histos

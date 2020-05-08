@@ -165,7 +165,7 @@ TCut DefineQualityCuts( Int_t experiment_cfg ){
     number_of_clusters = "number_of_clusters == 1";
     rep = "clusters[0].rep == 1";
   } else if ( experiment_cfg == 2 ){
-    number_of_clusters = "number_of_clusters > 1";
+    number_of_clusters = "number_of_clusters >= 1";
     rep = "clusters[0].rep == 1 && clusters[1].rep == 1";
   }
 
@@ -209,7 +209,6 @@ TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, 
 
 
 
-
 TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, int ymax=20000){
 
   TFile *file = new TFile( Form("runs/run_%d.root", run), "read" );
@@ -245,7 +244,6 @@ TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, i
   hist -> SetDirectory(0);
   return hist;
 }
-
 
 
 
@@ -309,7 +307,7 @@ TH1F* GenerateF90Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, D
 }
 
 
-/* void WriteS1Histogram ()
+/* void WriteF90Histogram ()
  *
  *  Summary of Function:
  *

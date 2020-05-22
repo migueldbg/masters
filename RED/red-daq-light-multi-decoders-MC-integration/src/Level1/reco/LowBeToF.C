@@ -68,54 +68,48 @@ TCut LowBeCut( Int_t run, Int_t num_bins, Int_t E_min, Int_t E_max, Int_t dE_min
   return lowBe_cut;
 }
 
-void LowBeContourCut( Int_t run, Int_t num_bins, Int_t E_min, Int_t E_max, Int_t dE_min, Int_t dE_max ){
+void LowBeContourCut( Int_t run, Int_t contourNumber, Int_t contourSize ){
 
-  TH2F* banana_hist = Bananator(run, num_bins, E_min, E_max, dE_min, dE_max);
+  Int_t num_bins = 400;
+  Int_t E_min  = 1500;  Int_t E_max  = 4000;
+  Int_t dE_min = 400;   Int_t dE_max = 1200;
 
-  Double_t gold_ratio = 1.61803398875;
-  Double_t height = 500;    Double_t width = gold_ratio * height;
+  TH2F* bananaHist = Bananator(run, num_bins, E_min, E_max, dE_min, dE_max);
+
+  Double_t goldRatio = 1.61803398875;
+  Double_t height = 500;    Double_t width = goldRatio * height;
 
   TCanvas* canvas1 = new TCanvas("canvas1", "Delta E/E Contours", width, height);
 
-  Int_t number_of_contours = 1;   Double_t size_of_contours = 10/number_of_contours;
-  Double_t contours[number_of_contours];
+  Double_t contours[contourNumber];
 
-  for (Int_t i = 0; i < number_of_contours; i++){
-    contours[i] = (i+1)*size_of_contours;
+  for (Int_t i = 0; i < contourNumber; i++){
+    contours[i] = (i+1)*contourSize;
   }
 
-  banana_hist -> SetContour(number_of_contours, contours);
+  bananaHist -> SetContour(contourNumber, contours);
 
-  banana_hist -> Draw("CONT Z LIST");
+  bananaHist -> Draw("CONT Z LIST");
   canvas1 -> Update();
 
   // Get Contours
-  TObjArray *conts     = (TObjArray*)gROOT -> GetListOfSpecials() -> FindObject("contours");
-  TList* contour_level = NULL;
-  TGraph* curve        = NULL;
-  TGraph* curve_clone  = NULL;
-  TGraph* max_curve    = NULL;
+  TObjArray* contourList    = (TObjArray*)gROOT -> GetListOfSpecials() -> FindObject("contours");
+  TList*     contourLevel   = NULL;
+  TGraph*    curve          = NULL;
+  TGraph*    curveClone     = NULL;
+  TGraph*    maxCurve       = NULL;
 
-  Int_t number_of_graphs = 0;
-  Int_t total_contours   = 0;
+  Int_t contourTotal = 0;
 
-  if ( conts == NULL ){
+  if ( contourList == NULL ){
     std::cout << "No contours were extracted!" << std::endl;
-    total_contours = 0;
+    contourTotal = 0;
     return 0;
   } else {
-    total_contours = conts -> GetSize();
+    contourTotal = contourList -> GetSize();
   }
 
-  std::cout << "Total Contours:" << total_contours << std::endl;
-
-  for (Int_t i = 0; i < total_contours; i++){
-    contour_level = (TList*) conts -> At(i);
-    std::cout << "Contour " << i << " has " << contour_level -> GetSize() << " graphs." << std::endl;
-    number_of_graphs += contour_level -> GetSize();
-  }
-
-  number_of_graphs = 0;
+  std::cout << "Total Contours:" << contourTotal << std::endl;
 
   TCanvas* canvas2 = new TCanvas("canvas2", "Delta E/E Contours", width, height);
   canvas2 -> Divide(2,1);

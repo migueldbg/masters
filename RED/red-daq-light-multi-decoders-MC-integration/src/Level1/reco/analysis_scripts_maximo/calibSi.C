@@ -92,22 +92,21 @@ double AsymGaus(double *v,double *par)
 void FitCalib(vector<Double_t> MeanE, vector<Double_t> eMeanE, vector<Double_t> MeanDE, vector<Double_t> eMeanDE, vector<Double_t> E0 )
 {
 
-  auto chi2Function = [&](const Double_t *par)
-    {
-      //minimisation function computing the sum of squares of residuals
-      // looping at the data points
-      Double_t f=0;
-      for (size_t i=0;i<MeanE.size();i++) {
-	Double_t expectedEnergy = E0[i];
+  auto chi2Function = [&](const Double_t *par) {
 
-	Double_t p1 = (par[0] + par[1]*MeanDE[i]+par[2]*MeanE[i] -
-		       expectedEnergy);
-	Double_t errorsquare = (  (eMeanDE[i]/MeanDE[i])*(eMeanDE[i]/MeanDE[i]) +
+    //minimisation function computing the sum of squares of residuals
+    // looping at the data points
+    Double_t f=0;
+    for (size_t i=0;i<MeanE.size();i++) {
+	    Double_t expectedEnergy = E0[i];
+
+	    Double_t p1 = (par[0] + par[1]*MeanDE[i]+par[2]*MeanE[i] - expectedEnergy);
+	    Double_t errorsquare = (  (eMeanDE[i]/MeanDE[i])*(eMeanDE[i]/MeanDE[i]) +
 				  (eMeanE[i]/MeanE[i])*(eMeanE[i]/MeanE[i]) )  *expectedEnergy*expectedEnergy;
-	f += p1*p1/errorsquare; //minimization!
+	    f += p1*p1/errorsquare; //minimization!
       }
-      return f;
-    };
+    return f;
+  };
 
   ROOT::Math::Functor fcn(chi2Function,3);
   ROOT::Fit::Fitter  fitter;
@@ -174,7 +173,7 @@ void CalibGold()
       frun_i[iF]=runRef[iF]; ftime_i[iF]=10.;  IsTPC=false;
 
       TTree *t;
-      std::string FileName=Form("reco/run_%d.root",runRef[iF]);
+      std::string FileName=Form("../runs/run_%d.root",runRef[iF]);
       TFile *f=new TFile(FileName.c_str());
       f->GetObject("reco",t);
       Summary(t,iF);
@@ -460,9 +459,9 @@ void CalibCH2(  bool FitBand=false )
   const double E0[nF_in]={18.,26.,28.};
   double thetaSi[nF_in]={ 5.5, 5.5, 5.5 };
 
-  TH1F   *h1D[2][nF_in];
-  TGraph *t2D[nF_in];
-  TH2F   *h2D[nF_in];
+  TH1F     *h1D[2][nF_in];
+  TGraph   *t2D[nF_in];
+  TH2F     *h2D[nF_in];
   TProfile *hP[2][nF_in];
 
   int color[4]={kBlue, kRed, kGreen+2,kBlack};
@@ -475,7 +474,7 @@ void CalibCH2(  bool FitBand=false )
       frun_i[iF]=runRef[iF]; ftime_i[iF]=10.;  IsTPC=false;
 
       TTree *t;
-      std::string FileName=Form("reco/run_%d.root",runRef[iF]);
+      std::string FileName=Form("../runs/run_%d.root",runRef[iF]);
       TFile *f=new TFile(FileName.c_str());
       f->GetObject("reco",t);
       Summary(t,iF);

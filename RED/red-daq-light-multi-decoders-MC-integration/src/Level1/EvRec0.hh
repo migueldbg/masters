@@ -15,8 +15,8 @@
 #include<stdio.h>
 
 #include "EvHeader.hh"
-#include "RDCluster.hh"
-#include "RDPulseFit.hh"
+#include "../Modules/RDCluster.hh"
+#include "../Modules/RDPulseFit.hh"
 
 #include "TROOT.h"
 #include "TObject.h"

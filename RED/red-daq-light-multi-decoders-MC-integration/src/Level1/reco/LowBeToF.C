@@ -33,7 +33,7 @@
 
 TCut LowBeCut( Int_t run, Int_t num_bins, Int_t E_min, Int_t E_max, Int_t dE_min, Int_t dE_max ){
 
-  TH2F* banana_hist = Bananator(run, num_bins, E_min, E_max, dE_min, dE_max);
+  TH2F* bananaHist = Bananator(run, num_bins, E_min, E_max, dE_min, dE_max);
   //                            15011521, 400, 1500, 4000, 400, 1200
 
   // Boundaries to enclose the low energy Berillium blob. This values are calibrated to the 1501-1521 runs.
@@ -55,8 +55,8 @@ TCut LowBeCut( Int_t run, Int_t num_bins, Int_t E_min, Int_t E_max, Int_t dE_min
   TCanvas* canvas = new TCanvas("canvas", "canvas", width, height);
 
   gStyle -> SetPalette(kSunset);
-  banana_hist -> SetOption("COLZ");
-  banana_hist -> Draw("CONT Z LIST");
+  bananaHist -> SetOption("COLZ");
+  bananaHist -> Draw("CONT Z LIST");
   E_low_L -> Draw("SAME");  E_upp_L -> Draw("SAME");  dE_low_L -> Draw("SAME");  dE_upp_L -> Draw("SAME");
 
   TCut E_low_cut  = Form("baseline_mean[31] - ymin[31] > %f", E_low);

@@ -243,13 +243,15 @@ void F90vToF(Int_t run){
   Double_t f90_min = 0.;   Double_t f90_max = 1.;
   Double_t tof_min = -100.;   Double_t tof_max = 100.;
 
-  TCut histogram_cuts = DefineCuts(cfg, f90_min, f90_max, 0, 0, 0, 0, tof_min, tof_min);
-  TCut lowBe_cut = LowBeCut( run, 400, 1500, 4000, 400, 1200 );
+  Double_t binSize = 0.25;
+  Double_t binNumber = (tof_max - tof_min)/binSize;
 
-  TCut total_cut = histogram_cuts && lowBe_cut;
+  TCut histogram_cuts = DefineCuts(cfg, f90_min, f90_max, 0, 0, 0, 0, tof_min, tof_max);
+  TCutG* lowBe_cut = LowBeGraphCut(run);
+  TCut combinedCut = histogram_cuts && "lowBe_cut";
 
-  TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", 400, tof_min, tof_max, 120, f90_min, f90_max);
-  reco -> Project( "f90ToF_hist", "clusters[0].f90:2*(start_time[30] - clusters[0].cdf_time)", total_cut );
+  TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", binNumber, tof_min, tof_max, 100, f90_min, f90_max);
+  reco -> Project( "f90ToF_hist", "clusters[0].f90:2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time)", combinedCut );
 
   f90ToF_hist -> Draw("COLZ");
 }

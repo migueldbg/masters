@@ -162,10 +162,10 @@ TCut DefineQualityCuts( Int_t experiment_cfg ){
   TCut rep = "";
 
   if ( experiment_cfg == 1 ){
-    number_of_clusters = "number_of_clusters == 1";
+    number_of_clusters = "number_of_clusters >= 1";
     rep = "clusters[0].rep == 1";
   } else if ( experiment_cfg == 2 ){
-    number_of_clusters = "number_of_clusters >= 1";
+    number_of_clusters = "number_of_clusters >= 2";
     rep = "clusters[0].rep == 1 && clusters[1].rep == 1";
   }
 
@@ -194,7 +194,7 @@ TCut DefineQualityCuts( Int_t experiment_cfg ){
  *
  *  Return Value : TCut final_cut.
  */
-TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, Double_t s1_up, Double_t s2_low, Double_t s2_up, Double_t tof_low = 0., Double_t tof_up = 0. ){
+TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, Double_t s1_up, Double_t s2_low = 0, Double_t s2_up = 0, Double_t tof_low = 0., Double_t tof_up = 0. ){
 
   TCut quality_cuts = DefineQualityCuts( cfg );
   TCut s1_range     = DefineS1Range( s1_low, s1_up );

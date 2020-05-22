@@ -204,8 +204,8 @@ void F90vToF(Int_t run){
 
   TCut total_cut = histogram_cuts && lowBe_cut;
 
-  TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", 100, tof_min, tof_max, 120, f90_min, f90_max);
-  reco -> Project( "f90ToF_hist", "clusters[0].f90:2*(xmin[30] - clusters[0].min_x)", total_cut );
+  TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", 400, tof_min, tof_max, 120, f90_min, f90_max);
+  reco -> Project( "f90ToF_hist", "clusters[0].f90:2*(start_time[30] - clusters[0].cdf_time)", total_cut );
 
   f90ToF_hist -> Draw("COLZ");
 }

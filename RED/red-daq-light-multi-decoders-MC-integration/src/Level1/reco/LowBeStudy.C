@@ -31,9 +31,9 @@
  */
 
 
-TCut LowBeCut( Int_t run, Int_t num_bins, Int_t E_min, Int_t E_max, Int_t dE_min, Int_t dE_max ){
+TCut LowBeCut( Int_t run, Int_t num_bins, Int_t EMin, Int_t EMax, Int_t dEMin, Int_t dEMax ){
 
-  TH2F* bananaHist = Bananator(run, num_bins, E_min, E_max, dE_min, dE_max);
+  TH2F* bananaHist = Bananator(run, num_bins, EMin, EMax, dEMin, dEMax);
   //                            15011521, 400, 1500, 4000, 400, 1200
 
   // Boundaries to enclose the low energy Berillium blob. This values are calibrated to the 1501-1521 runs.
@@ -71,10 +71,10 @@ TCut LowBeCut( Int_t run, Int_t num_bins, Int_t E_min, Int_t E_max, Int_t dE_min
 void LowBeContourCut( Int_t run, Int_t contourNumber, Int_t contourSize ){
 
   Int_t num_bins = 400;
-  Int_t E_min  = 1500;  Int_t E_max  = 4000;
-  Int_t dE_min = 400;   Int_t dE_max = 1200;
+  Int_t EMin  = 1500;  Int_t EMax  = 4000;
+  Int_t dEMin = 400;   Int_t dEMax = 1200;
 
-  TH2F* bananaHist = Bananator(run, num_bins, E_min, E_max, dE_min, dE_max);
+  TH2F* bananaHist = Bananator(run, num_bins, EMin, EMax, dEMin, dEMax);
 
   Double_t goldRatio = 1.61803398875;
   Double_t height = 500;    Double_t width = goldRatio * height;
@@ -113,7 +113,7 @@ void LowBeContourCut( Int_t run, Int_t contourNumber, Int_t contourSize ){
 
   TCanvas* canvas2 = new TCanvas("canvas2", "Delta E/E Contours", width, height);
   canvas2 -> Divide(2,1);
-  TH2F* hr = new TH2F("hr", "Contours", 2, E_min, E_max, 2, dE_min, dE_max);
+  TH2F* hr = new TH2F("hr", "Contours", 2, EMin, EMax, 2, dEMin, dEMax);
 
   canvas2 -> cd(1);
   hr->Draw();
@@ -154,8 +154,7 @@ void LowBeContourCut( Int_t run, Int_t contourNumber, Int_t contourSize ){
   output_file -> WriteObject(maxCurve, Form("lowBecut_%d", run), "OverWrite");
   output_file -> Close();
 }
-
-
+/*
 TCutG* LowBeGraphCut( int run ){
 
   TFile*  bCutFile    = new TFile("LowBeCut.root", "UPDATE");
@@ -178,15 +177,43 @@ TCutG* LowBeGraphCut( int run ){
   bGraphCut -> SetVarX("baseline_mean[31] - ymin[31]");
   bGraphCut -> SetVarY("baseline_mean[30] - ymin[30]");
 
-  /*
-  TFile* data_file = new TFile(Form("runs/run_%d.root", run), "UPDATE");
-  TTree* reco;    data_file -> GetObject("reco", reco);
-
-
-  reco -> Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31] >> hist", "gcut", "colz");
-  */
-
   return bGraphCut;
+}
+*/
+
+RooEllipse* SigmaEllipse( Int_t run, Double_t multiplier = 1. ){
+
+  TF2* bigaus = new TF2("bigaus", "bigaus", 2200, 2780, 680, 880);
+  bigaus -> SetParameters(7e+05, 2500, 100, 770, 30, -0.4 );
+
+  TH2F* bananaHist = Bananator(run, 400, 1500, 4000, 400, 1200);
+  bananaHist -> Fit("bigaus", "R0");
+
+  Double_t meanX = bigaus -> GetParameter("MeanX");   Double_t sigmaX = bigaus -> GetParameter("SigmaX");
+  Double_t meanY = bigaus -> GetParameter("MeanY");   Double_t sigmaY = bigaus -> GetParameter("SigmaY");
+  Double_t rho   = bigaus -> GetParameter("Rho");
+
+  auto* confidenceEllipse = new RooEllipse(Form("%2.1fSigmaEllipse", multiplier), meanX, meanY, multiplier*sigmaX, multiplier*sigmaY, rho);
+
+  return confidenceEllipse;
+}
+
+void PlotEllipses( Int_t run ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+
+  TH2F* bananaHist = Bananator(run, 400, 1500, 4000, 400, 1200);
+
+  TGraph* oneSigma = (TGraph*) SigmaEllipse(run, 1);
+  TGraph* twoSigma = (TGraph*) SigmaEllipse(run, 2);
+
+  oneSigma -> SetLineWidth(3);    oneSigma -> SetLineColor(kRed-4);
+  twoSigma -> SetLineWidth(3);    twoSigma -> SetLineColor(kRed-4);
+
+  bananaHist -> Draw("COLZ");
+  oneSigma -> Draw("SAME");
+  twoSigma -> Draw("SAME");
 }
 
 void TimeOfFlight(Int_t run){
@@ -196,27 +223,27 @@ void TimeOfFlight(Int_t run){
 
   bool normalize = false;
   Int_t cfg = 2;
-  Double_t s1_min  = 50.;  Double_t s1_max  = 5000.;
-  Double_t s2_min  = 50.;  Double_t s2_max  = 10000.;
-  Double_t f90_min = 0.;   Double_t f90_max = 1.;
-  Double_t tof_min = 0.;   Double_t tof_max = 40.;
+  Double_t s1Min  = 50.;  Double_t s1Max  = 5000.;
+  Double_t s2Min  = 50.;  Double_t s2Max  = 10000.;
+  Double_t f90Min = 0.;   Double_t f90Max = 1.;
+  Double_t tofMin = 0.;   Double_t tofMax = 40.;
 
-  Double_t binSize = 0.25;
-  Double_t binNumber = (tof_max - tof_min)/binSize;
+  Double_t tofBinSize = 0.25;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
 
-  TCut histogram_cuts = DefineCuts(cfg, f90_min, f90_max, s1_min, s1_max, s2_min, s2_max, 0, 0);
-  TCutG* lowBe_cut = LowBeGraphCut(run);
-  TCut combinedCut = histogram_cuts && "lowBe_cut";
+  TCut histogramCut = DefineCuts(cfg, f90Min, f90Max, s1Min, s1Max, s2Min, s2Max, 0, 0);
+  TCutG* lowBeCut = LowBeGraphCut(run);
+  TCut combinedCut = histogramCut && "lowBe_Cut";
 
-  TH1F* tofHistogram   = GenerateToFHistogram(runFile_name, histogram_cuts, binNumber, tof_min, tof_max, normalize);
-  TH1F* tofBeHistogram = GenerateToFHistogram(runFile_name, combinedCut, binNumber, tof_min, tof_max, normalize);
+  TH1F* tofHistogram   = GenerateToFHistogram(runFile_name, histogramCut, tofBinNumber, tofMin, tofMax, normalize);
+  TH1F* tofBeHistogram = GenerateToFHistogram(runFile_name, combinedCut, tofBinNumber, tofMin, tofMax, normalize);
 
   gStyle -> SetLabelFont(102, "xyz");
   gStyle -> SetTitleFont(102, "xyz");
   gStyle -> SetTitleFont(102, "t");
 
   tofHistogram -> SetName("tofHist");
-  tofHistogram -> GetYaxis() -> SetTitle(Form("Counts/%3.2f ns", binSize));
+  tofHistogram -> GetYaxis() -> SetTitle(Form("Counts/%3.2f ns", tofBinSize));
   tofHistogram -> GetXaxis() -> SetTitle("ns");
   tofHistogram -> SetLineColor(kBlue);
   tofHistogram -> Draw();
@@ -240,17 +267,19 @@ void F90vToF(Int_t run){
   TTree* reco;  file -> GetObject("reco", reco);
 
   Int_t cfg = 2;
-  Double_t f90_min = 0.;   Double_t f90_max = 1.;
-  Double_t tof_min = -100.;   Double_t tof_max = 100.;
+  Double_t f90Min = 0.;   Double_t f90Max = 1.;
+  Double_t tofMin = -100.;   Double_t tofMax = 100.;
 
-  Double_t binSize = 0.25;
-  Double_t binNumber = (tof_max - tof_min)/binSize;
+  Double_t tofBinSize = 0.25;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
+  Double_t f90BinSize = 0.005;
+  Double_t f90BinNumber = (f90Max - f90Min)/f90BinSize;
 
-  TCut histogram_cuts = DefineCuts(cfg, f90_min, f90_max, 0, 0, 0, 0, tof_min, tof_max);
-  TCutG* lowBe_cut = LowBeGraphCut(run);
-  TCut combinedCut = histogram_cuts && "lowBe_cut";
+  TCut histogramCut = DefineCuts(cfg, f90Min, f90Max, 0, 0, 0, 0, tofMin, tofMax);
+  TCutG* lowBeCut = LowBeGraphCut(run);
+  TCut combinedCut = histogramCut && "lowBeCut";
 
-  TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", binNumber, tof_min, tof_max, 100, f90_min, f90_max);
+  TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", tofBinNumber, tofMin, tofMax, f90BinNumber, f90Min, f90Max);
   reco -> Project( "f90ToF_hist", "clusters[0].f90:2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time)", combinedCut );
 
   f90ToF_hist -> Draw("COLZ");

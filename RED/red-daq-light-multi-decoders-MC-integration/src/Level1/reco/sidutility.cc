@@ -12,6 +12,21 @@
 #include <iostream>
 #include <vector>
 
+TStyle* SetSidStyle(){
+  auto sidStyle = new TStyle("sidStyle", "Sid's Style");
+  sidStyle -> SetPalette(kSunset);
+  sidStyle -> SetLabelFont(102, "xyz");
+  sidStyle -> SetTitleFont(102, "xyz");
+  sidStyle -> SetTitleFont(102, "t");
+  sidStyle -> SetCanvasBorderMode(0);
+  sidStyle -> SetPadBorderMode(0);
+  sidStyle -> SetTitleX(0.5);
+  sidStyle -> SetTitleBorderSize(0);
+  sidStyle -> SetTitleAlign(23);
+  sidStyle -> SetOptStat(0);
+  return sidStyle;
+}
+
 /* TFile* CheckFile()
  *
  * Summary of CheckFile function:

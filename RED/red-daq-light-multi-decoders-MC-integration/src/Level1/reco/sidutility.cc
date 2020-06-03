@@ -223,7 +223,6 @@ TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, 
 }
 
 
-
 TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, int ymax=20000){
 
   TFile *file = new TFile( Form("runs/run_%d.root", run), "read" );
@@ -238,28 +237,47 @@ TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, i
 
   // ************** Bananator ************** //
 
-  TCanvas *canvas1 = new TCanvas("canvas1", "canvas1", 10, 10, 900, 600);
-
-  canvas1 -> cd();
-  canvas1 -> SetLogz();
-
   TString hist_title = "#DeltaE / E Spectrum ";
 
   TH2F *hist = new TH2F("hist", hist_title, nbin, xmin, xmax, nbin, ymin, ymax);
 
-  reco -> Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31] >> hist");
+  reco -> Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31] >> hist", "", "goff");
 
   hist -> GetXaxis() -> SetTitle("E [ADC counts]");
   hist -> GetXaxis() -> SetTitleOffset(1.16);
   hist -> GetYaxis() -> SetTitle("#Delta E [ADC counts]");
   hist -> GetYaxis() -> SetTitleOffset(1.36);
 
-  hist -> DrawCopy("colz");
+  //hist -> DrawCopy("colz");
 
   hist -> SetDirectory(0);
   return hist;
 }
 
+TCutG* LowBeGraphCut( int run ){
+
+  TFile*  bCutFile    = new TFile("LowBeCut.root", "UPDATE");
+  TCutG*  bGraphCut   = new TCutG("lowBeCut");
+  TString bCutName    = Form("lowBecut_%d", run);
+  TGraph* sourceGraph = new TGraph();
+
+  if ( bCutFile -> IsOpen() ){
+    sourceGraph = (TGraph*)bCutFile -> Get(bCutName);
+    bCutFile -> Close();
+  }
+
+  double* x = sourceGraph -> GetX();
+  double* y = sourceGraph -> GetY();
+
+  for (Int_t i = 0; i < sourceGraph -> GetN(); i++){
+    bGraphCut -> SetPoint(i, x[i], y[i]);
+  }
+
+  bGraphCut -> SetVarX("baseline_mean[31] - ymin[31]");
+  bGraphCut -> SetVarY("baseline_mean[30] - ymin[30]");
+
+  return bGraphCut;
+}
 
 
 /* TH1* NormalizeHist()

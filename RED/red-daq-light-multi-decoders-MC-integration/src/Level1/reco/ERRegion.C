@@ -27,8 +27,8 @@
 
 
 Int_t    exp_cfg = 2;
-Double_t f90_min = 0.15;
-Double_t f90_max = 0.4;
+Double_t f90_min = 0.1;
+Double_t f90_max = 1.0;
 Double_t s1_min  = 0.0;
 Double_t s1_max  = 1000.0;
 
@@ -58,7 +58,7 @@ void ERRegion( int run ){
   Double_t xq[nq] = {0.03, 0.97};
   Double_t yq[nq];
 
-  Int_t binsNumber = 10;
+  Int_t binsNumber = 6;
   Double_t binSize = (s1_max - s1_min)/binsNumber;
   Double_t s1LowBound;
   Double_t s1UppBound;

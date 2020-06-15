@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* File: CreateF90Histograms.C (ROOT macro).
  *
  * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).
@@ -17,6 +18,9 @@
 
 #include <array>
 #include <cstring>
+=======
+#include "sidutility.cc"
+>>>>>>> runs_check
 
 #include <TCut.h>
 #include <TFile.h>
@@ -26,6 +30,7 @@
 #include <TSystem.h>
 #include <TTree.h>
 
+<<<<<<< HEAD
 /* TFile* CheckFile( TString path_name )
  *
  * Summary of CheckFile function:
@@ -71,6 +76,31 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
 
   return directory;
 }
+=======
+#include <array>
+#include <cstring>
+
+/* ************************************************************************************************************************* *
+ * File: CreateF90Histograms.C (ROOT macro).                                                                                 *
+ *                                                                                                                           *
+ * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).                                                              *
+ * Date of creation : February 4 2020.                                                                                       *
+ *                                                                                                                           *
+ * Summary of File:                                                                                                          *
+ *                                                                                                                           *
+ *    The goal of this macro is to generate a number of f90 histograms for a given run. We utilize three different data      *
+ *    sets: actual data, an electron recoil (ER) only Monte Carlo (MC) simulation and a neutron recoil (NR) only MC          *
+ *    simulation. The user defines the max total charge value of the events to be considered and also determines the number  *
+ *    of bins utilized when constructing the histograms. The program then generates a number of histograms equal to the      *
+ *    number of bins provided by the size of the bin, each one moving along the total charge: starts at 0, goes up to max    *
+ *    total charge in incriments defined by the bin size. The bin size is defined as the total charge range divide by the    *
+ *    number of bins. The generated histograms are then saved in a root file, separated in different folders to facilitate   *
+ *    later access, if necessary.                                                                                            *
+ *                                                                                                                           *
+ * ************************************************************************************************************************* */
+
+
+>>>>>>> runs_check
 
 /* TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR )
  *
@@ -115,6 +145,7 @@ TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR ){
 
 
 
+<<<<<<< HEAD
 TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
 
   TCut f90_range;
@@ -297,6 +328,8 @@ void WriteF90Hist( TDirectory* save_dir, TString file_name, TCut histogram_cuts,
 
 
 
+=======
+>>>>>>> runs_check
 /* void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t number_of_bins = 50, Double_t min_charge = 0., Double_t max_charge = 1000.)
  *
  *  Summary of Function:
@@ -342,13 +375,20 @@ void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
   }
 
   Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
+<<<<<<< HEAD
   Double_t charge_low;   Double_t charge_up;
   TString hist_name;     TString hist_title;
+=======
+  Double_t s1_charge_low;   Double_t s1_charge_up;
+  TString hist_name;     TString hist_title;
+
+>>>>>>> runs_check
   TCut histogram_cuts;
 
   for (int i = 0; i < number_of_bins; i++){
 
     // Calculate the boundaries of the current bin.
+<<<<<<< HEAD
     charge_low = ( i      * bin_size ) + min_charge;
     charge_up  = ((i + 1) * bin_size ) + min_charge;
 
@@ -358,6 +398,17 @@ void CreateF90ERHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
     hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) charge_low, (int) charge_up );
 
     WriteF90Hist( dir, run_file_name, histogram_cuts, hist_name, hist_title );
+=======
+    s1_charge_low = ( i      * bin_size ) + min_charge;
+    s1_charge_up  = ((i + 1) * bin_size ) + min_charge;
+
+    histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, s1_charge_low, s1_charge_up, tof_min, tof_max);
+
+    hist_name  = Form( "f90_histogram_%ser_%d", (isMC)?"mc":"", i+1 );
+    hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) s1_charge_low, (int) s1_charge_up );
+
+    WriteF90Histogram( dir, run_file_name, histogram_cuts, 100, f90_min, f90_max, false, hist_name, hist_title );
+>>>>>>> runs_check
   }
 
   output_file -> Close();
@@ -395,6 +446,7 @@ void CreateF90NRHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
   else if ( isMC ) { run_file_name = Form("runs/run_%d_MCNR.root", run); }
 
   // NUCLEAR RECOIL EVENT SELECTION PARAMETERS //
+<<<<<<< HEAD
   Double_t f90_min; Double_t f90_max;
   Double_t tof_min; Double_t tof_max; // If the ToF border values are equal, the code doesn't apply a ToF cut.
   // ----------------------------------------- //
@@ -402,10 +454,19 @@ void CreateF90NRHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
   if ( tof_cut ){
     f90_min = 0.0;  f90_max = 1.0;
     tof_min = 0.0;  tof_max = 50;
+=======
+  Double_t f90_min;  Double_t f90_max;
+  Double_t tof_min;  Double_t tof_max; // If the ToF border values are equal, the code doesn't apply a ToF cut.
+
+  if ( tof_cut ){
+    f90_min = 0.0;  f90_max = 1.0;
+    tof_min = 30;  tof_max = 42;  // based on runs 1501 to 1521.
+>>>>>>> runs_check
   } else if ( !tof_cut ) {
     f90_min = 0.4;  f90_max = 0.7;
     tof_min = 0.0;  tof_max = 0.0;
   }
+<<<<<<< HEAD
 
   Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
   Double_t charge_low;   Double_t charge_up;
@@ -424,11 +485,47 @@ void CreateF90NRHistograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof
     hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC NR":"NR", (int) charge_low, (int) charge_up );
 
     WriteF90Hist( dir, run_file_name, histogram_cuts, hist_name, hist_title );
+=======
+  // ----------------------------------------- //
+
+  // LOW ENERGY BERILIUM BLOB SELECTION (basend on runs 1501 to 1521) //
+  Double_t E_min  = 2250.; Double_t E_max  = 2725.;
+  Double_t dE_min = 700.;  Double_t dE_max = 850.;
+
+  TCut E_min_cut  = Form("baseline_mean[31] - ymin[31] > %f", E_min);
+  TCut E_max_cut  = Form("baseline_mean[31] - ymin[31] < %f", E_max);
+  TCut dE_min_cut = Form("baseline_mean[30] - ymin[30] > %f", dE_min);
+  TCut dE_max_cut = Form("baseline_mean[30] - ymin[30] < %f", dE_max);
+
+  TCut lowBe_cut = E_min_cut && E_max_cut && dE_min_cut && dE_max_cut;
+  // ---------------------------------------------------------------- //
+
+  Double_t bin_size = ( max_charge - min_charge ) / number_of_bins;
+  Double_t s1_charge_low;  Double_t s1_charge_up;
+
+  TString  hist_name;      TString  hist_title;
+  TCut histogram_cuts;  TCut total_cuts;
+
+  for (Int_t i = 0; i < number_of_bins; i++){
+
+    // Calculate the boundaries of the current bin.
+    s1_charge_low = ( i       * bin_size ) + min_charge;
+    s1_charge_up  = ( (i + 1) * bin_size ) + min_charge;
+
+    histogram_cuts = DefineCuts(exp_cfg, f90_min, f90_max, s1_charge_low, s1_charge_up, 0, 50000, tof_min, tof_max);
+    total_cuts = histogram_cuts && lowBe_cut;
+
+    hist_name  = Form( "f90_histogram_%snr_%d", (isMC)?"mc":"", i+1 );
+    hist_title = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC NR":"NR", (int) s1_charge_low, (int) s1_charge_up );
+
+    WriteF90Histogram( dir, run_file_name, total_cuts, 100, f90_min, f90_max, false, hist_name, hist_title);
+>>>>>>> runs_check
   }
 
   output_file -> Close();
 }
 
+<<<<<<< HEAD
 void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge = 1000., Double_t min_charge = 20.){
 
   TString file_name = Form("analysis_%d.root", run);
@@ -485,4 +582,24 @@ void CreateF90Histograms (int run, Double_t bin_size = 20., Double_t max_charge 
   }
 
   hist_file -> Close();
+=======
+
+
+void CreateF90Histograms ( int run, Int_t exp_cfg, bool isMC = false, bool tof_cut = false, Int_t ERorNR = 10, Int_t number_of_bins = 50, Double_t min_charge = 20., Double_t max_charge = 1000. ){
+
+  switch(ERorNR){
+    case 0:
+        CreateF90ERHistograms( run, exp_cfg, isMC, tof_cut, number_of_bins, min_charge, max_charge );
+        break;
+    case 1:
+        CreateF90NRHistograms( run, exp_cfg, isMC, tof_cut, number_of_bins, min_charge, max_charge );
+        break;
+    case 10:
+        CreateF90ERHistograms( run, exp_cfg, isMC, tof_cut, number_of_bins, min_charge, max_charge );
+        CreateF90NRHistograms( run, exp_cfg, isMC, tof_cut, number_of_bins, min_charge, max_charge );
+        break;
+    default:
+        std::cout << "Invalid 'ERorNR' parameter value. Plese enter one of the following options: 0 (ER), 1 (NR) or 10 (ER & NR)." << std::endl;
+  }
+>>>>>>> runs_check
 }

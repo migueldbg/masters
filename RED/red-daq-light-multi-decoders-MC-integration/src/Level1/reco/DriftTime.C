@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+#include "sidutility.cc"
+
+>>>>>>> runs_check
 #include <TCut.h>
 #include <TFile.h>
 #include <THStack.h>
@@ -7,6 +12,7 @@
 #include <TSystem.h>
 #include <TTree.h>
 
+<<<<<<< HEAD
 /* TFile* CheckFile( TString path_name )
  *
  * Summary of CheckFile function:
@@ -65,6 +71,8 @@ TH1* NormalizeHist( TH1* hist, Double_t norm = 1. ){
 
   return normalized_hist;
 }
+=======
+>>>>>>> runs_check
 
 void DrifTime(int run, const char* recoil_type ){
 

@@ -13,6 +13,7 @@
 #include <vector>
 
 /* *********************************************************************************************************************** *
+ *
  * File: RunsCheck.C
  *
  * Author: Miguel Del Ben Galdiano.
@@ -67,7 +68,7 @@ void CheckRunFieldOnS1(){
 
   std::vector<int> runs_on {1501, 1502, 1503, 1504, 1506, 1508, 1509, 1510, 1511, 1512, 1513, 1514, 1515, 1516, 1519, 1520, 1521};
 
-  TString file_name = Form( "analysis_%d-%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
+  TString file_name = Form( "analysis_%d%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
   TFile* output_file = CheckFile(file_name);
 
   for (Int_t i  =  0; i < 3; i++){
@@ -100,7 +101,7 @@ void CheckRunFieldOnS2(){
 
   std::vector<int> runs_on {1501, 1502, 1503, 1504, 1506, 1508, 1509, 1510, 1511, 1512, 1513, 1514, 1515, 1516, 1519, 1520, 1521};
 
-  TString file_name = Form( "analysis_%d-%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
+  TString file_name = Form( "analysis_%d%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
   TFile* output_file = CheckFile(file_name);
 
   for (Int_t i  =  0; i < 3; i++){
@@ -133,7 +134,7 @@ void CheckRunFieldOnDrift(){
 
   std::vector<int> runs_on {1501, 1502, 1503, 1504, 1506, 1508, 1509, 1510, 1511, 1512, 1513, 1514, 1515, 1516, 1519, 1520, 1521};
 
-  TString file_name = Form( "analysis_%d-%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
+  TString file_name = Form( "analysis_%d%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
   TFile* output_file = CheckFile(file_name);
 
   for (Int_t i  =  0; i < 3; i++){
@@ -166,7 +167,7 @@ void CheckRunFieldOnF90(){
 
   std::vector<int> runs_on {1501, 1502, 1503, 1504, 1506, 1508, 1509, 1510, 1511, 1512, 1513, 1514, 1515, 1516, 1519, 1520, 1521};
 
-  TString file_name = Form( "analysis_%d-%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
+  TString file_name = Form( "analysis_%d%d.root", runs_on.at(0), runs_on.at(runs_on.size() - 1) );
   TFile* output_file = CheckFile(file_name);
 
   for (Int_t i  =  0; i < 3; i++){

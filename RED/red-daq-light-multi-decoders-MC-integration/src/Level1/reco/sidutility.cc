@@ -12,6 +12,21 @@
 #include <iostream>
 #include <vector>
 
+TStyle* SetSidStyle(){
+  auto sidStyle = new TStyle("sidStyle", "Sid's Style");
+  sidStyle -> SetPalette(kSunset);
+  sidStyle -> SetLabelFont(102, "xyz");
+  sidStyle -> SetTitleFont(102, "xyz");
+  sidStyle -> SetTitleFont(102, "t");
+  sidStyle -> SetCanvasBorderMode(0);
+  sidStyle -> SetPadBorderMode(0);
+  sidStyle -> SetTitleX(0.5);
+  sidStyle -> SetTitleBorderSize(0);
+  sidStyle -> SetTitleAlign(23);
+  sidStyle -> SetOptStat(0);
+  return sidStyle;
+}
+
 /* TFile* CheckFile()
  *
  * Summary of CheckFile function:
@@ -37,6 +52,7 @@ TFile* CheckFile( TString path_name ){
   return file;
 }
 
+
 /* TDirectory* MakeDirectory()
   *
   * Summary of MakeDirectory function:
@@ -59,13 +75,40 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
 }
 
 
+/* void MergeRuns( std::vector<int> runs )
+ *
+ *  Summary of Function:
+ *
+ *    The function takes a set of root files and merges the 'reco' tree of each one into a single
+ *    TTree object. The resulting merged tree is then saved into a root file.
+ *
+ *  Parameters   : runs >> a vector of integers containing the number of each run to be merged.
+ *
+ *  Return Value : void.
+ */
+TFile* MergeRuns( std::vector<int> runs ){
+
+  TChain* reco_chain = new TChain("reco");
+  TString file_name;
+  for (Int_t i = 0; i < runs.size(); i++){
+    file_name = Form("runs/run_%d.root", runs.at(i));
+    reco_chain -> Add(file_name.Data());
+  }
+
+  TString output_file_name = Form("runs/run_%d%d.root", runs.front(), runs.back());
+  reco_chain -> Merge(output_file_name.Data(), "fast");
+
+  TFile* file = new TFile(output_file_name, "update");
+  return file;
+}
+
 
 TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
 
   TCut f90_range;
 
   if ( f90_low > f90_up ) {
-    std::cout << "Invalid f90 range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid f90 range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( f90_low == f90_up ) {
     f90_range = "";
@@ -76,12 +119,13 @@ TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
   return f90_range;
 }
 
+
 TCut DefineS1Range( Double_t s1_low, Double_t s1_up ){
 
   TCut s1_range;
 
   if ( s1_low > s1_up ) {
-    std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( s1_low == s1_up ) {
     s1_range = "";
@@ -92,12 +136,13 @@ TCut DefineS1Range( Double_t s1_low, Double_t s1_up ){
   return s1_range;
 }
 
+
 TCut DefineS2Range( Double_t s2_low, Double_t s2_up ){
 
   TCut s2_range;
 
   if ( s2_low > s2_up ) {
-    std::cout << "Invalid S2 charge range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid S2 charge range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( s2_low == s2_up ) {
     s2_range = "";
@@ -108,12 +153,13 @@ TCut DefineS2Range( Double_t s2_low, Double_t s2_up ){
   return s2_range;
 }
 
+
 TCut DefineToFRange( Double_t tof_low, Double_t tof_up ){
 
   TCut tof_range;
 
   if ( tof_low > tof_up ) {
-    std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary.";
+    std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
   } else if ( tof_low == tof_up ) {
     tof_range = "";
@@ -124,16 +170,17 @@ TCut DefineToFRange( Double_t tof_low, Double_t tof_up ){
   return tof_range;
 }
 
+
 TCut DefineQualityCuts( Int_t experiment_cfg ){
 
   TCut number_of_clusters = "";
   TCut rep = "";
 
   if ( experiment_cfg == 1 ){
-    number_of_clusters = "number_of_clusters == 1";
+    number_of_clusters = "number_of_clusters >= 1";
     rep = "clusters[0].rep == 1";
   } else if ( experiment_cfg == 2 ){
-    number_of_clusters = "number_of_clusters > 1";
+    number_of_clusters = "number_of_clusters >= 2";
     rep = "clusters[0].rep == 1 && clusters[1].rep == 1";
   }
 
@@ -162,7 +209,7 @@ TCut DefineQualityCuts( Int_t experiment_cfg ){
  *
  *  Return Value : TCut final_cut.
  */
-TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, Double_t s1_up, Double_t s2_low, Double_t s2_up, Double_t tof_low = 0., Double_t tof_up = 0. ){
+TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, Double_t s1_up, Double_t s2_low = 0, Double_t s2_up = 0, Double_t tof_low = 0., Double_t tof_up = 0. ){
 
   TCut quality_cuts = DefineQualityCuts( cfg );
   TCut s1_range     = DefineS1Range( s1_low, s1_up );
@@ -174,7 +221,6 @@ TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, 
 
   return total_cut;
 }
-
 
 
 TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, int ymax=20000){
@@ -191,26 +237,46 @@ TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, i
 
   // ************** Bananator ************** //
 
-  TCanvas *canvas1 = new TCanvas("canvas1", "canvas1", 10, 10, 900, 600);
-
-  canvas1 -> cd();
-  canvas1 -> SetLogz();
-
   TString hist_title = "#DeltaE / E Spectrum ";
 
   TH2F *hist = new TH2F("hist", hist_title, nbin, xmin, xmax, nbin, ymin, ymax);
 
-  reco -> Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31] >> hist");
+  reco -> Draw("baseline_mean[30] - ymin[30]:baseline_mean[31] - ymin[31] >> hist", "", "goff");
 
   hist -> GetXaxis() -> SetTitle("E [ADC counts]");
   hist -> GetXaxis() -> SetTitleOffset(1.16);
   hist -> GetYaxis() -> SetTitle("#Delta E [ADC counts]");
   hist -> GetYaxis() -> SetTitleOffset(1.36);
 
-  hist -> DrawCopy("colz");
+  //hist -> DrawCopy("colz");
 
   hist -> SetDirectory(0);
   return hist;
+}
+
+TCutG* LowBeGraphCut( int run ){
+
+  TFile*  bCutFile    = new TFile("LowBeCut.root", "UPDATE");
+  TCutG*  bGraphCut   = new TCutG("lowBeCut");
+  TString bCutName    = Form("lowBecut_%d", run);
+  TGraph* sourceGraph = new TGraph();
+
+  if ( bCutFile -> IsOpen() ){
+    sourceGraph = (TGraph*)bCutFile -> Get(bCutName);
+    bCutFile -> Close();
+  }
+
+  double* x = sourceGraph -> GetX();
+  double* y = sourceGraph -> GetY();
+
+  for (Int_t i = 0; i < sourceGraph -> GetN(); i++){
+    bGraphCut -> SetPoint(i, x[i], y[i]);
+  }
+
+  bGraphCut -> SetVarX("baseline_mean[31] - ymin[31]");
+  bGraphCut -> SetVarY("baseline_mean[30] - ymin[30]");
+
+  return bGraphCut;
 }
 
 
@@ -273,7 +339,8 @@ TH1F* GenerateF90Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, D
     return f90_hist;
 }
 
-/* void WriteS1Histogram ()
+
+/* void WriteF90Histogram ()
  *
  *  Summary of Function:
  *
@@ -340,6 +407,7 @@ TH1F* GenerateS1Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, Do
 
     return s1_hist;
 }
+
 
 /* void WriteS1Histogram ()
  *
@@ -408,6 +476,7 @@ TH1F* GenerateS2Histogram( TString file_name, TCut hist_cuts, Int_t num_bins, Do
 
     return s2_hist;
 }
+
 
 /* void WriteS2Histogram ()
  *
@@ -478,6 +547,7 @@ TH1F* GenerateDriftTimeHistogram( TString file_name, TCut hist_cuts, Int_t num_b
     return dt_hist;
 }
 
+
 /* void WriteDriftTimeHistogram ()
  *
  *  Summary of Function:
@@ -533,8 +603,8 @@ void WriteDriftTimeHistogram( TDirectory* save_dir, TString file_name, TCut hist
   TFile* file = new TFile(file_name);
   TTree* reco; file -> GetObject("reco", reco);
 
-  TH1F* tof_hist = new TH1F("tof_hist", "Time of Flight (TPC and SiTEL); Time (ns)", num_bins, tof_min, tof_max);
-  reco -> Project( "tof_hist", "2*(xmin[30] - clusters[0].min_x)", hist_cuts);
+  TH1F* tof_hist = new TH1F("tof_hist", "Time of Flight (TPC and SiTel); Time (ns)", num_bins, tof_min, tof_max);
+  reco -> Project( "tof_hist", "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time)", hist_cuts);
 
   if (tof_hist -> GetSumw2N() == 0) tof_hist -> Sumw2(kTRUE);
 
@@ -546,6 +616,7 @@ void WriteDriftTimeHistogram( TDirectory* save_dir, TString file_name, TCut hist
 
   return tof_hist;
 }
+
 
 /* void WriteToFHistogram ()
  *

@@ -7,6 +7,7 @@
 #include <TTree.h>
 
 /* TFile* CheckFile( TString path_name )
+<<<<<<< HEAD
   *
   * Summary of CheckFile function:
   *
@@ -17,6 +18,18 @@
   *
   * Return value : TFile* file.
   */
+=======
+ *
+ * Summary of CheckFile function:
+ *
+ *    The CheckFile function checks if a given file already exists and returns this information to the user.
+ *    If the file exists, CheckFile returns it. If not, it creates it and then returns it.
+ *
+ * Parameters   : path_name >> The name of the desired file.
+ *
+ * Return value : TFile* file.
+ */
+>>>>>>> runs_check
 TFile* CheckFile( TString path_name ){
 
   if (gSystem -> AccessPathName(path_name)) {

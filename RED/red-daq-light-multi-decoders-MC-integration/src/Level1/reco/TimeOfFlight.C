@@ -8,6 +8,8 @@
 
 #include <vector>
 
+using namespace std;
+
 /* ************************************************************************************************************************* *
  * File: TimeOfFlight.C (ROOT macro).                                                                                        *
  *                                                                                                                           *
@@ -84,21 +86,6 @@ void ProjectX( TH1* hist ){
 
 }
 
-TStyle* SetSidStyle(){
-  auto sidStyle = new TStyle("sidStyle", "Sid's Style");
-  sidStyle -> SetPalette(kSunset);
-  sidStyle -> SetLabelFont(102, "xyz");
-  sidStyle -> SetTitleFont(102, "xyz");
-  sidStyle -> SetTitleFont(102, "t");
-  sidStyle -> SetCanvasBorderMode(0);
-  sidStyle -> SetPadBorderMode(0);
-  sidStyle -> SetTitleX(0.5);
-  sidStyle -> SetTitleBorderSize(0);
-  sidStyle -> SetTitleAlign(23);
-  sidStyle -> SetOptStat(0);
-  return sidStyle;
-}
-
 void SiTelTPCToFvS1( int run ){
 
   TStyle* sidStyle = SetSidStyle();
@@ -115,9 +102,9 @@ void SiTelTPCToFvS1( int run ){
   Double_t s1BinSize = 5;
   Double_t s1BinNumber = (s1Max - s1Min)/s1BinSize;
 
-  TCut tpcCut     = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
-  TCutG* lowBeCut = LowBeGraphCut(run);
-  TCut totalCut   = tpcCut && "lowBeCut";
+  TCut   tpcCut   = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut = LowBeGraphCut(run, "lowBeCut");
+  TCut   totalCut = tpcCut && "lowBeCut";
 
   TH2F* ToFvS1Hist   = new TH2F("ToFvS1_hist", "SiTel-TPC ToF vs S1", s1BinNumber, s1Min, s1Max, tofBinNumber, tofMin, tofMax);
   TH2F* ToFvS1HistBe = new TH2F("ToFvS1_histBe", "SiTel-TPC ToF vs S1 (Low Be)", s1BinNumber, s1Min, s1Max, tofBinNumber, tofMin, tofMax);
@@ -125,7 +112,7 @@ void SiTelTPCToFvS1( int run ){
   reco -> Project("ToFvS1_hist", "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time):clusters[0].charge", tpcCut);
   reco -> Project("ToFvS1_histBe", "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time):clusters[0].charge", totalCut);
 
-  Double_t height = 500; Double_t width = gdRatio * height ;
+  Double_t height = 500; Double_t width = gdRatio * height;
   TCanvas* canvas = new TCanvas("canvas", "canvas", 2*width, height);
   canvas -> Divide(2,1);
 
@@ -138,7 +125,7 @@ void SiTelTPCToFvS1( int run ){
   ToFvS1HistBe -> GetXaxis() -> SetTitle("S1[PE]");
   ToFvS1HistBe ->  Draw("COLZ");
 
-  ToFvS1HistBe -> ProjectionY("_py", -1, 0) -> Draw();
+  //ToFvS1HistBe -> ProjectionY("_py", 20, 22) -> Draw();
 
   std::cout << ToFvS1Hist -> GetNbinsX() << std::endl;
   std::cout << ToFvS1HistBe -> GetNbinsX() << std::endl;
@@ -382,15 +369,36 @@ void LSciPSD( Int_t run, Int_t chanID ){
   TFile* file = CheckFile(file_name);
   TTree* reco;  file -> GetObject("reco", reco);
 
-  /*TCut histogramCuts = DefineCuts(exp_cfg, f90Min, f90Max, s1Min, s1Max);
 
-  TCut E_low_cut  = Form("baseline_mean[31] - ymin[31] > %f", E_low);
-  TCut E_upp_cut  = Form("baseline_mean[31] - ymin[31] < %f", E_upp);
-  TCut dE_low_cut = Form("baseline_mean[30] - ymin[30] > %f", dE_low);
-  TCut dE_upp_cut = Form("baseline_mean[30] - ymin[30] < %f", dE_upp);
-  TCut lowBe_cut = E_low_cut && E_upp_cut && dE_low_cut && dE_upp_cut;*/
+  Double_t psdMin       = 0;   Double_t psdMax       = 1.0;
+  //Double_t psdMinZ      = 0;   Double_t psdMaxZ      = 1.0;
+  Double_t lsChargeMin  = 0;   Double_t lsChargeMax  = 200e3;
+  Double_t lsChargeMinZ = 0;   Double_t lsChargeMaxZ = 2e3;
 
-  //reco -> Project("hist", "2*(start_time[30] - start_time[1])", histogramCuts && lowBe_cut);
+  Double_t psdBinSize       = 0.002;  Int_t psdBinNumber       = (psdMax - psdMin)/psdBinSize;
+  Double_t lsChargeBinSize  = 200;    Int_t lsChargeBinNumber  = (lsChargeMax - lsChargeMin)/lsChargeBinSize;
+  Double_t lsChargeBinSizeZ = 10;     Int_t lsChargeBinNumberZ = (lsChargeMaxZ - lsChargeMinZ)/lsChargeBinSizeZ;
 
-  reco -> Draw("(start_time[0] - 0.5*(start_time[31] + start_time[30] - 7.83))*2.", "charge[1]>2000 && Iteration$==0", "");
+  TCut lsChargeCut  = Form("charge[%d] >= %f && charge[%d] <= %f", chanID, lsChargeMin,  chanID, lsChargeMax);
+  TCut lsChargeCutZ = Form("charge[%d] >= %f && charge[%d] <= %f", chanID, lsChargeMinZ, chanID, lsChargeMaxZ);
+  TCut psdCut = Form("f90[%d] >= %f && f90[%d] <= %f", chanID, psdMin, chanID, psdMax);
+
+  TH2F* PSDvCharge = new TH2F("PSDvCharge", "PSD vs Charge (LSci 0)",
+                              lsChargeBinNumber, lsChargeMin, lsChargeMax, psdBinNumber, psdMin, psdMax);
+  TH2F* PSDvChargeZ = new TH2F("PSDvChargeZ", "PSD vs Charge (LSci 0)",
+                               lsChargeBinNumberZ, lsChargeMinZ, lsChargeMaxZ, psdBinNumber, psdMin, psdMax);
+
+  PSDvCharge  -> GetXaxis() -> SetTitle("Charge");    PSDvCharge  -> GetYaxis() -> SetTitle("PSD");
+  PSDvChargeZ -> GetXaxis() -> SetTitle("Charge");    PSDvChargeZ -> GetYaxis() -> SetTitle("PSD");
+
+  reco -> Project("PSDvCharge",  Form("f90[%d]:charge[%d]", chanID, chanID), lsChargeCut  && psdCut);
+  reco -> Project("PSDvChargeZ", Form("f90[%d]:charge[%d]", chanID, chanID), lsChargeCutZ && psdCut);
+
+
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* canvas = new TCanvas("canvas", "canvas", 2*width, height);
+  canvas -> Divide(2,1);
+
+  canvas -> cd(1);  PSDvCharge  -> Draw("HIST COLZ");
+  canvas -> cd(2);  PSDvChargeZ -> Draw("HIST COLZ");
 }

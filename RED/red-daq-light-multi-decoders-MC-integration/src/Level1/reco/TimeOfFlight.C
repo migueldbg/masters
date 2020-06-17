@@ -31,6 +31,53 @@ Double_t s1Max  = 1000.0;
 
 const double gdRatio = 1.61803398875;
 
+void F90vS1( Int_t run ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+
+  TString file_name = Form("runs/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+
+  TTree* reco;  file -> GetObject("reco", reco);
+
+
+  Double_t tpcToFMin = 20;    Double_t tpcToFMax = 30;
+  Double_t lsciToFMin = -30;  Double_t lsciToFMax = -20;
+
+  TCut tpcToF = Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) >= %f && 2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) <= %f", tpcToFMin, tpcToFMax);
+  TCut lsciToF = Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - start_time[0]) >= %f && 2*(0.5*(start_time[30] + start_time[31] - 7.45) - start_time[0]) <= %f", lsciToFMin, lsciToFMax);
+  TCut qualityCut = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut = LowBeGraphCut(run, "LowBeCut");
+  TCut tpcCut = qualityCut && "LowBeCut";
+
+  TH2F* f90vS1Hist[3];
+  const char* histNames[3] = {"tpc_cut", "tpc_cut + tpcToF", "tpc_cut + tpcToF + lsciToF"};
+  TCut cuts[3] = {tpcCut, tpcCut && tpcToF, tpcCut && tpcToF && lsciToF};
+
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* canvas = new TCanvas("canvas", "canvas", 3*width, height);
+  canvas -> Divide(3,1);
+
+  for (Int_t i = 0; i < 3; i++){
+
+    f90vS1Hist[i] = new TH2F(histNames[i], "f90 v S1", 100, s1Min, s1Max, 100, f90Min, f90Max);
+    reco -> Project(histNames[i], "clusters[0].f90:clusters[0].charge", cuts[i]);
+
+    canvas -> cd(i + 1);
+    if (i < 2){
+      f90vS1Hist[i] -> Draw("COLZ");
+    } else {
+      f90vS1Hist[i] -> SetMarkerStyle(20);
+      f90vS1Hist[i] -> SetMarkerSize(1);
+
+      f90vS1Hist[i] -> Draw();
+    }
+  }
+
+}
+
+
 void ProjectX( TH1* hist ){
 
 

@@ -146,15 +146,237 @@ void SiTelTPCToFvS1( int run ){
   file -> Close();
 }
 
-void LSciTPCToF( int run ){
 
-  gStyle -> SetLabelFont(102, "xyz");
-  gStyle -> SetTitleFont(102, "xyz");
-  gStyle -> SetTitleFont(102, "t");
+void TPCLSciToF( Int_t run, Int_t chanID ){
 
-  Double_t lsToFMin = -500;
-  Double_t lsToFMax = 500;
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
+  TString file_name = Form("runs/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+  Int_t cfg = 2;
+  Double_t s1Min = 50;    Double_t s1Max = 1000;
+  Double_t f90Min = 0.1;    Double_t f90Max = 1.0;
+  Double_t tofMin = 300;   Double_t tofMax = 700;
+
+  Double_t erRange = 0.3;
+
+  Double_t tofBinSize = 1;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
+
+  TCut tpcCut = DefineCuts(cfg, f90Min, f90Max, s1Min, s1Max);
+  TCut tpcCutER = DefineCuts(cfg, f90Min, f90Min + erRange, s1Min, s1Max);
+  TCut tpcCutNR = DefineCuts(cfg, f90Min + erRange, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut = LowBeGraphCut(run, "LowBeCut");
+
+  TH1F* tpcLSciTof[2];   TH1F* tpcLSciTofER[2];   TH1F* tpcLSciTofNR[2];
+
+  tpcLSciTof[0]   = new TH1F("tpcLSciTof", "No Be Selection", tofBinNumber, tofMin, tofMax);
+  tpcLSciTofER[0] = new TH1F("tpcLSciTofER", "", tofBinNumber, tofMin, tofMax);
+  tpcLSciTofNR[0] = new TH1F("tpcLSciTofNR", "", tofBinNumber, tofMin, tofMax);
+
+  tpcLSciTof[1]   = new TH1F("tpcLSciTof_LowBe", "Low Be Selection", tofBinNumber, tofMin, tofMax);
+  tpcLSciTofER[1] = new TH1F("tpcLSciTofER_LowBe", "", tofBinNumber, tofMin, tofMax);
+  tpcLSciTofNR[1] = new TH1F("tpcLSciTofNR_LowBe", "", tofBinNumber, tofMin, tofMax);
+
+
+  const char* histName[6] = {"tpcLSciTof", "tpcLSciTofER", "tpcLSciTofNR",
+                             "tpcLSciTof_LowBe", "tpcLSciTofER_LowBe", "tpcLSciTofNR_LowBe"};
+
+  TCut cut[6] = {tpcCut, tpcCutER, tpcCutNR, tpcCut && "LowBeCut", tpcCutER && "LowBeCut", tpcCutNR && "LowBeCut"};
+
+  for (Int_t i = 0; i < 6; i++){
+    reco -> Project(histName[i], Form("(clusters[0].cdf_time - start_time[%d])*2.", chanID), cut[i]);
+  }
+
+  for (Int_t i = 0; i < 2; i++){
+
+    tpcLSciTof[i]   -> SetLineWidth(2);
+    tpcLSciTofER[i] -> SetLineWidth(2);    tpcLSciTofER[i] -> SetLineColor(kRed);
+    tpcLSciTofNR[i] -> SetLineWidth(2);    tpcLSciTofNR[i] -> SetLineColor(kBlue);
+
+    tpcLSciTof[i] -> GetXaxis() -> SetTitle("ToF (TPC-LSci) [ns]");
+    tpcLSciTof[i] -> GetYaxis() -> SetTitle("Counts/1 ns");
+  }
+
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* canvas = new TCanvas("canvas", "Time of Flight (TPC - LSci)", 2*width, height);
+  canvas -> Divide(2,1);
+
+  TLegend*legend = new TLegend(0.85,0.74,0.95,0.95);
+  legend -> SetTextFont(102);
+  legend -> SetTextSize(0.03);
+  legend -> AddEntry(tpcLSciTof[1], Form("%2.1f #leq f90 #geq %2.1f", f90Min, f90Max), "l");
+  legend -> AddEntry(tpcLSciTofER[1], Form("%2.1f #leq f90 #geq %2.1f", f90Min, f90Min + erRange), "l");
+  legend -> AddEntry(tpcLSciTofNR[1], Form("%2.1f #leq f90 #geq %2.1f", f90Min + erRange, f90Max), "l");
+
+  for (Int_t i = 0; i < 2; i++){
+    canvas -> cd(i+1);
+    tpcLSciTof[i] -> Draw("HIST");
+    tpcLSciTofER[i] -> Draw("HIST SAME");
+    tpcLSciTofNR[i] -> Draw("HIST SAME");
+    legend -> Draw();
+  }
+
+  Double_t lowBound = 500;    Double_t uppBound = 560;
+  Int_t lowBin = (Int_t)(lowBound - tofMin)/tofBinSize;
+  Int_t uppBin = (Int_t)(uppBound - tofMin)/tofBinSize;
+
+  Double_t peak[2];   Double_t erPeak[2];   Double_t nrPeak[2];
+  for (Int_t i = 0; i < 2; i++){
+    peak[i]   = tpcLSciTof[i] -> Integral(lowBin, uppBin);
+    erPeak[i] = tpcLSciTofER[i] -> Integral(lowBin, uppBin);
+    nrPeak[i] = tpcLSciTofNR[i] -> Integral(lowBin, uppBin);
+
+    cout << "Nº Events at Peak Region (Total): " << peak[i] << endl;
+    cout << "Nº Events at Peak Region (Nuclear Recoil): " << nrPeak[i] << " (" << (nrPeak[i]/peak[i])*100 << "%)" << endl;
+    cout << "Nº Events at Peak Region (Electron Recoil): " << erPeak[i] << " (" << (erPeak[i]/peak[i])*100 << "%)" << endl;
+  }
+}
+
+void TPCLSciToFComparison( Int_t run ){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+
+  TString file_name = Form("runs/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+  Int_t cfg = 2;
+  Double_t s1Min = 50;    Double_t s1Max = 1000;
+  Double_t f90Min = 0.1;    Double_t f90Max = 1.0;
+  Double_t tofMin = 300;   Double_t tofMax = 700;
+
+  Double_t tofBinSize = 0.5;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
+
+  TCut tpcCut = DefineCuts(cfg, f90Min, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut = LowBeGraphCut(run, "LowBeCut");
+
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* canvas = new TCanvas("canvas", "Time of Flight (TPC - LSci)", width, height);
+
+  TH1F* tpcLSciToF[6];
+
+  Int_t chanIDs[6] = {0, 1, 3, 4, 5, 8};
+  const char* histNames[6] = {"LSci_0", "LSci_1", "LSci_3&LSci_7", "LSci_4&LSci_6", "LSci_5", "LSci_8"};
+
+  for (Int_t i = 0; i < 6; i++){
+    tpcLSciToF[i] = new TH1F(histNames[i], "", tofBinNumber, tofMin, tofMax);
+    reco -> Project(histNames[i], Form("(clusters[0].cdf_time - start_time[%d])*2.", chanIDs[i]), tpcCut && "LowBeCut");
+    tpcLSciToF[i] -> SetLineWidth(2);
+    tpcLSciToF[i] -> SetLineColor(2+i);
+
+    if (i == 0) {
+      tpcLSciToF[i] -> SetTitle("ToF TPC-LSci (for all Scintilators);ToF (TPC-LSci) [ns];Counts/1 ns");
+      tpcLSciToF[i] -> Draw("HIST");
+    } else {
+      tpcLSciToF[i] -> Draw("HIST SAME");
+    }
+  }
+
+}
+
+
+void SiTelLSciToF( Int_t run, Int_t chanID ){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+
+  TString file_name = Form("runs/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+  Int_t cfg = 2;
+  Double_t s1Min = 50;    Double_t s1Max = 1000;
+  Double_t f90Min = 0.1;    Double_t f90Max = 1.0;
+  Double_t tofMin = -1000;   Double_t tofMax = 1000 ;
+
+
+  Double_t tofBinSize = 0.5;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
+
+  TCut tpcCut = DefineCuts(cfg, f90Min, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut = LowBeGraphCut(run, "LowBeCut");
+
+  TH1F* siTelLSciTof[3];
+  const char* histNames[3] = {"noCut", "tpcCut", "tpc+lowBeCut"};
+  TCut cuts[3] = {"", tpcCut, tpcCut && "LowBeCut"};
+  EColor colors[3] = {kBlack, kBlue, kRed};
+
+  for (Int_t i = 0; i < 3; i++){
+
+    siTelLSciTof[i] = new TH1F(histNames[i], "Time of Flight (SiTel-LSci)", tofBinNumber, tofMin, tofMax);
+    reco -> Project(histNames[i], Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - start_time[%d])", chanID), cuts[i]);
+
+    siTelLSciTof[i] -> SetLineColor(colors[i]);
+    siTelLSciTof[i] -> SetLineWidth(2);
+
+    if (i == 0) {
+      siTelLSciTof[i] -> GetXaxis() -> SetTitle("ToF (SiTel-LSci) [ns]");
+      siTelLSciTof[i] -> GetXaxis() -> SetTitle("Counts/0.5 ns");
+      siTelLSciTof[i] -> Draw("HIST");
+    } else {
+      siTelLSciTof[i] -> Draw("HIST SAME");
+    }
+
+  }
+
+}
+
+void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+
+  TString file_name = Form("runs/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+
+  Double_t psdMin      = 0.0;   Double_t psdMax      = 1.0;
+  Double_t lsChargeMin = 0;     Double_t lsChargeMax = 200e3;
+  Double_t tofMin      = -200;  Double_t tofMax      = 800 ;
+
+  Double_t tofBinSize = 0.5;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
+
+
+  TH1F* siTelLSciTof[3];
+  const char* histNames[3] = {"noCut", "neutronCut", "gammaCut"};
+  TCut cuts[3] = {"", "lsci_psd_tot[0] >= 0.15 && lsci_psd_tot[0] <= 1.0 && charge[0] > 400",
+                      "lsci_psd_tot[0] >= 0.0 && lsci_psd_tot[0] <= 0.15 && charge[0] > 400"};
+  EColor colors[3] = {kBlack, kBlue, kRed};
+
+  for (Int_t i = 0; i < 3; i++){
+
+    siTelLSciTof[i] = new TH1F(histNames[i], "Time of Flight (SiTel-LSci)", tofBinNumber, tofMin, tofMax);
+    reco -> Project(histNames[i], Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - start_time[%d])", chanID), cuts[i]);
+
+    siTelLSciTof[i] -> SetLineColor(colors[i]);
+    siTelLSciTof[i] -> SetLineWidth(2);
+
+    if (i == 0) {
+      siTelLSciTof[i] -> GetXaxis() -> SetTitle("ToF (SiTel-LSci) [ns]");
+      siTelLSciTof[i] -> GetXaxis() -> SetTitle("Counts/0.5 ns");
+      siTelLSciTof[i] -> Draw("HIST");
+    } else {
+      siTelLSciTof[i] -> Draw("HIST SAME");
+    }
+  }
+
+  TLegend*legend = new TLegend(0.85,0.74,0.95,0.95);
+  legend -> SetTextFont(102);
+  legend -> SetTextSize(0.03);
+  legend -> AddEntry(siTelLSciTof[0], "No Cuts", "l");
+  legend -> AddEntry(siTelLSciTof[1], "NR Selection", "l");
+  legend -> AddEntry(siTelLSciTof[2], "ER Selection", "l");
+  legend -> Draw();
+
+}
+
+void LSciPSD( Int_t run, Int_t chanID ){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
   TString file_name = Form("runs/run_%d.root", run);
   TFile* file = CheckFile(file_name);

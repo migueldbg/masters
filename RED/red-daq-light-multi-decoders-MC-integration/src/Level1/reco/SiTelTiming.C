@@ -35,8 +35,8 @@ void SiTelTiming (int run){
   Double_t binNumber = (tofMax - tofMin)/binSize;
 
   TCut   tpcCut   = DefineCuts(exp_cfg, f90Min, f90Max, s1Min, s1Max);
-  TCutG* lowBeCut = LowBeGraphCut(run);
-  TCut   totalCut = tpcCut && "lowBeCut";
+  TCutG* lowBeCut = LowBeGraphCut(run, "LowBeCut");
+  TCut   totalCut = tpcCut && "LowBeCut";
 
   TH1F* siTeldTHist      = new TH1F("SiTeldTHist",   "SiTel Time Difference", binNumber, tofMin, tofMax);
   TH1F* siTeldTHistBe    = new TH1F("SiTeldTHistBe", "", binNumber, tofMin, tofMax);

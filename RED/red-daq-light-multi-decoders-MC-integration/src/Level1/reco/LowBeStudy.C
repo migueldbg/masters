@@ -30,6 +30,7 @@
     > Rho:      -0.4482 +/- 0.00423
  */
 
+const double gdRatio = 1.61803398875;
 
 TCut LowBeCut( Int_t run, Int_t num_bins, Int_t EMin, Int_t EMax, Int_t dEMin, Int_t dEMax ){
 
@@ -154,34 +155,8 @@ void LowBeContourCut( Int_t run, Int_t contourNumber, Int_t contourSize ){
   output_file -> WriteObject(maxCurve, Form("lowBecut_%d", run), "OverWrite");
   output_file -> Close();
 }
-/*
-TCutG* LowBeGraphCut( int run ){
 
-  TFile*  bCutFile    = new TFile("LowBeCut.root", "UPDATE");
-  TCutG*  bGraphCut   = new TCutG("lowBe_cut");
-  TString bCutName    = Form("lowBecut_%d", run);
-  TGraph* sourceGraph = new TGraph();
-
-  if ( bCutFile -> IsOpen() ){
-    sourceGraph = (TGraph*)bCutFile -> Get(bCutName);
-    bCutFile -> Close();
-  }
-
-  double* x = sourceGraph -> GetX();
-  double* y = sourceGraph -> GetY();
-
-  for (Int_t i = 0; i < sourceGraph -> GetN(); i++){
-    bGraphCut -> SetPoint(i, x[i], y[i]);
-  }
-
-  bGraphCut -> SetVarX("baseline_mean[31] - ymin[31]");
-  bGraphCut -> SetVarY("baseline_mean[30] - ymin[30]");
-
-  return bGraphCut;
-}
-*/
-
-RooEllipse* SigmaEllipse( Int_t run, Double_t multiplier = 1. ){
+RooEllipse* ConfidenceEllipse( Int_t run, Double_t multiplier = 1. ){
 
   TF2* bigaus = new TF2("bigaus", "bigaus", 2200, 2780, 680, 880);
   bigaus -> SetParameters(7e+05, 2500, 100, 770, 30, -0.4 );
@@ -205,18 +180,27 @@ void PlotEllipses( Int_t run ){
 
   TH2F* bananaHist = Bananator(run, 400, 1500, 4000, 400, 1200);
 
-  TGraph* oneSigma = (TGraph*) SigmaEllipse(run, 1);
-  TGraph* twoSigma = (TGraph*) SigmaEllipse(run, 2);
+  TGraph* oneSigma = (TGraph*) ConfidenceEllipse(run, 1);    oneSigma -> SetLineWidth(3);    oneSigma -> SetLineColor(kRed-4);
+  TGraph* twoSigma = (TGraph*) ConfidenceEllipse(run, 2);    twoSigma -> SetLineWidth(3);    twoSigma -> SetLineColor(kRed-4);
 
-  oneSigma -> SetLineWidth(3);    oneSigma -> SetLineColor(kRed-4);
-  twoSigma -> SetLineWidth(3);    twoSigma -> SetLineColor(kRed-4);
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* c1 = new TCanvas("c1", "Banana Histogram", width, height);
+  c1 -> cd();
 
-  bananaHist -> Draw("COLZ");
-  oneSigma -> Draw("SAME");
-  twoSigma -> Draw("SAME");
+  bananaHist -> Draw("COLZ");   oneSigma -> Draw("SAME");  twoSigma -> Draw("SAME");
+
+  oneSigma -> SetTitle("1#sigma Confidence Ellipse");
+  twoSigma -> SetTitle("2#sigma Confidence Ellipse");
+
+  TFile* output_file = new TFile("LowBeCut.root", "UPDATE");
+  output_file -> WriteObject(oneSigma, Form("LowBeOneSigmaCut_%d", run), "OverWrite");
+  output_file -> WriteObject(twoSigma, Form("LowBeTwoSigmaCut_%d", run), "OverWrite");
+  output_file -> Close();
 }
 
 void TimeOfFlight(Int_t run){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
   TString runFile_name = Form("runs/run_%d.root", run);  TFile* runFile = CheckFile(runFile_name);
   TTree* reco;    runFile -> GetObject("reco", reco);
@@ -231,25 +215,27 @@ void TimeOfFlight(Int_t run){
   Double_t tofBinSize = 0.25;
   Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
 
-  TCut histogramCut = DefineCuts(cfg, f90Min, f90Max, s1Min, s1Max, s2Min, s2Max, 0, 0);
-  TCutG* lowBeCut = LowBeGraphCut(run);
-  TCut combinedCut = histogramCut && "lowBe_Cut";
+  TCut tpcCut = DefineCuts(cfg, f90Min, f90Max, s1Min, s1Max, s2Min, s2Max, 0, 0);
+  TCutG* lowBeCut = LowBeGraphCut(run, "LowBeCut");
+  TCut combinedCut = tpcCut && "LowBeCut";
 
-  TH1F* tofHistogram   = GenerateToFHistogram(runFile_name, histogramCut, tofBinNumber, tofMin, tofMax, normalize);
-  TH1F* tofBeHistogram = GenerateToFHistogram(runFile_name, combinedCut, tofBinNumber, tofMin, tofMax, normalize);
+  TH1F* tofHistogram       = GenerateToFHistogram(runFile_name, tpcCut, tofBinNumber, tofMin, tofMax, normalize);
+  TH1F* tofBeHistogram     = GenerateToFHistogram(runFile_name, combinedCut, tofBinNumber, tofMin, tofMax, normalize);
+  TH1F* tofLogHistogram    = new TH1F("tofLogHist", "", tofBinNumber, tofMin, tofMax);
+  TH1F* tofLogBeHistogram  = new TH1F("tofLogBeHist", "", tofBinNumber, tofMin, tofMax);
 
-  gStyle -> SetLabelFont(102, "xyz");
-  gStyle -> SetTitleFont(102, "xyz");
-  gStyle -> SetTitleFont(102, "t");
+  tofHistogram   -> SetLineColor(kBlue);    tofHistogram   -> SetLineWidth(2);
+  tofBeHistogram -> SetLineColor(kRed);     tofBeHistogram -> SetLineWidth(2);
 
-  tofHistogram -> SetName("tofHist");
+  tofLogHistogram   = (TH1F*) tofHistogram -> Clone();
+  tofLogBeHistogram = (TH1F*) tofBeHistogram -> Clone();
+
+  tofHistogram   -> SetName("tofHist");
+  tofBeHistogram -> SetName("tofBeHist");
   tofHistogram -> GetYaxis() -> SetTitle(Form("Counts/%3.2f ns", tofBinSize));
   tofHistogram -> GetXaxis() -> SetTitle("ns");
-  tofHistogram -> SetLineColor(kBlue);
-  tofHistogram -> Draw();
 
-  tofBeHistogram -> SetName("tofBeHist");
-  tofBeHistogram -> SetLineColor(kRed);
+  tofHistogram   -> Draw();
   tofBeHistogram -> Draw("SAME HIST");
 
   TLegend *legend = new TLegend(0.85,0.74,0.95,0.95);
@@ -258,6 +244,19 @@ void TimeOfFlight(Int_t run){
   legend -> AddEntry(tofHistogram, "No Be Selection", "l");
   legend -> AddEntry(tofBeHistogram, "Be Selection", "l");
   legend -> Draw();
+
+  Double_t pointX = 0.15;    Double_t pointY = 0.3;    Double_t padRatio = 0.4;
+
+  TPad* logPad = new TPad("logPad", "", pointX, pointY, pointX + padRatio, pointY + padRatio);
+  logPad -> SetLogy();   logPad -> Draw();   logPad -> cd();
+
+  tofLogHistogram -> SetTitle("");
+  tofLogHistogram -> GetXaxis() -> SetTitle("");
+  tofLogHistogram -> Draw();
+
+  tofLogBeHistogram -> SetTitle("");
+  tofLogBeHistogram -> GetXaxis() -> SetTitle("");
+  tofLogBeHistogram -> Draw("SAME HIST");
 }
 
 void F90vToF(Int_t run){
@@ -275,9 +274,9 @@ void F90vToF(Int_t run){
   Double_t f90BinSize = 0.005;
   Double_t f90BinNumber = (f90Max - f90Min)/f90BinSize;
 
-  TCut histogramCut = DefineCuts(cfg, f90Min, f90Max, 0, 0, 0, 0, tofMin, tofMax);
+  TCut tpcCut = DefineCuts(cfg, f90Min, f90Max, 0, 0, 0, 0, tofMin, tofMax);
   TCutG* lowBeCut = LowBeGraphCut(run);
-  TCut combinedCut = histogramCut && "lowBeCut";
+  TCut combinedCut = tpcCut && "lowBeCut";
 
   TH2F* f90ToF_hist = new TH2F("f90ToF_hist", "F90 vs Time of Flight (TPC and SiTEL); ToF (ns); f90", tofBinNumber, tofMin, tofMax, f90BinNumber, f90Min, f90Max);
   reco -> Project( "f90ToF_hist", "clusters[0].f90:2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time)", combinedCut );

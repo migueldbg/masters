@@ -50,7 +50,7 @@ void F90vS1( Int_t run ){
 
 void ERRegion( int run ){
 
-  TString file_name = Form("runs/run_%d.root", run);
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
   TFile* file = CheckFile(file_name);
   TTree* reco;  file -> GetObject("reco", reco);
 
@@ -58,7 +58,7 @@ void ERRegion( int run ){
   Double_t xq[nq] = {0.03, 0.97};
   Double_t yq[nq];
 
-  Int_t binsNumber = 6;
+  Int_t binsNumber = 50;
   Double_t binSize = (s1_max - s1_min)/binsNumber;
   Double_t s1LowBound;
   Double_t s1UppBound;

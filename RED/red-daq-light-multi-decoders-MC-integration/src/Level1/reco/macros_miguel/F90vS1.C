@@ -35,8 +35,8 @@
 
 using namespace std;
 
-TCut DefineTPCToFCut(Double_t tofMin, Double_t tofMax);
-TCut DefineLSciToFCut(Int_t chanID, Double_t tofMin, Double_t tofMax);
+TCut DefineSiTelTPCToFCut(Double_t tofMin, Double_t tofMax);
+TCut DefineSiTelLSciToFCut(Int_t chanID, Double_t tofMin, Double_t tofMax);
 
 
 Int_t expCfg = 2;
@@ -68,10 +68,10 @@ void F90vS1( Int_t run ){
 
   TCut lsciCuts[chanTotal];
   for (Int_t i = 0; i < chanTotal; i++){
-    lsciCuts[i] = DefineLSciToFCut(chanID[i], lsciToFMin, lsciToFMax);
+    lsciCuts[i] = DefineSiTelLSciToFCut(chanID[i], lsciToFMin, lsciToFMax);
   }
 
-  TCut   tpcToF     = DefineTPCToFCut(tpcToFMin, tpcToFMax);
+  TCut   tpcToF     = DefineSiTelTPCToFCut(tpcToFMin, tpcToFMax);
   TCut   tpcCut     = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
   TCutG* lowBeCut   = LowBeGraphCut(run, "LowBeCut");
   TCut   qualityCut = tpcCut && "LowBeCut";
@@ -131,7 +131,7 @@ void F90vS1( Int_t run ){
 
 }
 
-TCut DefineTPCToFCut(Double_t tofMin, Double_t tofMax){
+TCut DefineSiTelTPCToFCut(Double_t tofMin, Double_t tofMax){
 
   TCut tofMinCut = Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) >= %f", tofMin);
   TCut tofMaxCut = Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) <= %f", tofMax);
@@ -140,7 +140,7 @@ TCut DefineTPCToFCut(Double_t tofMin, Double_t tofMax){
   return tofCut;
 }
 
-TCut DefineLSciToFCut(Int_t chanID, Double_t tofMin, Double_t tofMax){
+TCut DefineSiTelLSciToFCut(Int_t chanID, Double_t tofMin, Double_t tofMax){
 
   TCut tofMinCut = Form("2*(start_time[%d] - 0.5*(start_time[30] + start_time[31] - 7.45)) >= %f", chanID, tofMin);
   TCut tofMaxCut = Form("2*(start_time[%d] - 0.5*(start_time[30] + start_time[31] - 7.45)) <= %f", chanID, tofMax);

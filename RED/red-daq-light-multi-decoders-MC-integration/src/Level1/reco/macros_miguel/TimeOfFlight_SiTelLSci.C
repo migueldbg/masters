@@ -8,7 +8,7 @@
 #include <TTree.h>
 
 /* ************************************************************************************************************************* *
- * File: TimeOfFlight_SiTelTPC.C (ROOT macro).                                                                               *
+ * File: TimeOfFlight_SiTelLSci.C (ROOT macro).                                                                               *
  *                                                                                                                           *
  * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).                                                              *
  * Date of creation : June 28 2020.                                                                                          *
@@ -36,14 +36,14 @@
 
 using namespace std;
 
-/* THStack* TimeOfFlight( Int_t run, TTree* reco, Int_t chanID, TString stackTitle = "stack" )
+/* THStack* CutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitle = "stack" )
  *
  *  Summary of Function:
  *
  *    For a given TTree and a given channel number, this function calculates the time of flight between
  *    the SiTel detector and the given channel. Taking the appropriate channel numbers, the function
  *    calculates the ToF between the SiTel and a LSci. Three histograms are generated, each with
- *    progressively stricter cuts. The first has no cuts applie, the second considers tpc signal quality
+ *    progressively stricter cuts. The first has no cuts applied, the second considers TPC signal quality
  *    cuts and the third also selects the low energy berilium blob. The function then returns a THStack
  *    object containing all three histograms.
  *
@@ -54,7 +54,7 @@ using namespace std;
  *
  *  Return Value : THStack* tofStack
  */
-THStack* ToFCutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitle = "stack" ){
+THStack* CutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitle = "stack" ){
   /*
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
@@ -101,7 +101,7 @@ THStack* ToFCutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitl
 }
 
 
-void AllLSciToFCutAnalysis(Int_t run){
+void CutAnalysisAllChan(Int_t run){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 

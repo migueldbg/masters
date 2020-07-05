@@ -36,7 +36,7 @@
 
 using namespace std;
 
-/* THStack* CutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitle = "stack" )
+/* THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTree* reco = NULL, bool draw = true )
  *
  *  Summary of Function:
  *
@@ -47,21 +47,24 @@ using namespace std;
  *    cuts and the third also selects the low energy berilium blob. The function then returns a THStack
  *    object containing all three histograms.
  *
- *  Parameters   :  run        >> the run containing the desired data
- *                  reco       >> the TTree containing the desired data
+ *  Parameters   :  run        >> the run containing the desired data.
  *                  chanID     >> then number indicating which channel to consider
  *                  stackTitle >> the title of the stack generated
+ *                  reco       >> the TTree containing the desired data. If null, the code finds the TTree acording
+ *                                to the run.
+ *                  draw       >> a bool that tells the code wether the resulting THStack is to be drawn or not.
  *
  *  Return Value : THStack* tofStack
  */
-THStack* CutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitle = "stack" ){
-  /*
-  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTree* reco = NULL, bool draw = true ){
 
-  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
-  TFile* file = CheckFile(file_name);
-  TTree* reco;  file -> GetObject("reco", reco);
-  */
+  if (reco == NULL){
+    TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+
+    TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+    TFile* file = CheckFile(file_name);
+    reco;  file -> GetObject("reco", reco);
+  }
 
   Int_t cfg = 2;
   Double_t s1Min  = 50;      Double_t s1Max  = 1000;
@@ -97,6 +100,11 @@ THStack* CutAnalysis( Int_t run, TTree* reco, Int_t chanID, TString stackTitle =
 
   }
 
+  if (draw){
+    TCanvas* canvas = new TCanvas("canvas", "canvas", 400*gdRatio, 400);
+    tofStack -> Draw("nostack");
+  }
+
   return tofStack;
 }
 
@@ -122,7 +130,7 @@ void CutAnalysisAllChan(Int_t run){
   for (Int_t i = 0; i < chanAmount; i++){
 
     cout << chanIDs[i] << endl;
-    tofStacks[i] = ToFCutAnalysis(run, reco, chanIDs[i], chanNames[i]);
+    tofStacks[i] = CutAnalysis(run, chanIDs[i], chanNames[i], reco, false);
 
     canvas -> cd(i+1);
     tofStacks[i] -> Draw("NOSTACK");

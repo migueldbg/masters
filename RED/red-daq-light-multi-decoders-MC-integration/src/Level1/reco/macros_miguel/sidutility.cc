@@ -1,3 +1,5 @@
+#include "sidutility.h"
+
 #include <TChain.h>
 #include <TCut.h>
 #include <TCanvas.h>
@@ -11,6 +13,7 @@
 
 #include <iostream>
 #include <vector>
+
 
 TStyle* SetSidStyle(){
   auto sidStyle = new TStyle("sidStyle", "Sid's Style");
@@ -85,7 +88,7 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
 }
 
 
-/* void MergeRuns( std::vector<int> runs )
+/* TFile* MergeRuns( std::vector<int> runs )
  *
  *  Summary of Function:
  *
@@ -94,7 +97,7 @@ TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
  *
  *  Parameters   : runs >> a vector of integers containing the number of each run to be merged.
  *
- *  Return Value : void.
+ *  Return Value : TFile* file.
  */
 TFile* MergeRuns( std::vector<int> runs ){
 
@@ -259,7 +262,7 @@ TCutG* LowBeGraphCut( Int_t run, const char* name = "LowBeCut", Int_t sigma = 2 
   if ( sigma == 1 ){
     bCutName = Form("LowBeOneSigmaCut_%d", run);
   } else if ( sigma == 2 ){
-      bCutName = Form("LowBeTwoSigmaCut_%d", run);
+    bCutName = Form("LowBeTwoSigmaCut_%d", run);
   }
 
   if ( bCutFile -> IsOpen() ){

@@ -36,6 +36,10 @@
 
 using namespace std;
 
+TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax);
+TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax);
+
+
 /* THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTree* reco = NULL, bool draw = true )
  *
  *  Summary of Function:
@@ -54,7 +58,7 @@ using namespace std;
  *                                to the run.
  *                  draw       >> a bool that tells the code wether the resulting THStack is to be drawn or not.
  *
- *  Return Value : THStack* tofStack
+ *  Return Value :  THStack* tofStack
  */
 THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTree* reco = NULL, bool draw = true ){
 
@@ -108,7 +112,18 @@ THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTr
   return tofStack;
 }
 
-
+/* void CutAnalysisAllChan(Int_t run)
+ *
+ *  Summary of Function:
+ *
+ *    This function constructs the SiTel-LSci ToF histogram for each LSci and returns a canvas with all six
+ *    plots. Important to note: this function assumes a specific channel mapping (Feb2020_corr_channelmapping).
+ *    and the chanIDs and chanNames variables are defined with that in mind.
+ *
+ *  Parameters   :  run >> the run containing the desired data.
+ *
+ *  Return Value :  void
+ */
 void CutAnalysisAllChan(Int_t run){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
@@ -209,8 +224,7 @@ void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
 
 }
 
-
-void LSciPSD( Int_t run, Int_t chanID ){
+void LSciPSDvCharge( Int_t run, Int_t chanID ){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
@@ -219,29 +233,29 @@ void LSciPSD( Int_t run, Int_t chanID ){
   TTree* reco;  file -> GetObject("reco", reco);
 
 
-  Double_t psdMin       = 0;   Double_t psdMax       = 1.0;
-  //Double_t psdMinZ      = 0;   Double_t psdMaxZ      = 1.0;
-  Double_t lsChargeMin  = 0;   Double_t lsChargeMax  = 200e3;
-  Double_t lsChargeMinZ = 0;   Double_t lsChargeMaxZ = 2e3;
+  Double_t psdMin     = 0;   Double_t psdMax     = 1.0;
+  Double_t chargeMin  = 0;   Double_t chargeMax  = 400e3;
+  Double_t chargeMinZ = 0;   Double_t chargeMaxZ = 2e3;   //Z means 'zoomed'
 
-  Double_t psdBinSize       = 0.002;  Int_t psdBinNumber       = (psdMax - psdMin)/psdBinSize;
-  Double_t lsChargeBinSize  = 200;    Int_t lsChargeBinNumber  = (lsChargeMax - lsChargeMin)/lsChargeBinSize;
-  Double_t lsChargeBinSizeZ = 10;     Int_t lsChargeBinNumberZ = (lsChargeMaxZ - lsChargeMinZ)/lsChargeBinSizeZ;
+  Double_t psdBinSize     = 2E-3;   Int_t psdBinNumber     = (psdMax - psdMin)/psdBinSize;
+  Double_t chargeBinSize  = 4E3;    Int_t chargeBinNumber  = (chargeMax - chargeMin)/chargeBinSize;
+  Double_t chargeBinSizeZ = 10;     Int_t chargeBinNumberZ = (chargeMaxZ - chargeMinZ)/chargeBinSizeZ;
 
-  TCut lsChargeCut  = Form("charge[%d] >= %f && charge[%d] <= %f", chanID, lsChargeMin,  chanID, lsChargeMax);
-  TCut lsChargeCutZ = Form("charge[%d] >= %f && charge[%d] <= %f", chanID, lsChargeMinZ, chanID, lsChargeMaxZ);
-  TCut psdCut = Form("f90[%d] >= %f && f90[%d] <= %f", chanID, psdMin, chanID, psdMax);
+  TCut chargeCut  = DefineLSciChargeCut(chanID, chargeMin, chargeMax);
+  TCut chargeCutZ = DefineLSciChargeCut(chanID, chargeMinZ, chargeMaxZ);
+  TCut psdCut = DefineLSciPSDCut(chanID, psdMin, psdMax);
 
-  TH2F* PSDvCharge = new TH2F("PSDvCharge", "PSD vs Charge (LSci 0)",
-                              lsChargeBinNumber, lsChargeMin, lsChargeMax, psdBinNumber, psdMin, psdMax);
-  TH2F* PSDvChargeZ = new TH2F("PSDvChargeZ", "PSD vs Charge (LSci 0)",
-                               lsChargeBinNumberZ, lsChargeMinZ, lsChargeMaxZ, psdBinNumber, psdMin, psdMax);
 
-  PSDvCharge  -> GetXaxis() -> SetTitle("Charge");    PSDvCharge  -> GetYaxis() -> SetTitle("PSD");
-  PSDvChargeZ -> GetXaxis() -> SetTitle("Charge");    PSDvChargeZ -> GetYaxis() -> SetTitle("PSD");
+  TH2F* PSDvCharge  = new TH2F("psd_charge" , "PSD vs Charge (LSci 0)", chargeBinNumber, chargeMin, chargeMax,
+                                                                        psdBinNumber, psdMin, psdMax);
+  TH2F* PSDvChargeZ = new TH2F("psd_chargeZ", "PSD vs Charge (LSci 0)", chargeBinNumberZ, chargeMinZ, chargeMaxZ,
+                                                                        psdBinNumber, psdMin, psdMax);
 
-  reco -> Project("PSDvCharge",  Form("f90[%d]:charge[%d]", chanID, chanID), lsChargeCut  && psdCut);
-  reco -> Project("PSDvChargeZ", Form("f90[%d]:charge[%d]", chanID, chanID), lsChargeCutZ && psdCut);
+  PSDvCharge  -> GetXaxis() -> SetTitle("Charge [PE]");    PSDvCharge  -> GetYaxis() -> SetTitle("PSD");
+  PSDvChargeZ -> GetXaxis() -> SetTitle("Charge [PE]");    PSDvChargeZ -> GetYaxis() -> SetTitle("PSD");
+
+  reco -> Project("psd_charge" , Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
+  reco -> Project("psd_chargeZ", Form("f90[%d]:charge[%d]", chanID, chanID), chargeCutZ && psdCut);
 
 
   Double_t height = 500; Double_t width = gdRatio * height;
@@ -250,4 +264,23 @@ void LSciPSD( Int_t run, Int_t chanID ){
 
   canvas -> cd(1);  PSDvCharge  -> Draw("HIST COLZ");
   canvas -> cd(2);  PSDvChargeZ -> Draw("HIST COLZ");
+}
+
+
+TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax){
+
+  TCut psdMinCut = Form("f90[%d] >= %f", chanID, psdMin);
+  TCut psdMaxCut = Form("f90[%d] <= %f", chanID, psdMax);
+  TCut psdCut = psdMinCut && psdMaxCut;
+
+  return psdCut;
+}
+
+TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax){
+
+  TCut chargeMinCut = Form("charge[%d] >= %f", chanID, chargeMin);
+  TCut chargeMaxCut = Form("charge[%d] <= %f", chanID, chargeMax);
+  TCut chargeCut = chargeMinCut && chargeMaxCut;
+
+  return chargeCut;
 }

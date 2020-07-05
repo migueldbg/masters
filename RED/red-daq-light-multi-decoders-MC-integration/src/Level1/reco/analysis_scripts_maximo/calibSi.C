@@ -469,67 +469,67 @@ void CalibCH2(  bool FitBand=false )
   nF=nF_in;
 
   for (int iF=0;iF<nF;iF++)
-    {
-      iF_plot.push_back(iF);
-      frun_i[iF]=runRef[iF]; ftime_i[iF]=10.;  IsTPC=false;
+  {
+    iF_plot.push_back(iF);
+    frun_i[iF]=runRef[iF]; ftime_i[iF]=10.;  IsTPC=false;
 
-      TTree *t;
-      std::string FileName=Form("../runs/run_%d.root",runRef[iF]);
-      TFile *f=new TFile(FileName.c_str());
-      f->GetObject("reco",t);
-      Summary(t,iF);
+    TTree *t;
+    std::string FileName=Form("../runs/run_%d.root",runRef[iF]);
+    TFile *f=new TFile(FileName.c_str());
+    f->GetObject("reco",t);
+    Summary(t,iF);
 
-      //----------------
-      const char *hname=Form("h2D%d",iF);
-      h2D[iF]=new TH2F(hname,hname,300,5.,28.,300,1.5,7.5);
-      h2D[iF]->Sumw2();
+    //----------------
+    const char *hname=Form("h2D%d",iF);
+    h2D[iF]=new TH2F(hname,hname,300,5.,28.,300,1.5,7.5);
+    h2D[iF]->Sumw2();
 
-      std::string Sel="1";
+    std::string Sel="1";
 
-      int nn=t->Project(hname,Form("%s:%s", SidE_dep.c_str(),SiE_dep.c_str()), Sel.c_str() );
+    int nn=t->Project(hname, Form( "%s:%s", SidE_dep.c_str(),SiE_dep.c_str() ), Sel.c_str() );
 
-      double *v2=t->GetV2();
-      double *v1=t->GetV1();
-      t2D[iF]=new TGraph(nn,v2,v1);
+    double *v2=t->GetV2();
+    double *v1=t->GetV1();
+    t2D[iF]=new TGraph(nn,v2,v1);
 
-      h2D[iF]->SetDirectory(0);
-      h2D[iF]->Scale(100./h2D[iF]->Integral());
+    h2D[iF]->SetDirectory(0);
+    h2D[iF]->Scale(100./h2D[iF]->Integral());
 
-      //----------------------
-      for (int iBand=0;iBand<2;iBand++)
-	{
-	  //------------------
-	  const char *hnameP=Form("hprof%d%d",iF,iBand);
-	  hP[iBand][iF]=new TProfile(hnameP,hnameP,100,(iBand==0?5.:10.),(iBand==0?30.:20.) );
-	  hP[iBand][iF]->Sumw2();
-	  hP[iBand][iF]->SetDirectory(0);
-	  for (int ii=0;ii<nn;ii++)
+    //----------------------
+    for (int iBand=0;iBand<2;iBand++)
+	  {
+	    //------------------
+	    const char *hnameP = Form("hprof%d%d",iF,iBand);
+	    hP[iBand][iF]=new TProfile(hnameP,hnameP,100,(iBand==0?5.:10.),(iBand==0?30.:20.) );
+	    hP[iBand][iF]->Sumw2();
+	    hP[iBand][iF]->SetDirectory(0);
+	    for (int ii=0; ii<nn; ii++)
 	    {
 	      double E=v2[ii];
 	      double dE=v1[ii];
 	      double dE_p=5.2-4.34*log10(E/10.);
-	      if ( dE>7.) continue;
-	      if ( dE>dE_p && iBand==0 ) continue;
-	      if ( dE<dE_p && iBand==1 ) continue;
+	      if ( dE > 7.) continue;
+	      if ( dE > dE_p && iBand == 0 ) continue;
+	      if ( dE < dE_p && iBand == 1 ) continue;
 	      hP[iBand][iF]->Fill(E,dE);
 	    }
-	}
+	  }
 
-      for (int iBand=0;iBand<2;iBand++)
-	{
-	  //-------------------
-	  const char *hname1D=Form("h1D_%d%d",iF,iBand);
-	  h1D[iBand][iF]=new TH1F(hname1D,hname1D,(iBand==0?300:100.),15.,(iBand==0?30.:25.));
-	  h1D[iBand][iF]->Sumw2();
+    for (int iBand = 0; iBand < 2; iBand++)
+	  {
+	    //-------------------
+	    const char *hname1D=Form("h1D_%d%d",iF,iBand);
+	    h1D[iBand][iF]=new TH1F(hname1D,hname1D,(iBand==0?300:100.),15.,(iBand==0?30.:25.));
+	    h1D[iBand][iF]->Sumw2();
 
-	  nn=t->Project(hname1D,SiEnergy.c_str(), (iBand==0?IsLiBand.c_str():IsBeBand.c_str()) );
-	  h1D[iBand][iF]->SetDirectory(0);
-	  h1D[iBand][iF]->Scale(1./h1D[iBand][iF]->Integral());
-	}
-      f->Close();
+	    nn=t->Project(hname1D,SiEnergy.c_str(), (iBand==0?IsLiBand.c_str():IsBeBand.c_str()) );
+	    h1D[iBand][iF]->SetDirectory(0);
+	    h1D[iBand][iF]->Scale(1./h1D[iBand][iF]->Integral());
+	  }
 
+    f->Close();
 
-    }
+  }
 
 
   //----------------------------------------------------------------------------------
@@ -539,22 +539,22 @@ void CalibCH2(  bool FitBand=false )
 
 
   for (int iF=0;iF<nF;iF++)
-    {
-      cc[canvas]->cd(iF+1);
+  {
+    cc[canvas]->cd(iF+1);
 
-      TH2F *h0=h2D[iF];
-      h0->GetXaxis()->SetTitle("E [MeV]");
-      h0->GetYaxis()->SetTitle("#DeltaE [MeV]");
-      h0->DrawCopy("COLZ");
-      gPad->SetLogz();
+    TH2F *h0=h2D[iF];
+    h0->GetXaxis()->SetTitle("E [MeV]");
+    h0->GetYaxis()->SetTitle("#DeltaE [MeV]");
+    h0->DrawCopy("COLZ");
+    gPad->SetLogz();
 
-      l.DrawLatex(0.5,0.85,Form("E_{beam}=%5.2lf",E0[iF]));
+    l.DrawLatex(0.5,0.85,Form("E_{beam}=%5.2lf",E0[iF]));
 
-      for (int iBand=0;iBand<2;iBand++)
-	{
-	  TF1 *f=new TF1("f","([0]+[1]*(log10(x/10.)))*[2]",0.,30.);
-	  f->SetLineWidth(2);
-	  if ( FitBand )
+    for (int iBand=0;iBand<2;iBand++)
+	  {
+	    TF1 *f=new TF1("f","([0]+[1]*(log10(x/10.)))*[2]",0.,30.);
+	    f->SetLineWidth(2);
+	    if ( FitBand )
 	    {
 	      TProfile *h1=hP[iBand][iF];
 	      h1->DrawCopy("SAME");
@@ -563,19 +563,19 @@ void CalibCH2(  bool FitBand=false )
 	      f->DrawCopy("SAME");
 	      printf("Band=%d  iF=%d  %5.2lf %5.2lf  %5.2lf  N=%f \n",iBand,iF,f->GetParameter(0),f->GetParameter(1),f->GetParameter(2),h1->GetEntries());
 	    }
-	  else
+	    else
 	    {
 	      for (int ii=0;ii<3;ii++)
-		{
-		  double par[3]={ (iBand==0?pLiBand[0]:pBeBand[0]), (iBand==0?pLiBand[1]:pBeBand[1]), (ii==0?1.:(ii==1?0.9:1.1)) };
-		  f->SetParameters(par);
-		  f->SetLineStyle(ii==0?1:2);
-		  f->DrawCopy("SAME");
-		}
+		    {
+		      double par[3]={ (iBand==0?pLiBand[0]:pBeBand[0]), (iBand==0?pLiBand[1]:pBeBand[1]), (ii==0?1.:(ii==1?0.9:1.1)) };
+		      f->SetParameters(par);
+		      f->SetLineStyle(ii==0?1:2);
+		      f->DrawCopy("SAME");
+		    }
+      }
+	  }
+  }
 
-	    }
-	}
-    }
   canvas++;
 
 
@@ -589,35 +589,36 @@ void CalibCH2(  bool FitBand=false )
   double RangeHighBe[nF_in][2] ={ { UNDEF, UNDEF }, {20.5, 22.0}, {22.0,24.0} };
 
   double RangeLowLiP[nF_in][2]   ={ { UNDEF, UNDEF }, {15.0, 16.0}, {16.5,17.5} };
-  double RangeHighLiP[nF_in][2]   ={ { 16.0, 17.0  }, {23.8, 24.8}, {25.2,26.5} };
-  double RangeLiC[nF_in][2]   ={ { 17.4, 18.4 }, {25.0, 26.0}, {27.0,28.0} };
+  double RangeHighLiP[nF_in][2]  ={ { 16.0, 17.0  }, {23.8, 24.8}, {25.2,26.5} };
+  double RangeLiC[nF_in][2]      ={ { 17.4, 18.4 }, {25.0, 26.0}, {27.0,28.0} };
 
   TGraphErrors tTheta[nF_in][3];
 
   for (int iBand=0;iBand<2;iBand++)
-    {
-      cc[canvas]->cd(iBand+1);
+  {
+    cc[canvas]->cd(iBand+1);
 
-      TH2D *hFrame=new TH2D(Form("hX%d",iBand),"",1000, 15., (iBand==0?30.:25.),1000,0.,(iBand==0?0.2:0.1));
-      hFrame->GetXaxis()->SetTitle("E_{rec} [MeV]");
-      hFrame->GetYaxis()->SetTitle("A.U");
-      hFrame->DrawCopy();
+    TH2D *hFrame=new TH2D(Form("hX%d",iBand),"",1000, 15., (iBand==0?30.:25.),1000,0.,(iBand==0?0.2:0.1));
+    hFrame->GetXaxis()->SetTitle("E_{rec} [MeV]");
+    hFrame->GetYaxis()->SetTitle("A.U");
+    hFrame->DrawCopy();
 
-      for (int iF=0;iF<nF_in;iF++)
-	{
-	  if ( iBand==1 && iF==0 ) continue;
-	  TH1F *h0=h1D[iBand][iF];
-	  h0->SetLineColor(color[iF]);
-	  h0->SetMarkerColor(color[iF]);
-	  h0->DrawCopy("HISTSAME");
-	  l.SetTextColor(color[iF]);
-	  l.SetTextSize(0.03);
-	  l.DrawLatex(0.4,0.85-0.05*double(iF),  Form("E_{beam}=%3.0lf [MeV]",E0[iF]) );
-	  l.SetTextSize(0.035);
-	  l.SetTextColor(kBlack);
+    for (int iF=0;iF<nF_in;iF++)
+	  {
+	    if ( iBand==1 && iF==0 ) continue;
+
+	    TH1F *h0=h1D[iBand][iF];
+	    h0->SetLineColor(color[iF]);
+	    h0->SetMarkerColor(color[iF]);
+	    h0->DrawCopy("HISTSAME");
+	    l.SetTextColor(color[iF]);
+	    l.SetTextSize(0.03);
+	    l.DrawLatex(0.4,0.85-0.05*double(iF),  Form("E_{beam}=%3.0lf [MeV]",E0[iF]) );
+	    l.SetTextSize(0.035);
+	    l.SetTextColor(kBlack);
 
 
-	  for (int ipeak=0;ipeak<3;ipeak++)
+	    for (int ipeak=0;ipeak<3;ipeak++)
 	    {
 	      double *range=NULL;
 
@@ -652,9 +653,9 @@ void CalibCH2(  bool FitBand=false )
 	      t0->SetPoint(ipoint,thetaSi[iF],mean);
 	      t0->SetPointError(ipoint,0.,0.1);
 	    }
-	  l.DrawLatex(0.2,0.85,(iBand==0?"Li Band":"Be Band"));
-	}
-    }
+	    l.DrawLatex(0.2,0.85,(iBand==0?"Li Band":"Be Band"));
+	  }
+  }
   canvas++;
 
   //-------------------------------------------------------------

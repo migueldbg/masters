@@ -31,21 +31,20 @@ Double_t f90Max = 1.0;
 Double_t s1Min  = 40.0;
 Double_t s1Max  = 1000.0;
 
-const double gdRatio = 1.61803398875;
 
 void F90vS1( Int_t run ){
 
   TStyle* sidStyle = SetSidStyle();
   sidStyle -> cd();
 
-  TString file_name = Form("runs/run_%d.root", run);
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
   TFile* file = CheckFile(file_name);
 
   TTree* reco;  file -> GetObject("reco", reco);
 
 
   Double_t tpcToFMin = 20;    Double_t tpcToFMax = 30;
-  Double_t lsciToFMin = -30;  Double_t lsciToFMax = -20;
+  Double_t lsciToFMin = -40;  Double_t lsciToFMax = -20;
 
   TCut tpcToF = Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) >= %f && 2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) <= %f", tpcToFMin, tpcToFMax);
   TCut lsciToF = Form("2*(0.5*(start_time[30] + start_time[31] - 7.45) - start_time[0]) >= %f && 2*(0.5*(start_time[30] + start_time[31] - 7.45) - start_time[0]) <= %f", lsciToFMin, lsciToFMax);
@@ -54,7 +53,7 @@ void F90vS1( Int_t run ){
   TCut tpcCut = qualityCut && "LowBeCut";
 
   TH2F* f90vS1Hist[3];
-  const char* histNames[3] = {"tpc_cut", "tpc_cut + tpcToF", "tpc_cut + tpcToF + lsciToF"};
+  const char* histNames[3] = {"tpc_cut", "tpc_cut+tpcToF", "tpc_cut+tpcToF+lsciToF"};
   TCut cuts[3] = {tpcCut, tpcCut && tpcToF, tpcCut && tpcToF && lsciToF};
 
   Double_t height = 500; Double_t width = gdRatio * height;
@@ -270,7 +269,7 @@ void SiTelLSciToF( Int_t run, Int_t chanID ){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
-  TString file_name = Form("runs/run_%d.root", run);
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
   TFile* file = CheckFile(file_name);
   TTree* reco;  file -> GetObject("reco", reco);
 
@@ -315,7 +314,7 @@ void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
-  TString file_name = Form("runs/run_%d.root", run);
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
   TFile* file = CheckFile(file_name);
   TTree* reco;  file -> GetObject("reco", reco);
 
@@ -330,8 +329,8 @@ void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
 
   TH1F* siTelLSciTof[3];
   const char* histNames[3] = {"noCut", "neutronCut", "gammaCut"};
-  TCut cuts[3] = {"", "lsci_psd_tot[0] >= 0.15 && lsci_psd_tot[0] <= 1.0 && charge[0] > 400",
-                      "lsci_psd_tot[0] >= 0.0 && lsci_psd_tot[0] <= 0.15 && charge[0] > 400"};
+  TCut cuts[3] = {"", Form("lsci_psd_tot[%d] >= 0.15 && lsci_psd_tot[%d] <= 1.0 && charge[%d] > 400", chanID, chanID, chanID),
+                      Form("lsci_psd_tot[%d] >= 0.0 && lsci_psd_tot[%d] <= 0.15 && charge[%d] > 400", chanID, chanID, chanID)};
   EColor colors[3] = {kBlack, kBlue, kRed};
 
   for (Int_t i = 0; i < 3; i++){
@@ -365,7 +364,7 @@ void LSciPSD( Int_t run, Int_t chanID ){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
-  TString file_name = Form("runs/run_%d.root", run);
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
   TFile* file = CheckFile(file_name);
   TTree* reco;  file -> GetObject("reco", reco);
 

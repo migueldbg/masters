@@ -51,14 +51,14 @@ TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax);
  *    cuts and the third also selects the low energy berilium blob. The function then returns a THStack
  *    object containing all three histograms.
  *
- *  Parameters   :  run        >> the run containing the desired data.
- *                  chanID     >> then number indicating which channel to consider
- *                  stackTitle >> the title of the stack generated
- *                  reco       >> the TTree containing the desired data. If null, the code finds the TTree acording
+ *  Parameters   : run        >> the run containing the desired data.
+ *                 chanID     >> then number indicating which channel to consider
+ *                 stackTitle >> the title of the stack generated
+ *                 reco       >> the TTree containing the desired data. If null, the code finds the TTree acording
  *                                to the run.
- *                  draw       >> a bool that tells the code wether the resulting THStack is to be drawn or not.
+ *                 draw       >> a bool that tells the code wether the resulting THStack is to be drawn or not.
  *
- *  Return Value :  THStack* tofStack
+ *  Return Value : THStack* tofStack
  */
 THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "SiTel-LSci ToF", TTree* reco = NULL, bool draw = true ){
 
@@ -120,9 +120,9 @@ THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "SiTel-LSci 
  *    plots. Important to note: this function assumes a specific channel mapping (Feb2020_corr_channelmapping).
  *    and the chanIDs and chanNames variables are defined with that in mind.
  *
- *  Parameters   :  run >> the run containing the desired data.
+ *  Parameters   : run >> the run containing the desired data.
  *
- *  Return Value :  void
+ *  Return Value : void
  */
 void CutAnalysisAllChan( Int_t run ){
 
@@ -144,7 +144,6 @@ void CutAnalysisAllChan( Int_t run ){
 
   for (Int_t i = 0; i < chanAmount; i++){
 
-    cout << chanIDs[i] << endl;
     tofStacks[i] = CutAnalysis(run, chanIDs[i], chanNames[i], reco, false);
 
     canvas -> cd(i+1);
@@ -169,6 +168,151 @@ void CutAnalysisAllChan( Int_t run ){
   }
 
   legend -> Draw();
+}
+
+
+
+/* void LSciPSDvChargeStudy( Int_t run, Int_t chanID )
+ *
+ *  Summary of Function:
+ *
+ *    Preliminary study made to analyze the behaviour of the PSD vs Charge histograms for the LSci. It was
+ *    also useful to study some of the background signal that is present and which cuts can be implemented
+ *    in the PSD and Charge values to confidently remove them.
+ *
+ *  Parameters   : run >> run containing the desired data
+ *                 chanID >> LSci channel number to be used when constructing the histograms.
+ *
+ *  Return value : void
+ */
+void LSciPSDvChargeStudy( Int_t run, Int_t chanID ){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+
+  Double_t psdMin     = 0;   Double_t psdMax     = 1.0;
+  Double_t chargeMin  = 0;   Double_t chargeMax  = 400e3;
+  Double_t chargeMinZ = 0;   Double_t chargeMaxZ = 2e3;   //Z means 'zoomed'
+
+  Double_t psdBinSize     = 2E-3;   Int_t psdBinNumber     = (psdMax - psdMin)/psdBinSize;
+  Double_t chargeBinSize  = 4E3;    Int_t chargeBinNumber  = (chargeMax - chargeMin)/chargeBinSize;
+  Double_t chargeBinSizeZ = 10;     Int_t chargeBinNumberZ = (chargeMaxZ - chargeMinZ)/chargeBinSizeZ;
+
+  TCut chargeCut  = DefineLSciChargeCut(chanID, chargeMin, chargeMax);
+  TCut chargeCutZ = DefineLSciChargeCut(chanID, chargeMinZ, chargeMaxZ);
+  TCut psdCut = DefineLSciPSDCut(chanID, psdMin, psdMax);
+
+
+  TH2F* PSDvCharge  = new TH2F("psd_charge" , "PSD vs Charge (LSci 0)", chargeBinNumber, chargeMin, chargeMax,
+                                                                        psdBinNumber, psdMin, psdMax);
+  TH2F* PSDvChargeZ = new TH2F("psd_chargeZ", "PSD vs Charge (LSci 0)", chargeBinNumberZ, chargeMinZ, chargeMaxZ,
+                                                                        psdBinNumber, psdMin, psdMax);
+
+  PSDvCharge  -> GetXaxis() -> SetTitle("Charge [PE]");    PSDvCharge  -> GetYaxis() -> SetTitle("PSD");
+  PSDvChargeZ -> GetXaxis() -> SetTitle("Charge [PE]");    PSDvChargeZ -> GetYaxis() -> SetTitle("PSD");
+
+  reco -> Project("psd_charge" , Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
+  reco -> Project("psd_chargeZ", Form("f90[%d]:charge[%d]", chanID, chanID), chargeCutZ && psdCut);
+
+
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* canvas = new TCanvas("canvas", "canvas", 2*width, height);
+  canvas -> Divide(2,1);
+
+  canvas -> cd(1);  PSDvCharge  -> Draw("HIST COLZ");
+  canvas -> cd(2);  PSDvChargeZ -> Draw("HIST COLZ");
+}
+
+/* TH2F* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", TTree* reco = NULL, bool draw = true )
+ *
+ *  Summary of Function:
+ *
+ *    For a given run and channel number, this function plots the corresponding PSD vs Charge 2D histogram.
+ *    The main intent is to analyze the behaviour of the liquid scintillators.The function draws and returns
+ *    the generated histogram. With the appropriate parameter values, this function can also easily work
+ *    within another, being called multiple times for each liquid scintillator.
+ *
+ *  Parameters : run        >> the run containingt the necessary data.
+ *               chanID     >> channel number to be used when constructing the histograms.
+ *               histTitile >> title of the generated histogram.
+ *               reco       >> the tree containing the data from which to construct the histogram.
+ *               draw       >> tells the function wether or not to draw the construct histogram.
+ */
+TH2F* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", TTree* reco = NULL, bool draw = true ){
+
+  if (reco == NULL){
+    TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+    sidStyle -> SetOptStat(0);
+
+    TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+    TFile* file = CheckFile(file_name);
+    reco;  file -> GetObject("reco", reco);
+  }
+
+
+  Double_t psdMin     = 0.;   Double_t psdMax     = 0.5;
+  Double_t chargeMin  = 0.;   Double_t chargeMax  = 350e3;
+
+  Double_t psdBinSize     = 4E-3;   Int_t psdBinNumber     = (psdMax - psdMin)/psdBinSize;
+  Double_t chargeBinSize  = 2E3;    Int_t chargeBinNumber  = (chargeMax - chargeMin)/chargeBinSize;
+
+  TCut chargeCut  = DefineLSciChargeCut(chanID, chargeMin, chargeMax);
+  TCut psdCut     = DefineLSciPSDCut(chanID, psdMin, psdMax);
+
+
+  TH2F* PSDvCharge  = new TH2F(Form("psd_charge_%d", chanID), histTitle, chargeBinNumber, chargeMin, chargeMax,
+                                                                         psdBinNumber, psdMin, psdMax);
+
+  PSDvCharge -> GetXaxis() -> SetTitle("Charge [PE]");
+  PSDvCharge -> GetYaxis() -> SetTitle("PSD");
+
+  reco -> Project(Form("psd_charge_%d", chanID), Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
+
+
+  if (draw){
+    TCanvas* canvas = new TCanvas("canvas", "canvas", gdRatio*500, 500);
+    canvas -> SetGridx();
+    canvas -> SetGridy();
+    PSDvCharge  -> Draw("COLZ");
+  }
+
+  return PSDvCharge;
+}
+
+void PSDvChargeAllChan( Int_t run ){
+
+  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
+
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+  const Int_t chanAmount = 6;
+  Int_t chanIDs[chanAmount] = {0, 1, 3, 4, 5, 8};
+  TString chanNames[chanAmount] = {"LSci 0", "LSci 1", "LSci 3 & 7", "LSci 4 & 6", "LSci 5", "LSci 8"};
+
+  TH2F* psdvCharge[chanAmount];
+
+  Double_t height = 250;    Double_t width = gdRatio*height;
+  TCanvas* canvas = new TCanvas("canvas", "PSD vs Charge", 2*width, 3*height);
+  canvas -> Divide(2,3);
+
+  for (Int_t i = 0; i < chanAmount; i++){
+
+    psdvCharge[i] = PSDvCharge(run, chanIDs[i], chanNames[i], reco, false);
+
+    canvas -> cd(i+1);
+    psdvCharge[i] -> Draw("COLZ");
+    psdvCharge[i] -> GetXaxis() -> SetTitle("Charge [PE]");
+    psdvCharge[i] -> GetYaxis() -> SetTitle("PSD");
+  }
+
+  canvas -> Modified();
 
 }
 
@@ -222,93 +366,6 @@ void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
   legend -> AddEntry(siTelLSciTof[2], "ER Selection", "l");
   legend -> Draw();
 
-}
-
-
-void LSciPSDvChargeStudy( Int_t run, Int_t chanID ){
-
-  TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
-
-  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
-  TFile* file = CheckFile(file_name);
-  TTree* reco;  file -> GetObject("reco", reco);
-
-
-  Double_t psdMin     = 0;   Double_t psdMax     = 1.0;
-  Double_t chargeMin  = 0;   Double_t chargeMax  = 400e3;
-  Double_t chargeMinZ = 0;   Double_t chargeMaxZ = 2e3;   //Z means 'zoomed'
-
-  Double_t psdBinSize     = 2E-3;   Int_t psdBinNumber     = (psdMax - psdMin)/psdBinSize;
-  Double_t chargeBinSize  = 4E3;    Int_t chargeBinNumber  = (chargeMax - chargeMin)/chargeBinSize;
-  Double_t chargeBinSizeZ = 10;     Int_t chargeBinNumberZ = (chargeMaxZ - chargeMinZ)/chargeBinSizeZ;
-
-  TCut chargeCut  = DefineLSciChargeCut(chanID, chargeMin, chargeMax);
-  TCut chargeCutZ = DefineLSciChargeCut(chanID, chargeMinZ, chargeMaxZ);
-  TCut psdCut = DefineLSciPSDCut(chanID, psdMin, psdMax);
-
-
-  TH2F* PSDvCharge  = new TH2F("psd_charge" , "PSD vs Charge (LSci 0)", chargeBinNumber, chargeMin, chargeMax,
-                                                                        psdBinNumber, psdMin, psdMax);
-  TH2F* PSDvChargeZ = new TH2F("psd_chargeZ", "PSD vs Charge (LSci 0)", chargeBinNumberZ, chargeMinZ, chargeMaxZ,
-                                                                        psdBinNumber, psdMin, psdMax);
-
-  PSDvCharge  -> GetXaxis() -> SetTitle("Charge [PE]");    PSDvCharge  -> GetYaxis() -> SetTitle("PSD");
-  PSDvChargeZ -> GetXaxis() -> SetTitle("Charge [PE]");    PSDvChargeZ -> GetYaxis() -> SetTitle("PSD");
-
-  reco -> Project("psd_charge" , Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
-  reco -> Project("psd_chargeZ", Form("f90[%d]:charge[%d]", chanID, chanID), chargeCutZ && psdCut);
-
-
-  Double_t height = 500; Double_t width = gdRatio * height;
-  TCanvas* canvas = new TCanvas("canvas", "canvas", 2*width, height);
-  canvas -> Divide(2,1);
-
-  canvas -> cd(1);  PSDvCharge  -> Draw("HIST COLZ");
-  canvas -> cd(2);  PSDvChargeZ -> Draw("HIST COLZ");
-}
-
-TH2* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", TTree* reco = NULL, bool draw = true ){
-
-  if (reco == NULL){
-    TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
-    sidStyle -> SetOptStat(0);
-
-    TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
-    TFile* file = CheckFile(file_name);
-    reco;  file -> GetObject("reco", reco);
-  }
-
-
-  Double_t psdMin     = 0.;   Double_t psdMax     = 0.5;
-  Double_t chargeMin  = 0.;   Double_t chargeMax  = 400e3;
-
-  Double_t psdBinSize     = 4E-3;   Int_t psdBinNumber     = (psdMax - psdMin)/psdBinSize;
-  Double_t chargeBinSize  = 2E3;    Int_t chargeBinNumber  = (chargeMax - chargeMin)/chargeBinSize;
-
-  TCut chargeCut  = DefineLSciChargeCut(chanID, chargeMin, chargeMax);
-  TCut psdCut     = DefineLSciPSDCut(chanID, psdMin, psdMax);
-
-
-  TH2F* PSDvCharge  = new TH2F(Form("psd_charge_%d", chanID), histTitle, chargeBinNumber, chargeMin, chargeMax,
-                                                                         psdBinNumber, psdMin, psdMax);
-
-  PSDvCharge -> GetXaxis() -> SetTitle("Charge [PE]");
-  PSDvCharge -> GetYaxis() -> SetTitle("PSD");
-
-  reco -> Project(Form("psd_charge_%d", chanID), Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
-
-
-  if (draw){
-    TCanvas* canvas = new TCanvas("canvas", "canvas", gdRatio*500, 500);
-    canvas -> SetLogz();
-    PSDvCharge  -> Draw("HIST COLZ");
-  }
-
-  return PSDvCharge;
-}
-
-void PSDvChargeAllChan( Int_t run ){
-  
 }
 
 

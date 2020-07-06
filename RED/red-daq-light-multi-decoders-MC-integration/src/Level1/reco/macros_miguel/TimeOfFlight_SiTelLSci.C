@@ -40,7 +40,7 @@ TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax);
 TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax);
 
 
-/* THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTree* reco = NULL, bool draw = true )
+/* THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "SiTel-LSci ToF", TTree* reco = NULL, bool draw = true )
  *
  *  Summary of Function:
  *
@@ -60,7 +60,7 @@ TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax);
  *
  *  Return Value :  THStack* tofStack
  */
-THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTree* reco = NULL, bool draw = true ){
+THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "SiTel-LSci ToF", TTree* reco = NULL, bool draw = true ){
 
   if (reco == NULL){
     TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
@@ -112,7 +112,7 @@ THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTr
   return tofStack;
 }
 
-/* void CutAnalysisAllChan(Int_t run)
+/* void CutAnalysisAllChan( Int_t run )
  *
  *  Summary of Function:
  *
@@ -124,7 +124,7 @@ THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "stack", TTr
  *
  *  Return Value :  void
  */
-void CutAnalysisAllChan(Int_t run){
+void CutAnalysisAllChan( Int_t run ){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
@@ -224,7 +224,8 @@ void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
 
 }
 
-void LSciPSDvCharge( Int_t run, Int_t chanID ){
+
+void LSciPSDvChargeStudy( Int_t run, Int_t chanID ){
 
   TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
 
@@ -264,6 +265,50 @@ void LSciPSDvCharge( Int_t run, Int_t chanID ){
 
   canvas -> cd(1);  PSDvCharge  -> Draw("HIST COLZ");
   canvas -> cd(2);  PSDvChargeZ -> Draw("HIST COLZ");
+}
+
+TH2* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", TTree* reco = NULL, bool draw = true ){
+
+  if (reco == NULL){
+    TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+    sidStyle -> SetOptStat(0);
+
+    TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+    TFile* file = CheckFile(file_name);
+    reco;  file -> GetObject("reco", reco);
+  }
+
+
+  Double_t psdMin     = 0.;   Double_t psdMax     = 0.5;
+  Double_t chargeMin  = 0.;   Double_t chargeMax  = 400e3;
+
+  Double_t psdBinSize     = 4E-3;   Int_t psdBinNumber     = (psdMax - psdMin)/psdBinSize;
+  Double_t chargeBinSize  = 2E3;    Int_t chargeBinNumber  = (chargeMax - chargeMin)/chargeBinSize;
+
+  TCut chargeCut  = DefineLSciChargeCut(chanID, chargeMin, chargeMax);
+  TCut psdCut     = DefineLSciPSDCut(chanID, psdMin, psdMax);
+
+
+  TH2F* PSDvCharge  = new TH2F(Form("psd_charge_%d", chanID), histTitle, chargeBinNumber, chargeMin, chargeMax,
+                                                                         psdBinNumber, psdMin, psdMax);
+
+  PSDvCharge -> GetXaxis() -> SetTitle("Charge [PE]");
+  PSDvCharge -> GetYaxis() -> SetTitle("PSD");
+
+  reco -> Project(Form("psd_charge_%d", chanID), Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
+
+
+  if (draw){
+    TCanvas* canvas = new TCanvas("canvas", "canvas", gdRatio*500, 500);
+    canvas -> SetLogz();
+    PSDvCharge  -> Draw("HIST COLZ");
+  }
+
+  return PSDvCharge;
+}
+
+void PSDvChargeAllChan( Int_t run ){
+  
 }
 
 

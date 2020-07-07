@@ -36,8 +36,8 @@
 
 using namespace std;
 
-TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax);
-TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax);
+TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax = 0);
+TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax = 0);
 
 
 /* THStack* CutAnalysis( Int_t run, Int_t chanID, TString stackTitle = "SiTel-LSci ToF", TTree* reco = NULL, bool draw = true )
@@ -223,8 +223,8 @@ void LSciPSDvChargeStudy( Int_t run, Int_t chanID ){
   TCanvas* canvas = new TCanvas("canvas", "canvas", 2*width, height);
   canvas -> Divide(2,1);
 
-  canvas -> cd(1);  PSDvCharge  -> Draw("HIST COLZ");
-  canvas -> cd(2);  PSDvChargeZ -> Draw("HIST COLZ");
+  canvas -> cd(1);  PSDvCharge  -> Draw("COLZ");
+  canvas -> cd(2);  PSDvChargeZ -> Draw("COLZ");
 }
 
 /* TH2F* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", TTree* reco = NULL, bool draw = true )
@@ -236,7 +236,7 @@ void LSciPSDvChargeStudy( Int_t run, Int_t chanID ){
  *    the generated histogram. With the appropriate parameter values, this function can also easily work
  *    within another, being called multiple times for each liquid scintillator.
  *
- *  Parameters : run        >> the run containingt the necessary data.
+ *  Parameters : run        >> the run containing the necessary data.
  *               chanID     >> channel number to be used when constructing the histograms.
  *               histTitile >> title of the generated histogram.
  *               reco       >> the tree containing the data from which to construct the histogram.
@@ -267,8 +267,8 @@ TH2F* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", T
   TH2F* PSDvCharge  = new TH2F(Form("psd_charge_%d", chanID), histTitle, chargeBinNumber, chargeMin, chargeMax,
                                                                          psdBinNumber, psdMin, psdMax);
 
-  PSDvCharge -> GetXaxis() -> SetTitle("Charge [PE]");
-  PSDvCharge -> GetYaxis() -> SetTitle("PSD");
+   PSDvCharge -> GetXaxis() -> SetTitle("Charge [PE]");
+   PSDvCharge -> GetYaxis() -> SetTitle("PSD");
 
   reco -> Project(Form("psd_charge_%d", chanID), Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
 
@@ -317,6 +317,51 @@ void PSDvChargeAllChan( Int_t run ){
 }
 
 
+TH1F* ToFHist( Int_t run, Int_t chanID, Double_t psdMin, Double_t chargeMin, TString histTitle = "PSD v Charge", TTree* reco = NULL, bool draw = true ){
+
+  if (reco == NULL){
+    TStyle* sidStyle = SetSidStyle();   sidStyle -> cd();
+    sidStyle -> SetOptStat(0);
+
+    TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+    TFile* file = CheckFile(file_name);
+    reco;  file -> GetObject("reco", reco);
+  }
+
+
+  Double_t tofMin = -40;   Double_t tofMax = 100;
+
+  Double_t tofBinSize   = 1.;
+  Int_t    tofBinNumber = (tofMax - tofMin)/tofBinSize;
+
+  TCut lsciPSDCut    = DefineLSciPSDCut(chanID, psdMin);
+  TCut lsciChargeCut = DefineLSciChargeCut(chanID, chargeMin);
+  TCut tpcCut = DefineQualityCuts(2);
+  TCut lsciCut = lsciPSDCut && lsciChargeCut && tpcCut;
+
+
+  TH1F* tofHist = new TH1F(Form("tof_hist_lsci%d", chanID), histTitle, tofBinNumber, tofMin, tofMax);
+
+  tofHist -> GetXaxis() -> SetTitle("ToF (SiTel-LSci) [ns]");
+  tofHist -> GetYaxis() -> SetTitle("Counts / 0.5 ns");
+
+  TString histExpression = Form("2*(start_time[%d] - 0.5*(start_time[30] + start_time[31] - 7.45))", chanID);
+  reco -> Project(Form("tof_hist_lsci%d", chanID), histExpression, lsciCut);
+
+  if (draw){
+    TCanvas* canvas = new TCanvas("canvas", "canvas", gdRatio*500, 500);
+    canvas -> SetGridx();
+    canvas -> SetGridy();
+    tofHist -> Draw("HIST");
+  }
+
+  Int_t peakCount = tofHist -> Integral(60,80);
+  Int_t totalCount = tofHist -> Integral(1, 140);
+
+  cout << "Events in peak region: " << peakCount << " (" << (Double_t) peakCount/totalCount * 100 << "%)" << endl;
+
+  return tofHist;
+}
 
 void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
 
@@ -369,20 +414,38 @@ void SiTelLSciToFNeutron( Int_t run, Int_t chanID ){
 }
 
 
-TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax){
+TCut DefineLSciPSDCut(Int_t chanID, Double_t psdMin, Double_t psdMax = 0){
 
-  TCut psdMinCut = Form("f90[%d] >= %f", chanID, psdMin);
-  TCut psdMaxCut = Form("f90[%d] <= %f", chanID, psdMax);
-  TCut psdCut = psdMinCut && psdMaxCut;
+  TCut psdCut;
+  TCut psdMinCut;
+  TCut psdMaxCut;
+
+  if (psdMax == 0){
+    psdMinCut = Form("f90[%d] >= %f", chanID, psdMin);
+    psdCut = psdMinCut;
+  } else {
+    psdMinCut = Form("f90[%d] >= %f", chanID, psdMin);
+    psdMaxCut = Form("f90[%d] <= %f", chanID, psdMax);
+    psdCut = psdMinCut && psdMaxCut;
+  }
 
   return psdCut;
 }
 
-TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax){
+TCut DefineLSciChargeCut(Int_t chanID, Double_t chargeMin, Double_t chargeMax = 0){
 
-  TCut chargeMinCut = Form("charge[%d] >= %f", chanID, chargeMin);
-  TCut chargeMaxCut = Form("charge[%d] <= %f", chanID, chargeMax);
-  TCut chargeCut = chargeMinCut && chargeMaxCut;
+  TCut chargeCut;
+  TCut chargeMaxCut;
+  TCut chargeMinCut;
+
+  if (chargeMax == 0){
+    chargeMinCut = Form("charge[%d] >= %f", chanID, chargeMin);
+    chargeCut = chargeMinCut;
+  } else {
+    chargeMinCut = Form("charge[%d] >= %f", chanID, chargeMin);
+    chargeMaxCut = Form("charge[%d] <= %f", chanID, chargeMax);
+    chargeCut = chargeMinCut && chargeMaxCut;
+  }
 
   return chargeCut;
 }

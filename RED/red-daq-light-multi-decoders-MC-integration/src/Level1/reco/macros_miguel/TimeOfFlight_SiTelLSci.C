@@ -267,8 +267,8 @@ TH2F* PSDvCharge( Int_t run, Int_t chanID, TString histTitle = "PSD v Charge", T
   TH2F* PSDvCharge  = new TH2F(Form("psd_charge_%d", chanID), histTitle, chargeBinNumber, chargeMin, chargeMax,
                                                                          psdBinNumber, psdMin, psdMax);
 
-   PSDvCharge -> GetXaxis() -> SetTitle("Charge [PE]");
-   PSDvCharge -> GetYaxis() -> SetTitle("PSD");
+   PSDvCharge -> GetXaxis() -> SetTitle("Sinal [PE]");
+   PSDvCharge -> GetYaxis() -> SetTitle("f_{prompt}");
 
   reco -> Project(Form("psd_charge_%d", chanID), Form("f90[%d]:charge[%d]", chanID, chanID), chargeCut  && psdCut);
 
@@ -331,7 +331,7 @@ TH1F* ToFHist( Int_t run, Int_t chanID, Double_t psdMin, Double_t chargeMin, TSt
 
   Double_t tofMin = -40;   Double_t tofMax = 100;
 
-  Double_t tofBinSize   = 1.;
+  Double_t tofBinSize   = 0.5;
   Int_t    tofBinNumber = (tofMax - tofMin)/tofBinSize;
 
   TCut lsciPSDCut    = DefineLSciPSDCut(chanID, psdMin);
@@ -343,22 +343,16 @@ TH1F* ToFHist( Int_t run, Int_t chanID, Double_t psdMin, Double_t chargeMin, TSt
   TH1F* tofHist = new TH1F(Form("tof_hist_lsci%d", chanID), histTitle, tofBinNumber, tofMin, tofMax);
 
   tofHist -> GetXaxis() -> SetTitle("ToF (SiTel-LSci) [ns]");
-  tofHist -> GetYaxis() -> SetTitle("Counts / 0.5 ns");
+  tofHist -> GetYaxis() -> SetTitle("Eventos / 0.5 ns");
 
   TString histExpression = Form("2*(start_time[%d] - 0.5*(start_time[30] + start_time[31] - 7.45))", chanID);
   reco -> Project(Form("tof_hist_lsci%d", chanID), histExpression, lsciCut);
 
   if (draw){
     TCanvas* canvas = new TCanvas("canvas", "canvas", gdRatio*500, 500);
-    canvas -> SetGridx();
-    canvas -> SetGridy();
+    canvas -> SetGrid();
     tofHist -> Draw("HIST");
   }
-
-  Int_t peakCount = tofHist -> Integral(60,80);
-  Int_t totalCount = tofHist -> Integral(1, 140);
-
-  cout << "Events in peak region: " << peakCount << " (" << (Double_t) peakCount/totalCount * 100 << "%)" << endl;
 
   return tofHist;
 }

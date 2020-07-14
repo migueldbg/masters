@@ -30,7 +30,6 @@
     > Rho:      -0.4482 +/- 0.00423
  */
 
-const double gdRatio = 1.61803398875;
 
 TCut LowBeCut( Int_t run, Int_t num_bins, Int_t EMin, Int_t EMax, Int_t dEMin, Int_t dEMax ){
 
@@ -177,6 +176,7 @@ void PlotEllipses( Int_t run ){
 
   TStyle* sidStyle = SetSidStyle();
   sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
 
   TH2F* bananaHist = Bananator(run, 400, 1500, 4000, 400, 1200);
 
@@ -187,10 +187,19 @@ void PlotEllipses( Int_t run ){
   TCanvas* c1 = new TCanvas("c1", "Banana Histogram", width, height);
   c1 -> cd();
 
-  bananaHist -> Draw("COLZ");   oneSigma -> Draw("SAME");  twoSigma -> Draw("SAME");
+  bananaHist -> SetTitle("; E [U.A.]; #DeltaE [U.A.]");
+  bananaHist -> Draw("COLZ");
+
+  twoSigma -> SetLineStyle(7);
+  oneSigma -> Draw("SAME");  twoSigma -> Draw("SAME");
 
   oneSigma -> SetTitle("1#sigma Confidence Ellipse");
   twoSigma -> SetTitle("2#sigma Confidence Ellipse");
+
+  TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
+  legend -> AddEntry(oneSigma, "Elipse 1#sigma");
+  legend -> AddEntry(twoSigma, "Elipse 2#sigma");
+  legend -> Draw();
 
   TFile* output_file = new TFile("LowBeCut.root", "UPDATE");
   output_file -> WriteObject(oneSigma, Form("LowBeOneSigmaCut_%d", run), "OverWrite");

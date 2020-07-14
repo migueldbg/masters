@@ -271,9 +271,9 @@ void GenerateF90vChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc
   string param_title;
 
   if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
-    param_name = "mean";   param_title = "Mean";
+    param_name = "mean";   param_title = "Média";
   } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
-    param_name = "peak";   param_title = "Peak";
+    param_name = "peak";   param_title = "Pico";
   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
     param_name = "rms";    param_title = "RMS";
   } else {
@@ -286,19 +286,19 @@ void GenerateF90vChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc
   TMultiGraph* multigraph = new TMultiGraph();
   multigraph -> Add(data_graph);    multigraph -> Add(mc_graph);
 
-  multigraph -> SetTitle( Form("Data and MC f90 %s Comparision (1220, %s); Charge (PE); %s", param_title.c_str(), (ERorNR == 0)?"ER":"NR", param_title.c_str()) );
+  multigraph -> SetTitle( Form("; S1 [PE]; %s", param_title.c_str()) );
   multigraph -> SetName( Form("f90%s_v_charge_total_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
   multigraph -> Draw("ALP");
 
   TLegend* legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  legend -> AddEntry( data_graph, "Data",        "lep" );
+  legend -> AddEntry( data_graph, "Dado",        "lep" );
   legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
   legend -> Draw();
 
   directory -> WriteObject( multigraph, Form("f90%s_v_charge_total_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
 
-  canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
-  canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
 
 }
 
@@ -331,9 +331,9 @@ void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors
   string param_title;
 
   if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
-    param_name = "mean";   param_title = "Mean";
+    param_name = "mean";   param_title = "Média";
   } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
-    param_name = "peak";   param_title = "Peak";
+    param_name = "peak";   param_title = "Pico";
   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
     param_name = "rms";    param_title = "RMS";
   } else {
@@ -344,7 +344,7 @@ void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors
   TCanvas* canvas = new TCanvas( Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), x_size, y_size );
 
   TGraphErrors* diff_graph = GraphDiff( data_graph, mc_graph, 0 );
-  diff_graph -> SetTitle( Form("Relative Difference of MC and Data f90 %s (1220, %s); Charge(PE); Difference", param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  diff_graph -> SetTitle( "; S1 [PE]; Diferença" );
   diff_graph -> SetName( Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
 
   int ms = 0;  if (ERorNR == 0){ ms = 22; } else { ms = 23; }
@@ -358,12 +358,12 @@ void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors
 
   directory -> WriteObject( diff_graph, Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
 
-  canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
-  canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
 }
 
 // **************************************************** PlotRMS() MACRO **************************************************** //
-void PlotF90Parameters( int run, const char* recoil_type, Double_t charge_min = 0. ){
+void PlotF90Parameters( int run, Double_t charge_min = 0. ){
 
   TString file_name = Form("hist_%d.root", run);
   TFile* hist_file = CheckFile(file_name);

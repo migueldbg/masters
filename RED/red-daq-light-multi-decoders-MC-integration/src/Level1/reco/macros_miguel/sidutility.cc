@@ -28,6 +28,8 @@ TStyle* SetSidStyle(){
 
   sidStyle -> SetPalette(kSunset);
 
+  sidStyle -> SetStatColor(0);
+
   sidStyle -> SetTitleAlign(23);
   sidStyle -> SetTitleBorderSize(0);
   sidStyle -> SetTitleColor(0, "t");
@@ -286,13 +288,11 @@ TCutG* LowBeGraphCut( Int_t run, const char* name = "LowBeCut", Int_t sigma = 2 
 
 TH2F* Bananator(int run, int nbin=100, int xmin=0, int xmax=20000, int ymin=0, int ymax=20000){
 
-  TFile *file = new TFile( Form("runs/run_%d.root", run), "read" );
+  TFile *file = new TFile( runsDirectoryPath + Form("/run_%d.root", run), "read" );
 
   TTree *reco = (TTree*)file -> Get("reco");
 
   // Style
-  //gROOT->SetStyle("Plain");
-  gStyle->SetOptStat(2210);
   gStyle->SetOptFit();
 
 

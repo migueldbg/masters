@@ -85,52 +85,6 @@ void ProjectX( TH1* hist ){
 
 }
 
-void SiTelTPCToFvS1( int run ){
-
-  TStyle* sidStyle = SetSidStyle();
-  sidStyle -> cd();
-
-  TString file_name = Form("runs/run_%d.root", run);
-  TFile* file = CheckFile(file_name);
-  TTree* reco;  file -> GetObject("reco", reco);
-
-  Double_t tofMin = 0;   Double_t tofMax = 50;
-  Double_t tofBinSize = 0.25;
-  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
-
-  Double_t s1BinSize = 5;
-  Double_t s1BinNumber = (s1Max - s1Min)/s1BinSize;
-
-  TCut   tpcCut   = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
-  TCutG* lowBeCut = LowBeGraphCut(run, "lowBeCut");
-  TCut   totalCut = tpcCut && "lowBeCut";
-
-  TH2F* ToFvS1Hist   = new TH2F("ToFvS1_hist", "SiTel-TPC ToF vs S1", s1BinNumber, s1Min, s1Max, tofBinNumber, tofMin, tofMax);
-  TH2F* ToFvS1HistBe = new TH2F("ToFvS1_histBe", "SiTel-TPC ToF vs S1 (Low Be)", s1BinNumber, s1Min, s1Max, tofBinNumber, tofMin, tofMax);
-
-  reco -> Project("ToFvS1_hist", "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time):clusters[0].charge", tpcCut);
-  reco -> Project("ToFvS1_histBe", "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time):clusters[0].charge", totalCut);
-
-  Double_t height = 500; Double_t width = gdRatio * height;
-  TCanvas* canvas = new TCanvas("canvas", "canvas", 2*width, height);
-  canvas -> Divide(2,1);
-
-  canvas -> cd(1);
-  ToFvS1Hist -> GetXaxis() -> SetTitle("S1[PE]");
-  ToFvS1Hist -> GetYaxis() -> SetTitle("ToF (SiTel - TPC)[ns]");
-  ToFvS1Hist -> Draw("COLZ");
-
-  canvas -> cd(2);
-  ToFvS1HistBe -> GetXaxis() -> SetTitle("S1[PE]");
-  ToFvS1HistBe ->  Draw("COLZ");
-
-  //ToFvS1HistBe -> ProjectionY("_py", 20, 22) -> Draw();
-
-  std::cout << ToFvS1Hist -> GetNbinsX() << std::endl;
-  std::cout << ToFvS1HistBe -> GetNbinsX() << std::endl;
-
-  file -> Close();
-}
 
 
 void TPCLSciToF( Int_t run, Int_t chanID ){

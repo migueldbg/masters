@@ -37,6 +37,7 @@ void ToFHistogram( int run ){
 
   TStyle* sidStyle = SetSidStyle();
   sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
 
   TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
   TTree* reco;
@@ -44,12 +45,13 @@ void ToFHistogram( int run ){
 
   Double_t height = 500;    Double_t width = gdRatio * height;
   TCanvas* canvas = new TCanvas("canvas", "Time of Flight (SiTel-TPC)", width, height);
+  canvas -> SetGrid();
 
   Int_t cfg = 2;  // Double Phase = 2; Single Phase = 1
 
   Double_t f90Min   = 0.1;    Double_t f90Max   = 1.0;
   Double_t f90erMin = 0.2;    Double_t f90erMax = 0.4;
-  Double_t f90nrMin = 0.4;    Double_t f90nrMax = 0.7;
+  Double_t f90nrMin = 0.4;    Double_t f90nrMax = 0.6;
   Double_t s1Min    = 50;     Double_t s1Max    = 1E3;
 
   TCut generalCut = DefineCuts(2, f90Min,   f90Max,   s1Min, s1Max);
@@ -69,6 +71,8 @@ void ToFHistogram( int run ){
   const char* histNames[numOfHists] = {"tof", "tof_nr", "tof_er"};
   EColor      colors[numOfHists] = {kBlue, kRed, kBlack};
 
+  TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
+  const char* legendLabel[numOfHists] = {"ER", "NR", "Ambos"};
 
   for (Int_t i = 0; i < numOfHists; i++){
 
@@ -79,29 +83,62 @@ void ToFHistogram( int run ){
     tofHistograms[i] -> SetLineWidth(2);
     tofHistograms[i] -> SetLineColor(colors[i]);
 
-    //tofLogHistograms[i] = (TH1F*) tofHistograms[i] -> Clone();
+    tofHistograms[i] -> GetXaxis() -> SetTitle("ToF (SiTel-TPC) [ns]");
+    tofHistograms[i] -> GetYaxis() -> SetTitle("Eventos / 0.25 ns");
+
+    legend -> AddEntry(tofHistograms[i], legendLabel[i]);
 
     canvas -> cd();
     if (i == 0) {
       tofHistograms[i] -> Draw("HIST");
+
     } else {
       tofHistograms[i] -> Draw("SAME HIST");
     }
 
   }
-
-  /*TPad* logPad = new TPad("logPad", "", pointX, pointY, pointX + padRatio, pointY + padRatio);
-  logPad -> SetLogy();   logPad -> Draw();    logPad -> cd();
-
-  for (Int_t i = 0; i < numOfHists; i++){
-    if (i == 0) {
-      tofLogHistograms[i] -> Draw("HIST");
-    } else {
-      tofLogHistograms[i] -> Draw("SAME HIST");
-    }
-  }
-  */
+  legend -> Draw();
 }
+
+void F90vsToF( int run ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
+
+  TString file_name = runsDirectoryPath + Form("/run_%d.root", run);
+  TFile* file = CheckFile(file_name);
+  TTree* reco;  file -> GetObject("reco", reco);
+
+  Int_t expCfg = 2;
+  Double_t s1Min = 40;    Double_t s1Max = 1000;
+  Double_t f90Min = 0.;   Double_t f90Max = 1.0;
+  Double_t tofMin = 0;   Double_t tofMax = 50;
+  Double_t tofBinSize = 0.125;
+  Double_t tofBinNumber = (tofMax - tofMin)/tofBinSize;
+
+  Double_t f90BinSize = 5E-3;
+  Double_t f90BinNumber = (f90Max - f90Min)/f90BinSize;
+
+  TCut   tpcCut   = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut = LowBeGraphCut(run, "lowBeCut");
+  TCut   totalCut = tpcCut && "lowBeCut";
+
+  TH2F* ToFvS1Hist   = new TH2F("ToFvS1_hist", "", tofBinNumber, tofMin, tofMax, f90BinNumber, f90Min, f90Max);
+
+  reco -> Project("ToFvS1_hist", "clusters[0].f90:2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time)", totalCut);
+
+  Double_t height = 500; Double_t width = gdRatio * height;
+  TCanvas* canvas = new TCanvas("canvas", "canvas", width, height);
+  canvas -> SetGrid();
+
+  ToFvS1Hist -> GetXaxis() -> SetTitle("ToF (SiTel-TPC) [ns]");
+  ToFvS1Hist -> GetYaxis() -> SetTitle("f_{prompt}");
+  ToFvS1Hist -> Draw("COLZ");
+
+  file -> Close();
+}
+
 
 void ToFHistLSciCoincidence( int run ){
 

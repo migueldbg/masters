@@ -421,7 +421,8 @@ int MCTraces::GetDuplicatedNpe(int isipm)
         if (rnd->Rndm() < pVino_sipm.at(isipm))
             npe++;
 
-    return npe-1;
+    //return npe-1;
+    return 0;
 }
 
 int MCTraces::GetClusterStart(int icluster)

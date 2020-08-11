@@ -36,7 +36,7 @@ TDirectory* MakeDirStruct(TFile* file, bool isMC, Int_t ERorNR);
 
 
 
-/* void CreateF90ERHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Int_t binNumber = 50, Double_t chargeMin = 0., Double_t chargeMax = 1000.)
+/* void CreateF90ERHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Double_t binSize = 20, Double_t s1Min = 0., Double_t s1Max = 1000.)
  *
  *  Summary of Function:
  *
@@ -46,43 +46,48 @@ TDirectory* MakeDirStruct(TFile* file, bool isMC, Int_t ERorNR);
  *    single phase or dual phase and call for the appropriate quality cuts. The resulting histograms are then saved in a root file
  *    named analysis_#run number#.root.
  *
- *  Parameters   : run >> run number.
+ *  Parameters   : run       >> run number.
  *                 data_type >> in dicates if the source is taken from data or MC simulation.
- *                 expCfg >> indicates if the run was single phase or dual phase.
- *                 cutTof >> indicates wheter ToF cuts are to be applied for ER event selection.
- *                 binNumber >> total number of histograms that will be generated, each for a different charge range.
- *                 chargeMin >> the lower boundary of the S1 total charge range to be considered.
- *                 chargeMax >> the upper boundary of the S1 total charge range to be considered.
+ *                 expCfg    >> indicates if the run was single phase or dual phase.
+ *                 cutTof    >> indicates wheter ToF cuts are to be applied for ER event selection.
+ *                 binSize   >> size of the S1 slices for which a f90 histogram will be generated.
+ *                 s1Min     >> the maximum value of S1 total charge to be considered.
+ *                 s1Max     >> the minimum value of S1 total charge to be considered.
  *
  *  Return Value : void.
  */
-void CreateF90ERHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Int_t binNumber = 50,
-                             Double_t chargeMin = 0., Double_t chargeMax = 1000.){
+void CreateF90ERHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Double_t binSize = 20, Double_t s1Min = 0.,
+                             Double_t s1Max = 1000.){
 
-  TFile* outputFile = CheckFile( Form("analysis_%d.root", run) );
+  TString analysisFileName = analysisDirectoryPath + Form("/analysis_%d.root", run);
+  TFile*  analysisFile = CheckFile(analysisFileName);
 
-  TDirectory* dir = MakeDirStruct( outputFile, isMC, 1 );
+  TDirectory* dir = MakeDirStruct(analysisFile, isMC, 0); // 0 creates the 'ER' folder.
 
   TString runFileName;
   if ( !isMC ) { runFileName = runsDirectoryPath + Form("/run_%d.root", run); }
   else if ( isMC ) { runFileName = runsDirectoryPath + Form("/run_%d_MCER.root", run); }
 
-  // ELECTRON RECOIL EVENT SELECTION PARAMETERS //
+  TFile* runFile = CheckFile(runFileName);
+  TTree* reco;  runFile -> GetObject("reco", reco);
 
+
+  // ELECTRON RECOIL EVENT SELECTION PARAMETERS //
   Double_t f90Min;  Double_t f90Max;
   Double_t tofMin;  Double_t tofMax; // If the ToF border values are equal, the code doesn't apply a ToF cut.
 
   if ( cutTof ){
     f90Min = 0.0;  f90Max = 1.0;
-    tofMin = 30;  tofMax = 42;  // based on runs 1501 to 1521.
+    tofMin = 30;   tofMax = 42;  // based on runs 1501 to 1521.
   } else if ( !cutTof ) {
-    f90Min = 0.1;  f90Max = 0.4;
+    f90Min = 0.1;  f90Max = 0.4; //TODO: change f90 limits.
     tofMin = 0.0;  tofMax = 0.0;
   }
 
-  Double_t binSize = ( chargeMax - chargeMin ) / binNumber;
-  Double_t chargeLowBound;
-  Double_t chargeUppBound;
+
+  Int_t binNumber = ( s1Max - s1Min ) / binSize;
+  Double_t s1LowBound;
+  Double_t s1UppBound;
 
   TString histName;     TString histTitle;
 
@@ -91,21 +96,25 @@ void CreateF90ERHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutT
   for (int i = 0; i < binNumber; i++){
 
     // Calculate the boundaries of the current bin.
-    chargeLowBound = ( i      * binSize ) + chargeMin;
-    chargeUppBound = ((i + 1) * binSize ) + chargeMin;
+    s1LowBound = ( i      * binSize ) + s1Min;
+    s1UppBound = ((i + 1) * binSize ) + s1Min;
 
-    tpcCut = DefineCuts(expCfg, f90Min, f90Max, chargeLowBound, chargeUppBound, tofMin, tofMax);
+    tpcCut = DefineCuts(expCfg, f90Min, f90Max, s1LowBound, s1UppBound, 0, 0, tofMin, tofMax);
 
     histName  = Form( "f90_histogram_%ser_%d", (isMC)?"mc":"", i+1 );
-    histTitle = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) chargeLowBound, (int) chargeUppBound );
+    histTitle = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC ER":"ER", (int) s1LowBound, (int) s1UppBound );
 
-    WriteF90Histogram( dir, runFileName, histogram_cuts, 100, f90Min, f90Max, false, histName, histTitle );
+    TH1F* f90Hist = new TH1F(histName, histTitle, 100, f90Min, f90Max);
+    reco -> Project(histName, "clusters[0].f90", tpcCut);
+
+    dir -> WriteObject(f90Hist, histName, "OverWrite");
   }
 
-  outputFile -> Close();
+  runFile -> Close();
+  analysisFile -> Close();
 }
 
-/* void CreateF90NRHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Int_t binNumber = 50, Double_t chargeMin = 0., Double_t chargeMax = 1000.)
+/* void CreateF90NRHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Double_t binSize = 20, Double_t s1Min = 0., Double_t s1Max = 1000.)
  *
  *  Summary of Function:
  *
@@ -115,81 +124,85 @@ void CreateF90ERHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutT
  *    single phase or dual phase and call for the appropriate quality cuts. The resulting histograms are then saved in a root file
  *    named analysis_#run number#.root.
  *
- *  Parameters   : run >> run number.
+ *  Parameters   : run       >> run number.
  *                 data_type >> in dicates if the source is taken from data or MC simulation.
- *                 expCfg >> indicates if the run was single phase or dual phase.
- *                 cutTof >> indicates wheter ToF cuts are to be applied for ER event selection.
- *                 binNumber >> total number of histograms that will be generated, each for a different charge range.
- *                 chargeMin >> the lower boundary of the S1 total charge range to be considered.
- *                 chargeMax >> the upper boundary of the S1 total charge range to be considered.
+ *                 expCfg    >> indicates if the run was single phase or dual phase.
+ *                 cutTof    >> indicates wheter ToF cuts are to be applied for ER event selection.
+ *                 binSize   >> size of the S1 slices for which a f90 histogram will be generated.
+ *                 s1Min     >> the maximum value of S1 total charge to be considered.
+ *                 s1Max     >> the minimum value of S1 total charge to be considered.
  *
  *  Return Value : void.
  */
-void CreateF90NRHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Int_t binNumber = 50,
-                             Double_t chargeMin = 0., Double_t chargeMax = 1000.){
+void CreateF90NRHistograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Double_t binSize = 20, Double_t s1Min = 0.,
+                             Double_t s1Max = 1000.){
 
-  TFile* outputFile = CheckFile( Form("analysis_%d.root", run) );
+  TString analysisFileName = analysisDirectoryPath + Form("/analysis_%d.root", run);
+  TFile*  analysisFile = CheckFile(analysisFileName);
 
-  TDirectory* dir = MakeDirStruct( outputFile, isMC, 1 );
+  TDirectory* dir = MakeDirStruct(analysisFile, isMC, 1);
 
   TString runFileName;
   if ( !isMC ) { runFileName = runsDirectoryPath + Form("/run_%d.root", run); }
   else if ( isMC ) { runFileName = runsDirectoryPath + Form("/run_%d_MCNR.root", run); }
 
-  // NUCLEAR RECOIL EVENT SELECTION PARAMETERS //
+  TFile* runFile = CheckFile(runFileName);
+  TTree* reco;  runFile -> GetObject("reco", reco);
 
+
+  // NUCLEAR RECOIL EVENT SELECTION PARAMETERS //
   Double_t f90Min;  Double_t f90Max;
   Double_t tofMin;  Double_t tofMax; // If the ToF border values are equal, the code doesn't apply a ToF cut.
 
   if ( cutTof ){
     f90Min = 0.0;  f90Max = 1.0;
-    tofMin = 30;  tofMax = 42;  // based on runs 1501 to 1521.
+    tofMin = 30;   tofMax = 42;
   } else if ( !cutTof ) {
     f90Min = 0.4;  f90Max = 0.7;
     tofMin = 0.0;  tofMax = 0.0;
   }
 
 
-  // ----------------------------------------- //
-
-  Double_t binSize = ( chargeMax - chargeMin ) / binNumber;
-  Double_t chargeLowBound;  Double_t chargeUppBound;
+  Int_t binNumber = ( s1Max - s1Min ) / binSize;
+  Double_t s1LowBound;
+  Double_t s1UppBound;
 
   TString  histName;      TString  histTitle;
-  TCut histogram_cuts;  TCut total_cuts;
+  TCut tpcCut;
 
   for (Int_t i = 0; i < binNumber; i++){
 
     // Calculate the boundaries of the current bin.
-    chargeLowBound = ( i       * binSize ) + chargeMin;
-    chargeUppBound  = ( (i + 1) * binSize ) + chargeMin;
+    s1LowBound = ( i       * binSize ) + s1Min;
+    s1UppBound = ( (i + 1) * binSize ) + s1Min;
 
-    histogram_cuts = DefineCuts(expCfg, f90Min, f90Max, chargeLowBound, chargeUppBound, 0, 50000, tofMin, tofMax);
-    total_cuts = histogram_cuts;
+    tpcCut = DefineCuts(expCfg, f90Min, f90Max, s1LowBound, s1UppBound, 0, 0, tofMin, tofMax);
 
     histName  = Form( "f90_histogram_%snr_%d", (isMC)?"mc":"", i+1 );
-    histTitle = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC NR":"NR", (int) chargeLowBound, (int) chargeUppBound );
+    histTitle = Form( "f90 Distribution (%s, Charge Interval: %d - %d PE); f90", (isMC)?"MC NR":"NR", (int) s1LowBound, (int) s1UppBound );
 
-    WriteF90Histogram( dir, runFileName, total_cuts, 100, f90Min, f90Max, false, histName, histTitle);
+    TH1F* f90Hist = new TH1F(histName, histTitle, 100, f90Min, f90Max);
+    reco -> Project(histName, "clusters[0].f90", tpcCut);
 
+    dir -> WriteObject(f90Hist, histName, "OverWrite");
   }
 
-  outputFile -> Close();
+  analysisFile -> Close();
 }
 
 
-void CreateF90Histograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Int_t ERorNR = 10, Int_t binNumber = 50, Double_t chargeMin = 20., Double_t chargeMax = 1000. ){
+void CreateF90Histograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof = false, Int_t ERorNR = 10, Double_t binSize = 20, Double_t s1Min = 20., Double_t s1Max = 1000. ){
 
   switch(ERorNR){
     case 0:
-        CreateF90ERHistograms( run, expCfg, isMC, cutTof, binNumber, chargeMin, chargeMax );
+        CreateF90ERHistograms(run, expCfg, isMC, cutTof, binSize, s1Min, s1Max);
         break;
     case 1:
-        CreateF90NRHistograms( run, expCfg, isMC, cutTof, binNumber, chargeMin, chargeMax );
+        CreateF90NRHistograms(run, expCfg, isMC, cutTof, binSize, s1Min, s1Max);
         break;
     case 10:
-        CreateF90ERHistograms( run, expCfg, isMC, cutTof, binNumber, chargeMin, chargeMax );
-        CreateF90NRHistograms( run, expCfg, isMC, cutTof, binNumber, chargeMin, chargeMax );
+        CreateF90ERHistograms(run, expCfg, isMC, cutTof, binSize, s1Min, s1Max);
+        CreateF90NRHistograms(run, expCfg, isMC, cutTof, binSize, s1Min, s1Max);
         break;
     default:
         std::cout << "Invalid 'ERorNR' parameter value. Plese enter one of the following options: 0 (ER), 1 (NR) or 10 (ER & NR)." << std::endl;
@@ -197,6 +210,7 @@ void CreateF90Histograms ( int run, Int_t expCfg, bool isMC = false, bool cutTof
 }
 
 
+// =================================== AUXILIARY FUNCTIONS USED IN THE MACRO =================================== //
 
 /* TDirectory* MakeDirStruct( TFile* file, bool isMC, Int_t ERorNR )
  *

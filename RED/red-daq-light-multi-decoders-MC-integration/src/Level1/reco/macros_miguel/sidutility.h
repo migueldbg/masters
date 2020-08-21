@@ -7,8 +7,8 @@
 
 #include <iostream>
 
-TString runsDirectoryPath = "/home/mdbg/MEGA/Mestrado/masters/RED/red-daq-light-multi-decoders-MC-integration/src/Level1/reco/runs";
-TString analysisDirectoryPath = "/home/mdbg/MEGA/Mestrado/masters/RED/red-daq-light-multi-decoders-MC-integration/src/Level1/reco/analysis_results";
+TString runsDirectoryPath     = "/home/migueldbg/Desktop/Mestrado/masters/RED/red-daq-light-multi-decoders-MC-integration/src/Level1/reco/runs";
+TString analysisDirectoryPath = "/home/migueldbg/Desktop/Mestrado/masters/RED/red-daq-light-multi-decoders-MC-integration/src/Level1/reco/analysis_results";
 
 const double gdRatio = 1.61803398875;
 

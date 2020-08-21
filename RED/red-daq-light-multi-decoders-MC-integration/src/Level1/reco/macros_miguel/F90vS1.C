@@ -1,10 +1,11 @@
 #include "sidutility.cc"
 
-#include <TFile.h>
-#include <TH2.h>
-#include <TString.h>
-#include <TSystem.h>
-#include <TTree.h>
+#include "TFile.h"
+#include "TH2.h"
+#include "TString.h"
+#include "TStyle.h"
+#include "TSystem."
+#include "TTree.h"
 
 /* ************************************************************************************************************************* *
  * File: TimeOfFlight_SiTelTPC.C (ROOT macro).                                                                               *
@@ -51,8 +52,8 @@ Int_t expCfg = 2;
 Double_t f90Min = 0.0;    Double_t f90Max = 1.0;
 Double_t s1Min  = 50.0;   Double_t s1Max  = 1000.0;
 
-Double_t f90BinSize = 5E-3;   Double_t f90BinCount = (f90Max - f90Min)/f90BinSize;
-Double_t s1BinSize  = 2.5;     Double_t s1BinCount  = (s1Max - s1Min)/s1BinSize;
+Double_t f90BinSize = 10E-3;   Double_t f90BinCount = (f90Max - f90Min)/f90BinSize;
+Double_t s1BinSize  = 5;    Double_t s1BinCount  = (s1Max - s1Min)/s1BinSize;
 // </code-fold>
 
 //TODO: write the intendend workflow when using this macro.
@@ -81,6 +82,235 @@ void tempF90vS1( Int_t run ){
   reco -> Project("f_{prompt} vs S1", "clusters[0].f90:clusters[0].charge", "LowBeCut");
 
   f90vS1Hist -> Draw("COLZ");
+}
+
+/* void F90vS1IndependentCuts( Int_t run )
+ *
+ *  Summary of Function:
+ *
+ *    This function constructs five 2D histograms with x-axis equal to the S1 charge and y-axis equal to f90.
+ *    Each histogram, while taken from the same raw dataset defined by the run number, has different selection
+ *    cuts applied to it. Each cut is independently applied to the dataset, such as to see how each cut
+ *    individually affects the data set. The cuts are: no cuts, TPC signal quality cuts, low Be selection cuts,
+ *    SiTel-TPC time of flight cuts and SiTel-LSci time of flight cuts.
+ *
+ *  Parameters   : run >> the run containing the reconstruced data.
+ *
+ *  Return Value : void.
+ */
+void IndependentCutsF90vS1( Int_t run, bool draw = true, bool write = false ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+  sidStyle -> SetOptStat(10);
+
+  TString runFileName = runsDirectoryPath + Form("/run_%d.root", run);
+  TFile* runFile = CheckFile(runFileName);
+  TTree* reco;  runFile -> GetObject("reco", reco);
+
+  // F90 vs S1 ouput histograms properties:
+  const Int_t histCount = 5;
+  TH2F*   hist[histCount];
+  TString histName[histCount]  = {"f90vs1_histogram_nocut"    , "f90vs1_histogram_tpccut", "f90vs1_histogram_lowbecut",
+                                  "f90vs1_histogram_tpctofcut", "f90vs1_histogram_lscitofcut"};
+  TString histTitle[histCount] = {"F90 vs S1 (No Cuts)",
+                                  "F90 vs S1 (TPC Cuts)",
+                                  "F90 vs S1 (Low Be Cuts)",
+                                  "F90 vs S1 (SiTel-TPC ToF Cuts)",
+                                  "F90 vs S1 (SiTel-LSci ToF Cuts)"};
+
+  // <code-fold> DEFINING THE SELECTION CUTS TO BE APPLIED:
+  const Int_t chanCount = 6;
+  Int_t chanID[chanCount] = {0, 1, 3, 4, 5, 8};
+
+  // SiTel-TPC ToF values are taken from a gaussian fit. SiTel-LSci are from a rough visual guess.
+  Double_t tpcToFMin  = 22;   Double_t tpcToFMax  = 27;
+  Double_t lsciToFMin = 20;   Double_t lsciToFMax = 40;
+
+  TCut   tpcCut     = DefineCuts(expCfg, f90Min, f90Max, s1Min, s1Max);
+  TCutG* lowBeCut   = LowBeGraphCut(run, "LowBeCut");
+  TCut   tpcToFCut  = SiTelTPCToFCut(tpcToFMin, tpcToFMax);
+  TCut   lsciToFCut = SiTelLSciToFCutAllChan(chanID, chanCount, lsciToFMin, lsciToFMax);
+
+  // </code-fold>
+
+  TCut cut[histCount] = {"", tpcCut, "LowBeCut", tpcToFCut, lsciToFCut};
+
+  // Generating the histograms, each with a different cut selection.
+  for (Int_t i = 0; i < histCount; i++){
+    hist[i] = new TH2F(histName[i], histTitle[i], s1BinCount, s1Min, s1Max, f90BinCount, f90Min, f90Max);
+    reco -> Project(histName[i], "clusters[0].f90:clusters[0].charge", cut[i]);
+
+    hist[i] -> GetXaxis() -> SetTitle("S1 [PE]");
+    hist[i] -> GetYaxis() -> SetTitle("f_{90}");
+  }
+
+  // Saves the generated histograms to root file for later use.
+  if (write){
+
+    TString outputFileName = analysisDirectoryPath + Form("/analysis_%d.root", run);
+    TFile* outputFile = CheckFile(outputFileName);
+
+    TDirectory* histDir = MakeDirectory("histograms", "histograms");
+    histDir -> cd();
+    TDirectory* f90vs1Dir = MakeDirectory("f90vS1", "f90vS1");
+
+    for (Int_t i = 0; i < histCount; i++)  f90vs1Dir -> WriteObject(hist[i], histName[i], "OverWrite");
+
+    outputFile -> Close();
+  }
+
+  // Draws the generated histograms for the user.
+  if (draw){
+
+    Double_t height = 300;    Double_t width = gdRatio*height;
+    TCanvas* canvas[histCount];
+
+    for (Int_t i = 0; i < histCount; i++){
+
+      canvas[i] = new TCanvas(Form("canvas_%d", i), "F90 vs S1", 2*width, 2*height);
+      canvas[i] -> SetGrid();
+
+      hist[i] -> Draw("COLZ");
+    }
+  }
+}
+
+
+void IndependentCutsEventAnalysis( Int_t run, bool total = true, bool fraction = true, bool nrRatio = true ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
+
+  // <code-fold> GETTING THE HISTOGRAMS PREVIOUSLY GENERATED BY 'IndependentCutsF90vS1()'.
+  // Opening the directory were the f90 vs s1 histograms are saved in.
+  TString analysisFileName = analysisDirectoryPath + Form("/analysis_%d.root", run);
+  TFile* analysisFile = CheckFile(analysisFileName);
+
+  TDirectory* histDir = MakeDirectory("histograms", "histograms");
+  histDir -> cd();
+  TDirectory* f90vs1Dir = MakeDirectory("f90vS1", "f90vS1");
+
+  const Int_t histCount = 5;
+  TString histName[histCount] = {"f90vs1_histogram_nocut"    , "f90vs1_histogram_tpccut", "f90vs1_histogram_lowbecut",
+                                 "f90vs1_histogram_tpctofcut", "f90vs1_histogram_lscitofcut"};
+
+  TH2F*    hist[histCount];  Double_t eventCount[histCount];
+  // </code-fold>
+
+  for (Int_t i = 0; i < histCount; i++){
+    hist[i] = (TH2F*) f90vs1Dir -> Get(histName[i]);
+    eventCount[i] = hist[i] -> GetEntries();
+  }
+
+  // <code-fold> SETTING UP GLOBAL STRUCTURES FOR GENERATING THE FOLLOWING GRAPHS
+
+  TString eventLabel[histCount] = {"No Cuts", "TPC", "Low Be", "SiTel-TPC ToF", "SiTel-LSci ToF"};
+  Double_t x[histCount];
+  for (Int_t i = 0; i < histCount; i++)  x[i] = i*1 + 1;
+
+  // Defines the width and height of the canvas that will be created.
+  Double_t height = 600;    Double_t width = gdRatio*height;
+
+  // Defines frame histogram necessary for writing the alphanumeric labels used.
+  TH1F *frameHist = new TH1F("frame_hist","Surviving Events", histCount, x[0] -0.5, x[histCount-1] + 0.5);
+  for (Int_t i = 1; i <= histCount; i++) frameHist -> GetXaxis() -> SetBinLabel(i, eventLabel[i-1]);
+
+  // </code-fold>
+
+  // Draws a graph showing how the number of events change with the application of different cuts.
+  if (total){
+
+    TCanvas *canvas1 = new TCanvas("canvas1", "Surviving Events (Total)", width, height);
+    canvas1 -> SetLogy();
+    canvas1 -> SetGrid();
+
+    frameHist -> SetMaximum(2*eventCount[0]);
+    frameHist -> GetXaxis() -> SetTitle("Selections");
+    frameHist -> GetYaxis() -> SetTitle("Number of Events");
+    frameHist -> DrawCopy();
+
+    TGraph *eventCountGraph = new TGraph(histCount, x, eventCount);
+    eventCountGraph -> SetMarkerStyle(21);
+    eventCountGraph -> SetMarkerColor(1179);
+    eventCountGraph -> SetMarkerSize(1);
+    eventCountGraph -> Draw("P");
+  }
+
+  // Draws a graph showing how the fraction of surviving events change with the application of different cuts.
+  if (fraction){
+
+    Double_t normCount[histCount];
+    for (Int_t i = 0; i < histCount; i++)  normCount[i] = eventCount[i]/eventCount[0];
+
+    TCanvas *canvas2 = new TCanvas("canvas2", "Surviving Events (Fraction)", width, height);
+    canvas2 -> SetLogy();
+    canvas2 -> SetGrid();
+
+    frameHist -> SetMaximum(2*normCount[0]);
+    frameHist -> SetTitle("Surviving Events (Fraction)");
+    frameHist -> GetXaxis() -> SetTitle("Selections");
+    frameHist -> GetYaxis() -> SetTitle("Fraction of Events");
+    frameHist -> DrawCopy();
+
+    TGraph *normCountGraph = new TGraph(histCount, x, normCount);
+    normCountGraph -> SetMarkerStyle(21);
+    normCountGraph -> SetMarkerColor(1230);
+    normCountGraph -> SetMarkerSize(1);
+    normCountGraph -> Draw("P");
+  }
+
+  if (nrRatio){
+
+    Double_t nrEventCount[histCount];
+    Double_t nrRatio[histCount];
+    Double_t nrPurity[histCount];
+    Double_t nrMax = 1;
+
+    Double_t nrF90Min = 0.4;    Double_t nrF90Max = 0.6;
+    Int_t nrF90MinBin = hist[0] -> GetYaxis() -> FindBin(nrF90Min);
+    Int_t nrF90MaxBin = hist[0] -> GetYaxis() -> FindBin(nrF90Max);
+
+    for (Int_t i = 0; i < histCount; i++){
+
+      nrEventCount[i] = hist[i] -> Integral(1, hist[i] -> GetNbinsX(), nrF90MinBin, nrF90MaxBin);
+      nrRatio[i] = nrEventCount[i]/eventCount[i];
+      nrPurity[i] = (nrRatio[i]/eventCount[i]) * 1000;
+
+    }
+
+    TCanvas *canvas3 = new TCanvas("canvas3", "NR Percentage", width, height);
+    canvas3 -> SetGrid();
+
+    frameHist -> SetMaximum(nrMax);
+    frameHist -> SetTitle("Nuclear Recoil Fraction");
+    frameHist -> GetXaxis() -> SetTitle("Selections");
+    frameHist -> GetYaxis() -> SetTitle("NR Fraction");
+    frameHist -> DrawCopy();
+
+    TGraph *nrRatioGraph = new TGraph(histCount, x, nrRatio);
+    nrRatioGraph -> SetMarkerStyle(21);
+    nrRatioGraph -> SetMarkerColor(1281);
+    nrRatioGraph -> SetMarkerSize(1);
+    nrRatioGraph -> Draw("P");
+
+    TCanvas *canvas4 = new TCanvas("canvas4", "NR Purity", width, height);
+    canvas4 -> SetLogy();
+    canvas4 -> SetGrid();
+
+    frameHist -> SetMaximum(nrMax);
+    frameHist -> SetTitle("Nuclear Recoil Purity");
+    frameHist -> GetXaxis() -> SetTitle("Selections");
+    frameHist -> GetYaxis() -> SetTitle("NR Fraction/1000 Events");
+    frameHist -> DrawCopy();
+
+    TGraph *nrPurityGraph = new TGraph(histCount, x, nrPurity);
+    nrPurityGraph -> SetMarkerStyle(21);
+    nrPurityGraph -> SetMarkerColor(1332);
+    nrPurityGraph -> SetMarkerSize(1);
+    nrPurityGraph -> Draw("P");
+  }
 }
 
 void F90vS1LSciCuts( Int_t run ){
@@ -154,8 +384,8 @@ void F90vS1LSciCuts( Int_t run ){
  *
  *    The function construncs 4 2D histograms with x-axis equal to S1 charge and y-axis equal to f90. Each
  *    histogram, while taken from the same raw dataset define by the run Count, has different selection cuts
- *    applied to it. Each new cut also applies the previous ones to it. The are: no cuts, TPC signal quality
- *    cuts (Count of clusters, complete signal reconstruction), SiTel-TPC time of flight cuts and SiTel-LSci
+ *    applied to it. Each new cut also applies the previous ones to it. They are: no cuts, TPC signal quality
+ *    cuts (count of clusters, complete signal reconstruction), SiTel-TPC time of flight cuts and SiTel-LSci
  *    time of flight cuts. As such, each histogram has progressively stricter cut selections, which should
  *    result in a greater percentage of nuclear recoil events with respect to background, as is desired.
  *
@@ -179,8 +409,9 @@ void ProgressiveCutsF90vS1( Int_t run, bool write = false, bool draw = true ){
   TFile* runFile = CheckFile(runFileName);
   TTree* reco;  runFile -> GetObject("reco", reco);
 
+  const Int_t histCount = 4;
 
-  // Defining the selection cuts to be applied:
+  // <code-fold> DEFINING THE SELECTION CUTS TO BE APPLIED:
   const Int_t chanCount = 6;
   Int_t chanID[chanCount] = {0, 1, 3, 4, 5, 8};
 
@@ -192,18 +423,19 @@ void ProgressiveCutsF90vS1( Int_t run, bool write = false, bool draw = true ){
   TCut tpcToFCut  = SiTelTPCToFCut(tpcToFMin, tpcToFMax);
   TCut lsciToFCut = SiTelLSciToFCutAllChan(chanID, chanCount, lsciToFMin, lsciToFMax);
 
+  // </code-fold>
 
-  const Int_t histCount = 4;
+  TCut cut[histCount] = {"", tpcCut && "LowBeCut", tpcCut && tpcToFCut && "LowBeCut", tpcCut && tpcToFCut && lsciToFCut && "LowBeCut"};
+
   TH2F*   f90vS1Hist[histCount];
-  TString histName[histCount]  = {"f90vs1_histogram_nocut"    , "f90vs1_histogram_tpccut",
-                                   "f90vs1_histogram_tpctofcut", "f90vs1_histogram_lscitofcut"};
+  TString histName[histCount]  = {"f90vs1_histogram_prgcut00"    , "f90vs1_histogram_prgcut01",
+                                   "f90vs1_histogram_prgcut02", "f90vs1_histogram_prgcut03"};
   TString histTitle[histCount] = {"F90 vs S1 (No Cuts)",
                                    "F90 vs S1 (TPC Cuts)",
                                    "F90 vs S1 (TPC + SiTel-TPC ToF Cuts)",
                                    "F90 vs S1 (TPC + SiTel-TPC ToF + SiTel-LSci ToF Cuts)"};
 
-  TCut cut[histCount] = {"", tpcCut && "LowBeCut", tpcCut && tpcToFCut && "LowBeCut", tpcCut && tpcToFCut && lsciToFCut && "LowBeCut"};
-
+  // Generates f90 vs S1 histograms considering different cuts.
   for (Int_t i = 0; i < histCount; i++){
     f90vS1Hist[i] = new TH2F(histName[i], "", s1BinCount, s1Min, s1Max, f90BinCount, f90Min, f90Max);
     reco -> Project(histName[i], "clusters[0].f90:clusters[0].charge", cut[i]);
@@ -252,6 +484,8 @@ void ProgressiveCutsF90vS1( Int_t run, bool write = false, bool draw = true ){
 
 }
 
+//TODO: Define better NR event selection.
+
 /* void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 )
  *
  *  Summary of Functions:
@@ -271,6 +505,8 @@ void ProgressiveCutsF90vS1( Int_t run, bool write = false, bool draw = true ){
  *
  *  Parameters   : run >> the run containing the reconstructed data.
  *                 s1BinSize >> the size of the s1 slices used.
+ *
+ *  Return Value : void
  */
 void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 ){
 
@@ -285,10 +521,9 @@ void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 ){
   histDir -> cd();
   TDirectory* f90vs1Dir = MakeDirectory("f90vS1", "f90vS1");
 
-
-  const Int_t histCount = 4;
-  TString histName[histCount] = {"f90vs1_histogram_nocut"    , "f90vs1_histogram_tpccut",
-                                 "f90vs1_histogram_tpctofcut", "f90vs1_histogram_lscitofcut"};
+  const Int_t histCount = 5;
+  TString histName[histCount] = {"f90vs1_histogram_prgcut00", "f90vs1_histogram_prgcut01",
+                                 "f90vs1_histogram_prgcut02", "f90vs1_histogram_prgcut03"};
 
   TH2F* f90vs1Hist[histCount];
   for (Int_t i = 0; i < histCount; i++) f90vs1Hist[i] =  (TH2F*) f90vs1Dir -> Get(histName[i]);
@@ -301,7 +536,7 @@ void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 ){
 
   const Int_t s1BinCount = (Int_t) (s1Max - s1Min)/s1BinSize;
 
-  // These arrays will hould the number of events within each regioSetting up the values that will be used to impose the region of interest when counting the number of events.n defined
+  // These arrays will hold the number of events within each region defined
   Double_t nrEventCount[histCount][s1BinCount];   Double_t nrPercentage[histCount][s1BinCount];
   Double_t erEventCount[histCount][s1BinCount];   Double_t erPercentage[histCount][s1BinCount];
   Double_t s1[s1BinCount];
@@ -324,9 +559,10 @@ void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 ){
 
   // The same applies for the s1 boundaries, though they will change as they run through the values of s1.
   Int_t s1LowBoundBin;    Int_t s1UppBoundBin;
+
   // </code-fold>
 
-  // Getting the count of NR and ER events per S1 bin.
+  // Getting the NR and ER percentage of events per S1 bin.
   for (Int_t i = 0; i < histCount; i++){
 
     Int_t j = 0;
@@ -361,8 +597,8 @@ void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 ){
 
   TGraph* percGraph[6];
   // <code-fold> SETTING UP GRAPH PARAMETERS.
-  TString graphName[6]  = {"nr_graph_nocut", "nr_graph_tpccut", "nr_graph_tpctofcut",
-                           "er_graph_nocut", "er_graph_tpccut", "er_graph_tpctofcut"};
+  TString graphName[6]  = {"nr_graph_prgcut00", "nr_graph_prgcut01", "nr_graph_prgcut02",
+                           "er_graph_prgcut00", "er_graph_prgcut01", "er_graph_prgcut02"};
   TString graphTitle[6] = {"Nenhum Corte (NR)", "TPC + Be (NR)", "TPC + ToF + Be (NR)",
                            "Nenhum Corte (ER)", "TPC + Be (ER)", "TPC + ToF + Be (ER)"};
 
@@ -390,8 +626,10 @@ void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 ){
 
     cutEffDir -> WriteObject(percGraph[i], graphName[i], "OverWrite");
   }
+
   analysisFile -> Close();
 }
+
 
 /* void ProgressiveCutsEffectAnalysis( Int_t run, bool singleEventAllCut = true, bool bothEventOneCut = false )
  *
@@ -433,8 +671,8 @@ void ProgressiveCutsEffectAnalysis( Int_t run, bool singleEventAllCut = true, bo
   TGraph* nrGraph[graphCount];
   TGraph* erGraph[graphCount];
 
-  TString nrGraphName[graphCount] = {"nr_graph_nocut", "nr_graph_tpccut", "nr_graph_tpctofcut"};
-  TString erGraphName[graphCount] = {"er_graph_nocut", "er_graph_tpccut", "er_graph_tpctofcut"};
+  TString nrGraphName[graphCount] = {"nr_graph_prgcut00", "nr_graph_prgcut01", "nr_graph_prgcut02"};
+  TString erGraphName[graphCount] = {"er_graph_prgcut00", "er_graph_prgcut01", "er_graph_prgcut02"};
 
   for (Int_t i = 0; i < graphCount; i++){
     nrGraph[i] = (TGraph*) cutEffDir -> Get(nrGraphName[i]);
@@ -564,6 +802,7 @@ void ProgressiveCutsEffectAnalysis( Int_t run, bool singleEventAllCut = true, bo
       // </code-fold>
     }
   }
+
 }
 
 

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /* File: PlotF90Parameters.C (ROOT macro).
  *
  * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).

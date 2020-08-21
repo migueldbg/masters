@@ -39,29 +39,540 @@
  *    aforementioned macro, please make sure to do so, or else the code will not run.                                        *
  * ************************************************************************************************************************* */
 
-/* TFile* CheckFile( TString path_name )
- *
- * Summary of CheckFile function:
- *
- *    The CheckFile function checks if a given file already exists and returns this information to the user.
- *    If the file exists, CheckFile returns it. If not, it creates it and then returns it.
- *
- * Parameters   : path_name >> The name of the desired file.
- *
- * Return value : TFile* file.
- */
-TFile* CheckFile( TString path_name ){
+//<code-fold> AUXILIARY FUNCTIONS DECLARATION.
+TGraphErrors* SubtractGraph(TGraphErrors* minGraph, TGraphErrors* subGraph, Int_t option);
+TGraphErrors* WriteGraph(TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0, const char* title = "", const char* name = "graph", Int_t ms = 22, Int_t mc = 1);
 
-  if (gSystem -> AccessPathName(path_name)) {
-    std::cout << "The " << path_name << " file does not exist. Creating it..." << std::endl;
-  } else {
-    std::cout << "Opening file: " << path_name << std::endl;
+Double_t GetPeak(TH1* histogram);
+Double_t GetPeakError(TH1* histogram);
+Int_t NumberOfHistograms(TDirectory* directory);
+//</code-fold>
+
+
+
+// /* void GenerateF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter )
+//  *
+//  *  Summary of Function:
+//  *
+//  *    Generates a plot containing two graphs, one generated from acquired data and another from MC simulated data. The x-axis
+//  *    is the total charge of the event signal, while the y-axis dependes on the value of 'parameter' and can be one of three:
+//  *    the mean value, the peak position or the rms, all with respect to a f90 histogram. This plot is then written into the
+//  *    given directory and the constructed canvas is saved in two file formats: pdf and png.
+//  *
+//  *  Parameters   : run        >> the number of the run from witch the data is taken.
+//  *                 data_graph >> contains the graph generated from the actual data.
+//  *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
+//  *                 ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
+//  *                 directory  >> directory where the multigraph is writen to.
+//  *                 x_size     >> width of the canvas.
+//  *                 y_size     >> height of the canvas.
+//  *                 parameter  >> indicates witch parameter from the f90 histogram will be plotted.
+//  *
+//  *  Return Value : void.
+//  */
+// void GenerateF90vChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t width, Double_t height, const char* parameter ){
+//
+//   if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
+//
+//   string param_name;
+//   string param_title;
+//
+//   if ( std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
+//     param_name = "mean";   param_title = "Média";
+//   } else if ( std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
+//     param_name = "peak";   param_title = "Pico";
+//   } else if ( std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
+//     param_name = "rms";    param_title = "RMS";
+//   } else {
+//     std::cout << "Invalid 'parameter' value. Please type one of the following: m (mean), p (peak) or r (rms)";
+//     exit(EXIT_FAILURE);
+//   }
+//
+//   TCanvas* canvas = new TCanvas(Form("%s_%s_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), width, height);
+//
+//   TMultiGraph* multigraph = new TMultiGraph();
+//   multigraph -> Add(data_graph);    multigraph -> Add(mc_graph);
+//
+//   multigraph -> SetTitle(Form("; S1 [PE]; %s", param_title.c_str()));
+//   multigraph -> SetName(Form("f90%svS1_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr"));
+//   multigraph -> Draw("ALP");
+//
+//   TLegend* legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
+//   legend -> AddEntry( data_graph, "Dado",        "lep" );
+//   legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
+//   legend -> Draw();
+//
+//
+// }
+//
+// /* void GenerateF90DiffvChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter )
+//  *
+//  *  Summary of Function:
+//  *
+//  *    Takes two TGraphErrors object, one containing actual data and the other MC simulated data. It then calculates the
+//  *    relative difference between them using the GraphDiff() function defined above and plots the resulting graph. The x-axis
+//  *    is equal to the total charge of the event signal, while the y-axis depends on the value of 'parameter' and can be one of
+//  *    three: the mean value, the peak position or the rms, all with respect to the f90 histogram. The graph is then writen
+//  *    into the given directory and the constructed canvas is saved in two file formats: pdf and png.
+//  *
+//  *  Parameters   : run        >> the number of the run from witch the data is taken.
+//  *                 data_graph >> contains the graph generated from the actual data.
+//  *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
+//  *                 ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
+//  *                 directory  >> directory where the multigraph is writen to.
+//  *                 x_size     >> width of the canvas.
+//  *                 y_size     >> height of the canvas.
+//  *                 parameter  >> indicates witch parameter from the f90 histogram will be plotted.
+//  *
+//  *  Return Value : void.
+//  */
+// void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter ){
+//
+//   if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
+//
+//   string param_name;
+//   string param_title;
+//
+//   if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
+//     param_name = "mean";   param_title = "Média";
+//   } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
+//     param_name = "peak";   param_title = "Pico";
+//   } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
+//     param_name = "rms";    param_title = "RMS";
+//   } else {
+//     std::cout << "Invalid 'parameter' value.";
+//     exit(EXIT_FAILURE);
+//   }
+//
+//   TCanvas* canvas = new TCanvas( Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), x_size, y_size );
+//
+//   TGraphErrors* diff_graph = GraphDiff( data_graph, mc_graph, 0 );
+//   diff_graph -> SetTitle( "; S1 [PE]; Diferença" );
+//   diff_graph -> SetName( Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
+//
+//   int ms = 0;  if (ERorNR == 0){ ms = 22; } else { ms = 23; }
+//
+//   diff_graph -> SetMarkerStyle(ms);
+//   diff_graph -> SetMarkerColor(46);
+//   diff_graph -> SetMarkerSize(2.5);
+//   diff_graph -> SetLineColor(46);
+//
+//   diff_graph -> Draw();
+//
+//   directory -> WriteObject( diff_graph, Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
+//
+//   //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+//   //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
+// }
+//
+//
+// void PlotF90Parameters( int run, Double_t charge_min = 0. ){
+//
+//   TString file_name = Form("hist_%d.root", run);
+//   TFile* hist_file = CheckFile(file_name);
+//
+//   // ---------------------- CREATING NECESSARY DIRECTORIES ----------------------- //
+//   hist_file -> cd();
+//   TDirectory* RMS_analysis_dir   = MakeDirectory("RMS_analysis", "RMS_analysis");
+//   TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
+//
+//   RMS_analysis_dir -> cd();
+//   TDirectory* graphs_dir         = MakeDirectory("graphs", "graphs");
+//
+//   histograms_dir -> cd();
+//   TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
+//
+//   f90_histograms_dir -> cd();
+//   TDirectory* data_dir           = MakeDirectory("data", "data");
+//   TDirectory* monte_carlo_dir    = MakeDirectory("monte_carlo", "monte_carlo");
+//
+//   data_dir -> cd();
+//   TDirectory* da_both_dir         = MakeDirectory("both","both");
+//   TDirectory* da_er_dir           = MakeDirectory("ER","ER");
+//   TDirectory* da_nr_dir           = MakeDirectory("NR","NR");
+//
+//   monte_carlo_dir -> cd();
+//   TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
+//   TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
+//   // ----------------------------------------------------------------------------- //
+//
+//   Int_t number_of_histograms = NumberOfHistograms(da_both_dir);
+//
+//   Double_t RMS_da_er     [number_of_histograms];      Double_t RMS_da_nr     [number_of_histograms];
+//   Double_t RMSerr_da_er  [number_of_histograms];      Double_t RMSerr_da_nr  [number_of_histograms];
+//   Double_t MEAN_da_er    [number_of_histograms];      Double_t MEAN_da_nr    [number_of_histograms];
+//   Double_t MEANerr_da_er [number_of_histograms];      Double_t MEANerr_da_nr [number_of_histograms];
+//   Double_t PEAK_da_er    [number_of_histograms];      Double_t PEAK_da_nr    [number_of_histograms];
+//   Double_t PEAKerr_da_er [number_of_histograms];      Double_t PEAKerr_da_nr [number_of_histograms];
+//
+//
+//   Double_t RMS_mc_er     [number_of_histograms];      Double_t RMS_mc_nr     [number_of_histograms];
+//   Double_t RMSerr_mc_er  [number_of_histograms];      Double_t RMSerr_mc_nr  [number_of_histograms];
+//   Double_t MEAN_mc_er    [number_of_histograms];      Double_t MEAN_mc_nr    [number_of_histograms];
+//   Double_t MEANerr_mc_er [number_of_histograms];      Double_t MEANerr_mc_nr [number_of_histograms];
+//   Double_t PEAK_mc_er    [number_of_histograms];      Double_t PEAK_mc_nr    [number_of_histograms];
+//   Double_t PEAKerr_mc_er [number_of_histograms];      Double_t PEAKerr_mc_nr [number_of_histograms];
+//
+//   Double_t charge_total[number_of_histograms];
+//
+//   TH1F* htemp = 0;
+//
+//   for ( int i = 0; i < number_of_histograms; i++ ){
+//
+//     htemp = (TH1F *)da_er_dir -> Get( Form("f90_histogram_er_%d", i+1) );
+//     RMS_da_er[i]  = htemp -> GetRMS();   RMSerr_da_er[i]  = htemp -> GetRMSError();
+//     MEAN_da_er[i] = htemp -> GetMean();  MEANerr_da_er[i] = htemp -> GetMeanError();
+//     PEAK_da_er[i] = GetPeak(htemp);      PEAKerr_da_er[i] = GetPeakError(htemp);
+//
+//     htemp = (TH1F *)da_nr_dir -> Get( Form("f90_histogram_nr_%d", i+1) );
+//     RMS_da_nr[i]  = htemp -> GetRMS();   RMSerr_da_nr[i]  = htemp -> GetRMSError();
+//     MEAN_da_nr[i] = htemp -> GetMean();  MEANerr_da_nr[i] = htemp -> GetMeanError();
+//     PEAK_da_nr[i] = GetPeak(htemp);      PEAKerr_da_nr[i] = GetPeakError(htemp);
+//
+//     htemp = (TH1F *)mc_er_dir -> Get( Form("f90_histogram_mcer_%d", i+1) );
+//     RMS_mc_er[i]  = htemp -> GetRMS();   RMSerr_mc_er[i]  = htemp -> GetRMSError();
+//     MEAN_mc_er[i] = htemp -> GetMean();  MEANerr_mc_er[i] = htemp -> GetMeanError();
+//     PEAK_mc_er[i] = GetPeak(htemp);      PEAKerr_mc_er[i] = GetPeakError(htemp);
+//
+//     htemp = (TH1F *)mc_nr_dir -> Get( Form("f90_histogram_mcnr_%d", i+1) );
+//     RMS_mc_nr[i]  = htemp -> GetRMS();   RMSerr_mc_nr[i]  = htemp -> GetRMSError();
+//     MEAN_mc_nr[i] = htemp -> GetMean();  MEANerr_mc_nr[i] = htemp -> GetMeanError();
+//     PEAK_mc_nr[i] = GetPeak(htemp);      PEAKerr_mc_nr[i] = GetPeakError(htemp);
+//
+//     charge_total[i] = (20*i + 10) + charge_min;
+//   }
+//
+//   TGraphErrors* da_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_er,  0, RMSerr_da_er,
+//                                               "RMS of f90 Histograms (ER); Charge (PE); F90 RMS",      "f90RMSxCharge_total_er",    22, 40 );
+//   TGraphErrors* da_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_da_er, 0, MEANerr_da_er,
+//                                               "Mean of f90 Histograms (ER); Charge (PE); F90 Mean",    "f90MeanxCharge_total_er",   22, 40 );
+//   TGraphErrors* da_er_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_da_er, 0, PEAKerr_da_er,
+//                                               "Peak of f90 Histograms (ER); Charge (PE); F90 Peak",    "f90PeakxCharge_total_er",   22, 40 );
+//
+//   TGraphErrors* da_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_nr,  0, RMSerr_da_nr,
+//                                               "RMS of f90 Histograms (NR); Charge (PE); F90 RMS",      "f90RMSxCharge_total_nr",    23, 40 );
+//   TGraphErrors* da_nr_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_da_nr, 0, MEANerr_da_nr,
+//                                               "Mean of f90 Histograms (NR); Charge (PE); F90 Mean",    "f90MeanxCharge_total_nr",   23, 40 );
+//   TGraphErrors* da_nr_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_da_nr, 0, PEAKerr_da_nr,
+//                                               "Peak of f90 Histograms (NR); Charge (PE); F90 Peak",    "f90PeakxCharge_total_nr",   23, 40 );
+//
+//   TGraphErrors* mc_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er,  0, RMSerr_mc_er,
+//                                               "RMS of f90 Histograms (MC ER); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcer",  22, 30 );
+//   TGraphErrors* mc_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_er, 0, MEANerr_mc_er,
+//                                               "Mean of f90 Histograms (MC ER); Charge (PE); F90 Mean", "f90MeanxCharge_total_mcer", 22, 30 );
+//   TGraphErrors* mc_er_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_mc_er, 0, PEAKerr_mc_er,
+//                                               "Peak of f90 Histograms (MC ER); Charge (PE); F90 Peak", "f90PeakxCharge_total_mcer", 22, 30 );
+//
+//   TGraphErrors* mc_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms,  charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
+//                                               "RMS of f90 Histograms (MC NR); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcnr",  23, 30 );
+//   TGraphErrors* mc_nr_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_nr, 0, MEANerr_mc_nr,
+//                                               "Mean of f90 Histograms (MC NR); Charge (PE); F90 Mean", "f90MeanxCharge_total_mcnr", 23, 30 );
+//   TGraphErrors* mc_nr_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_mc_nr, 0, PEAKerr_mc_nr,
+//                                               "Peak of f90 Histograms (MC NR); Charge (PE); F90 Peak", "f90PeakxCharge_total_mcnr", 23, 30 );
+//
+//   // *************************************************** CONSTRUCTING THE DESIRED PLOTS *************************************************** //
+//
+//   Double_t y_size = 1000.;    Double_t x_size = 1.61803398875 * y_size;
+//
+//   GenerateF90vChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
+//   GenerateF90vChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
+//
+//   GenerateF90DiffvChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
+//   GenerateF90DiffvChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
+//
+//   GenerateF90vChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
+//   GenerateF90vChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
+//
+//   GenerateF90DiffvChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
+//   GenerateF90DiffvChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
+//
+//   GenerateF90vChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms" );
+//   GenerateF90vChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms" );
+//
+//   GenerateF90DiffvChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms"  );
+//   GenerateF90DiffvChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms"  );
+// }
+
+
+void F90ParamGraphs( Int_t run, bool write = true, bool draw = false, Double_t s1Min = 60, Double_t s1BinSize = 20 ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
+
+  TString analysisFileName = analysisDirectoryPath + Form("/analysis_%d.root", run);
+  TFile* analysisFile = CheckFile(analysisFileName);
+
+  // <code-fold> DIRECTORY STRUCTURE FOR HISTOGRAM LOCATIONS
+  TDirectory* recoilDir[2][2];
+
+  analysisFile -> cd();
+  TDirectory* graphDir = MakeDirectory("graphs", "graphs");
+  TDirectory* histDir  = MakeDirectory("histograms", "histograms");
+
+  histDir -> cd();    TDirectory* f90Dir = MakeDirectory("f90", "f90");
+
+  f90Dir -> cd();     TDirectory* dataDir = MakeDirectory("data", "data");
+                      TDirectory* mcDir   = MakeDirectory("monte_carlo", "monte_carlo");
+
+  dataDir -> cd();    recoilDir[0][0] = MakeDirectory("ER", "ER");
+                      recoilDir[0][1] = MakeDirectory("NR", "NR");
+
+  mcDir -> cd();      recoilDir[1][0] = MakeDirectory("ER", "ER");
+                      recoilDir[1][1] = MakeDirectory("NR", "NR");
+  // </code-fold>
+
+  TH1F* htemp;
+
+  Int_t histNumber = NumberOfHistograms(recoilDir[0][0]);
+
+  // Remember: [0][0] = ER (Data) || [0][1] = NR (Data) || [1][0] = ER (MC) || [1][1] = NR (MC).
+  Double_t mean[2][2][histNumber];    Double_t meanErr[2][2][histNumber];
+  Double_t peak[2][2][histNumber];    Double_t peakErr[2][2][histNumber];
+  Double_t rms[2][2][histNumber];     Double_t rmsErr[2][2][histNumber];
+
+  Double_t s1[histNumber];            Double_t s1Err[histNumber];
+
+  // Geting the parameters (mean, peak and rms) of each f90 histogram.
+  for (Int_t j = 0; j < 2; j++){
+    for (Int_t k = 0; k < 2; k++){
+      for (Int_t i = 0; i < histNumber; i++){
+        htemp = (TH1F *)recoilDir[j][k] -> Get(Form("f90_histogram_%s%s_%d", (j == 0)?"":"mc", (k == 0)?"er":"nr", i+1));
+
+        mean[j][k][i] = htemp -> GetMean();   meanErr[j][k][i] = htemp -> GetMeanError();
+        peak[j][k][i] = GetPeak(htemp);       peakErr[j][k][i] = GetPeakError(htemp);
+        rms[j][k][i] = htemp -> GetRMS();     rmsErr[j][k][i]  = htemp -> GetRMSError();
+      }
+    }
+  }
+  for (Int_t i = 0; i < histNumber; i++){
+    s1[i] = (s1BinSize * i) + (s1BinSize/2) + s1Min;
+    s1Err[i] = s1BinSize/2;
   }
 
-  TFile *file = new TFile(path_name, "UPDATE");
-  if ( !(file -> IsOpen()) ) { std::cout << "Unable to open file." << std::endl;}
+  // Generating the desired graphs.
+  TGraphErrors* meanGraph[2][2];
+  TGraphErrors* peakGraph[2][2];
+  TGraphErrors* rmsGraph[2][2];
 
-  return file;
+  for (Int_t j = 0; j < 2; j++){
+    for (Int_t k = 0; k < 2; k++){
+
+      meanGraph[j][k] = new TGraphErrors(histNumber, s1, mean[j][k], s1Err, meanErr[j][k]);
+      peakGraph[j][k] = new TGraphErrors(histNumber, s1, peak[j][k], s1Err, peakErr[j][k]);
+      rmsGraph[j][k]  = new TGraphErrors(histNumber, s1, rms[j][k],  s1Err, rmsErr[j][k]);
+
+    }
+  }
+
+
+  // Writes the obtained graphs in the appropriate directory for later use.
+  if (write) {
+    graphDir -> cd();
+    TDirectory* f90ParamDir = MakeDirectory("f90_parameters", "f90_parameters");
+
+    f90ParamDir -> cd();
+    TDirectory* meanDir = MakeDirectory("mean", "mean");
+    TDirectory* peakDir = MakeDirectory("peak", "peak");
+    TDirectory* rmsDir  = MakeDirectory("rms", "rms");
+
+
+    const char* meanName[2][2] = {{"mean_er", "mean_nr"}, {"mean_mcer", "mean_mcnr"}};
+    const char* peakName[2][2] = {{"peak_er", "peak_nr"}, {"peak_mcer", "peak_mcnr"}};
+    const char* rmsName[2][2]  = {{"rms_er" , "rms_nr"} , {"rms_mcer" , "rms_mcnr"}};
+
+    for (Int_t j = 0; j < 2; j++){
+      for (Int_t k = 0; k < 2; k++){
+
+        meanGraph[j][k] -> SetName(meanName[j][k]);
+        meanDir -> WriteObject(meanGraph[j][k], meanName[j][k], "OverWrite");
+
+        peakGraph[j][k] -> SetName(peakName[j][k]);
+        peakDir -> WriteObject(peakGraph[j][k], peakName[j][k], "OverWrite");
+
+        rmsGraph[j][k] -> SetName(rmsName[j][k]);
+        rmsDir -> WriteObject(rmsGraph[j][k], rmsName[j][k], "OverWrite");
+
+      }
+    }
+  }
+
+  // Draws the obtained graphs for visualization.
+  if (draw) {
+    TCanvas* canvas[3];
+    TString canvasName[3]  = {"mean", "peak", "rms"};
+    TString canvasTitle[3] = {"f90 Mean", "f90 Peak", "f90 RMS"};
+
+    Int_t canvasDivision[2][2] = {{1, 2}, {3, 4}};
+    TString graphName[2][2] = {{"ER (Data)", "NR (Data)"}, {"ER (MC)", "NR (MC)"}};
+
+    Double_t height = 400;    Double_t width = gdRatio*height;
+
+    for (Int_t i = 0; i < 3; i++){
+
+      canvas[i] = new TCanvas(canvasName[i], canvasTitle[i], 2*width, 2*height);
+      canvas[i] -> Divide(2,2);
+
+      for (Int_t j = 0; j < 2; j++){
+        for (Int_t k = 0; k < 2; k++){
+          canvas[i] -> cd(canvasDivision[j][k]);
+
+          if (i == 0) {
+            meanGraph[j][k] -> SetTitle(graphName[j][k]);
+            meanGraph[j][k] -> Draw("ALP");
+          } else if (i == 1) {
+            peakGraph[j][k] -> SetTitle(graphName[j][k]);
+            peakGraph[j][k] -> Draw("ALP");
+          } else if (i == 2) {
+            rmsGraph[j][k] -> SetTitle(graphName[j][k]);
+            rmsGraph[j][k] -> Draw("ALP");
+          }
+        }
+      }
+    }
+
+  }
+
+}
+
+void F90ParamDiffGraphs( Int_t run ){
+
+  TStyle* sidStyle = SetSidStyle();
+  sidStyle -> cd();
+  sidStyle -> SetOptStat(0);
+
+  TString analysisFileName = analysisDirectoryPath + Form("/analysis_%d.root", run);
+  TFile* analysisFile = CheckFile(analysisFileName);
+
+  TDirectory* paramDir[3];
+  // <code-fold> GETTING THE DIRECTORIES WERE THE GRAPHS ARE LOCATED.
+  TDirectory* graphDir = MakeDirectory("graphs", "graphs");
+
+  graphDir -> cd();   TDirectory* f90ParamDir = MakeDirectory("f90_parameters", "f90_parameters");
+
+  f90ParamDir -> cd();    paramDir[0] = MakeDirectory("mean", "mean");
+                          paramDir[1] = MakeDirectory("peak", "peak");
+                          paramDir[2] = MakeDirectory("rms", "rms");
+  // </code-fold>
+
+  // [0][0] = mean (ER) | [0][1] = peak (ER) | [0][2] = rms (ER) |
+  // [1][0] = mean (NR) | [1][1] = peak (NR) | [1][2] = rms (NR) |
+  TGraphErrors* dataGraph[2][3];
+  TGraphErrors* mcGraph[2][3];
+  TGraphErrors* diffGraph[2][3];
+
+  TString dataGraphName[2][3] = {{"mean_er"  , "peak_er"  , "rms_er"}  , {"mean_nr"  , "peak_nr"  , "rms_nr"}};
+  TString mcGraphName[2][3]   = {{"mean_mcer", "peak_mcer", "rms_mcer"}, {"mean_mcnr", "peak_mcnr", "rms_mcnr"}};
+
+
+  for (Int_t j = 0; j < 2; j++){
+    for (Int_t i = 0; i < 3; i++){
+      dataGraph[j][i] = (TGraphErrors*) paramDir[i] -> Get(dataGraphName[j][i]);
+      mcGraph[j][i]   = (TGraphErrors*) paramDir[i] -> Get(mcGraphName[j][i]);
+
+      diffGraph[j][i] = SubtractGraph(dataGraph[j][i], mcGraph[j][i], 1);
+    }
+  }
+
+  diffGraph[1][0] -> Draw("ALP");
+
+}
+
+// =================================== AUXILIARY FUNCTIONS USED IN THE MACRO =================================== //
+
+/* TGraphErrors* SubtractGraph( TGraphErrors* minGraph, TGraphErrors* subGraph, Int_t option = 0 )
+ *
+ * Summary of GraphDiff function:
+ *
+ *    The GraphDiff function takes two TGraphErrors objects and returns a third TGraphErrors object containing
+ *    the difference between them. The two graphs given to the function must have the same number of points for
+ *    the function to run without errors. The user has three options when it comes to the output: option 1
+ *    returns the difference, option 2 calculates the difference relative to the first graph and option 2 returns
+ *    the difference relative to the second graph.
+ *
+ * Parameters   : minGraph >> graph to be the minuend of the subtraction.
+ *                subGraph >> graph to be the subtrahend of the subtraction.
+ *                option >> determines the type of differnce to be calculated.
+ *
+ * Return value : TGraphErrors* diffGraph.
+ */
+TGraphErrors* SubtractGraph( TGraphErrors* minGraph, TGraphErrors* subGraph, Int_t option = 0 ){
+
+  Int_t minPoints = minGraph -> GetN();   Int_t subPoints = subGraph -> GetN();
+  if ( minPoints != subPoints ) { exit(EXIT_FAILURE); }
+
+  Double_t* minY = minGraph -> GetY();    Double_t* minYErr = minGraph -> GetEY();
+  Double_t* subY = subGraph -> GetY();    Double_t* subYErr = subGraph -> GetEY();
+
+  Double_t* minX = minGraph -> GetX();    Double_t* minXErr  = minGraph ->GetEX();
+
+  Double_t diffY[minPoints];
+  Double_t diffYErr[minPoints];
+
+  Double_t diff = 0;
+  Double_t diffErr = 0;
+
+  for ( Int_t i = 0; i < minPoints; i++ ) {
+
+    switch (option) {
+      case 0:
+        diffY[i] = minY[i] - subY[i];
+        diffYErr[i] = TMath::Sqrt(pow(minYErr[i], 2) + pow(subYErr[i], 2));
+        break;
+      case 1:
+        diff = minY[i] - subY[i];
+        diffErr = TMath::Sqrt(pow(minYErr[i], 2) + pow(subYErr[i], 2));
+
+        diffY[i] = diff / minY[i];
+        diffYErr[i] = diffY[i] * TMath::Sqrt(pow((diffErr/diff), 2) + pow((minYErr[i]/minY[i]), 2));
+        break;
+      case 2:
+        diff = minY[i] - subY[i];
+        diffErr = TMath::Sqrt(pow(minYErr[i], 2) + pow(subYErr[i], 2));
+
+        diffY[i] = diff / subY[i];
+        diffYErr[i] = diffY[i] * TMath::Sqrt(pow((diffErr/diff), 2) + pow((subYErr[i]/subY[i]), 2));
+        break;
+    }
+  }
+
+  TGraphErrors* diffGraph = new TGraphErrors(minPoints, minX, diffY, minXErr, diffYErr);
+  return diffGraph;
+}
+
+/* TGraphErrors WriteGraph (TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0,
+                            const char* title = "", const char* name = "graph", Int_t ms = 22)
+ *
+ * Summary of WriteGraph function:
+ *
+ *    The WriteGraph function takes the necessary parameters to construct a TGraphErrors object and does. It
+ *    can also take some parameters to determine the name, title and marker style of the resulting graph. The
+ *    code than writes the graph to the given directory and returns it.
+ *
+ * Parameters   : directory       >> where to write the graph.
+ *                title           >> title of the graph ("TITLE; XAXIS; YAXIS").
+ *                name            >> name of the graph.
+ *                ms              >> indicates the MarkerStyle to be used.
+ *                mc              >> indicates the MarkerColor to be used.
+ *                n, x, y, ex, ey >> necessary parameters to construct a TGraphErros object.
+ *
+ * Return Value : TGraphErros* graph
+ */
+TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0,
+                          const char* title = "", const char* name = "graph", Int_t ms = 22, Int_t mc = 1){
+
+  TGraphErrors* graph = new TGraphErrors(n, x, y, ex, ey);
+  graph -> SetTitle(title);
+  graph -> SetName(name);
+  graph -> SetMarkerStyle(ms);
+  graph -> SetMarkerColor(mc);
+  graph -> SetMarkerSize(2.5);
+  graph -> SetLineColor(mc);
+  graph -> GetXaxis() -> SetRangeUser(-50., 1100.);
+
+  directory -> WriteObject(graph, name, "OverWrite");
+
+  return graph;
 }
 
 /* Double_t GetPeak( TH1* histogram )
@@ -102,87 +613,6 @@ Double_t GetPeakError( TH1* histogram ){
   return peak_err;
 }
 
-/* TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t option = 0 )
- *
- * Summary of GraphDiff function:
- *
- *    The GraphDiff function takes two TGraphErrors objects and returns a third TGraphErrors object containing
- *    the difference between them. The two graphs given to the function must have the same number of points for
- *    the function to run without errors. The user has three options when it comes to the output: option 1
- *    returns the absolute difference, option 2 calculates the difference relative to the first graph and option
- *    2 returns the difference relative to the second graph.
- *
- * Parameters   : graph1 >> first graph.
- *                graph2 >> second graph.
- *                option >> determines the type of differnce to be calculated. Defaults to absolute difference.
- *
- * Return value : TGraphErrors* graph_diff.
- */
-TGraphErrors* GraphDiff( TGraphErrors* graph1, TGraphErrors* graph2, Int_t option ){
-  Int_t n_points1 = graph1 -> GetN();   Int_t n_points2 = graph2 -> GetN();
-
-  if ( n_points1 != n_points2 ) { exit(EXIT_FAILURE); }
-
-  Double_t* y1_value = graph1 -> GetY();    Double_t* y1_error = graph1 -> GetEY();
-  Double_t* y2_value = graph2 -> GetY();    Double_t* y2_error = graph2 -> GetEY();
-
-  Double_t* x_value  = graph1 -> GetX();    Double_t* x_error   = graph1 ->GetEX();
-
-  Double_t y_diff[n_points1];
-  Double_t y_diff_error[n_points1];
-
-  Double_t abs_diff = 0;
-  Double_t abs_diff_error = 0;
-
-  for ( Int_t i = 0; i < n_points1; i++ ) {
-    if ( option == 0 ) {
-
-      y_diff[i] = TMath::Abs( y1_value[i] - y2_value[i] );
-      y_diff_error[i] = TMath::Sqrt( pow(y1_error[i], 2) + pow(y2_error[i], 2) );
-
-    } else if ( option == 1 ) {
-
-      abs_diff = TMath::Abs( y1_value[i] - y2_value[i] );
-      abs_diff_error = TMath::Sqrt( pow(y1_error[i], 2) + pow(y2_error[i], 2) );
-
-      y_diff[i] = abs_diff / y1_value[i];
-      y_diff_error[i] = y_diff[i] * TMath::Sqrt( pow( (abs_diff_error/abs_diff), 2 ) + pow( (y1_error[i]/y1_value[i]), 2 ) );
-
-    } else if ( option == 2 ) {
-
-      abs_diff = TMath::Abs( y1_value[i] - y2_value[i] );
-      abs_diff_error = TMath::Sqrt( pow(y1_error[i], 2) + pow(y2_error[i], 2) );
-
-      y_diff[i] = abs_diff / y2_value[i];
-      y_diff_error[i] = y_diff[i] * TMath::Sqrt( pow( (abs_diff_error/abs_diff), 2 ) + pow( (y2_error[i]/y2_value[i]), 2 ) );
-    }
-  }
-
-  TGraphErrors* graph_diff = new TGraphErrors(n_points1, x_value, y_diff, x_error, y_diff_error);
-  return graph_diff;
-}
-
-/* TDirectory* MakeDirectory( const char* dir_name, const char* dir_title )
- *
- * Summary of MakeDirectory function:
- *
- *    The MakeDirectory function checks wether a given directory currently exists. If it does, it returns a
- *    pointer to it. If it doesn't, the function creates the directory with the given name in the current
- *    path and returns a pointer to it.
- *
- * Parameters   : dir_name  >> name of the desired directory.
- *                dir_title >> title of the directory, for bookeeping purpouses.
- *
- * Return value : TDirectory* directory.
- */
-TDirectory* MakeDirectory( const char* dir_name, const char* dir_title ){
-
-  TDirectory *directory = gDirectory -> GetDirectory(dir_name);
-  if (!directory) directory = gDirectory -> mkdir(dir_name, dir_title);
-
-  return directory;
-}
-
 /* Int_t NumberOfHistograms ( TDirectory* directory )
  *
  * Summary of NumberofHistograms function:
@@ -210,286 +640,4 @@ Int_t NumberOfHistograms( TDirectory* directory ){
   }
 
   return number_of_histograms;
-}
-
-/* TGraphErrors WriteGraph (TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0,
-                            const char* title = "", const char* name = "graph", Int_t ms = 22)
- *
- * Summary of WriteGraph function:
- *
- *    The WriteGraph function takes the necessary parameters to construct a TGraphErrors object and does. It
- *    can also take some parameters to determine the name, title and marker style of the resulting graph. The
- *    code than writes the graph to the given directory and returns it.
- *
- * Parameters   : directory       >> where to write the graph.
- *                title           >> title of the graph ("TITLE; XAXIS; YAXIS").
- *                name            >> name of the graph.
- *                ms              >> indicates the MarkerStyle to be used.
- *                mc              >> indicates the MarkerColor to be used.
- *                n, x, y, ex, ey >> necessary parameters to construct a TGraphErros object.
- *
- * Return Value : TGraphErros* graph
- */
-TGraphErrors* WriteGraph( TDirectory* directory, Int_t n, Double_t* x, Double_t* y, Double_t* ex = 0, Double_t* ey = 0,
-                          const char* title = "", const char* name = "graph", Int_t ms = 22, Int_t mc = 1){
-
-  TGraphErrors* graph = new TGraphErrors(n, x, y, ex, ey);
-  graph -> SetTitle(title);
-  graph -> SetName(name);
-  graph -> SetMarkerStyle(ms);
-  graph -> SetMarkerColor(mc);
-  graph -> SetMarkerSize(2.5);
-  graph -> SetLineColor(mc);
-  graph -> GetXaxis() -> SetRangeUser(-50., 1100.);
-
-  directory -> WriteObject(graph, name, "OverWrite");
-
-  return graph;
-}
-
-/* void GenerateF90vChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter )
- *
- *  Summary of Function:
- *
- *    Generates a plot containing two graphs, one generated from acquired data and another from MC simulated data. The x-axis
- *    is the total charge of the event signal, while the y-axis dependes on the value of 'parameter' and can be one of three:
- *    the mean value, the peak position or the rms, all with respect to a f90 histogram. This plot is then written into the
- *    given directory and the constructed canvas is saved in two file formats: pdf and png.
- *
- *  Parameters   : run        >> the number of the run from witch the data is taken.
- *                 data_graph >> contains the graph generated from the actual data.
- *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
- *                 ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
- *                 directory  >> directory where the multigraph is writen to.
- *                 x_size     >> width of the canvas.
- *                 y_size     >> height of the canvas.
- *                 parameter  >> indicates witch parameter from the f90 histogram will be plotted.
- *
- *  Return Value : void.
- */
-void GenerateF90vChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter ){
-
-  if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
-
-  string param_name;
-  string param_title;
-
-  if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
-    param_name = "mean";   param_title = "Média";
-  } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
-    param_name = "peak";   param_title = "Pico";
-  } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
-    param_name = "rms";    param_title = "RMS";
-  } else {
-    std::cout << "Invalid 'parameter' value.";
-    exit(EXIT_FAILURE);
-  }
-
-  TCanvas* canvas = new TCanvas( Form("%s_%s_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), x_size, y_size );
-
-  TMultiGraph* multigraph = new TMultiGraph();
-  multigraph -> Add(data_graph);    multigraph -> Add(mc_graph);
-
-  multigraph -> SetTitle( Form("; S1 [PE]; %s", param_title.c_str()) );
-  multigraph -> SetName( Form("f90%s_v_charge_total_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
-  multigraph -> Draw("ALP");
-
-  TLegend* legend = new TLegend(0.674067, 0.776657, 0.924319, 0.926513);
-  legend -> AddEntry( data_graph, "Dado",        "lep" );
-  legend -> AddEntry( mc_graph,   "Monte Carlo", "lep" );
-  legend -> Draw();
-
-  directory -> WriteObject( multigraph, Form("f90%s_v_charge_total_%s_both", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
-
-  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
-  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ f90 %s v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
-
-}
-
-/* void GenerateF90DiffvChargePlot( TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter )
- *
- *  Summary of Function:
- *
- *    Takes two TGraphErrors object, one containing actual data and the other MC simulated data. It then calculates the
- *    relative difference between them using the GraphDiff() function defined above and plots the resulting graph. The x-axis
- *    is equal to the total charge of the event signal, while the y-axis depends on the value of 'parameter' and can be one of
- *    three: the mean value, the peak position or the rms, all with respect to the f90 histogram. The graph is then writen
- *    into the given directory and the constructed canvas is saved in two file formats: pdf and png.
- *
- *  Parameters   : run        >> the number of the run from witch the data is taken.
- *                 data_graph >> contains the graph generated from the actual data.
- *                 mc_graph   >> contains the graph generated from a Monte Carlo simulation.
- *                 ERorNR     >> Possible values: 1 or 0, corresponding to wether the data sets are from NR or ER.
- *                 directory  >> directory where the multigraph is writen to.
- *                 x_size     >> width of the canvas.
- *                 y_size     >> height of the canvas.
- *                 parameter  >> indicates witch parameter from the f90 histogram will be plotted.
- *
- *  Return Value : void.
- */
-void GenerateF90DiffvChargePlot( int run, TGraphErrors* data_graph, TGraphErrors* mc_graph, int ERorNR, TDirectory* directory, Double_t x_size, Double_t y_size, const char* parameter ){
-
-  if ( !(ERorNR == 0 || ERorNR == 1)) { exit(EXIT_FAILURE); }
-
-  string param_name;
-  string param_title;
-
-  if ( std::strncmp(parameter, "mean", 4) == 0 || std::strncmp(parameter, "MEAN", 4) == 0 || std::strncmp(parameter, "m", 1) == 0 || std::strncmp(parameter, "M", 1) == 0 ){
-    param_name = "mean";   param_title = "Média";
-  } else if ( std::strncmp(parameter, "peak", 4) == 0 || std::strncmp(parameter, "PEAK", 4) == 0 || std::strncmp(parameter, "p", 1) == 0 || std::strncmp(parameter, "P", 1) == 0 ){
-    param_name = "peak";   param_title = "Pico";
-  } else if ( std::strncmp(parameter, "rms", 3) == 0 || std::strncmp(parameter, "RMS", 3) == 0 || std::strncmp(parameter, "r", 1) == 0 || std::strncmp(parameter, "R", 1) == 0 ){
-    param_name = "rms";    param_title = "RMS";
-  } else {
-    std::cout << "Invalid 'parameter' value.";
-    exit(EXIT_FAILURE);
-  }
-
-  TCanvas* canvas = new TCanvas( Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), Form("%s_%s_diff_canvas", (ERorNR == 0)?"er":"nr", param_name.c_str()), x_size, y_size );
-
-  TGraphErrors* diff_graph = GraphDiff( data_graph, mc_graph, 0 );
-  diff_graph -> SetTitle( "; S1 [PE]; Diferença" );
-  diff_graph -> SetName( Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr") );
-
-  int ms = 0;  if (ERorNR == 0){ ms = 22; } else { ms = 23; }
-
-  diff_graph -> SetMarkerStyle(ms);
-  diff_graph -> SetMarkerColor(46);
-  diff_graph -> SetMarkerSize(2.5);
-  diff_graph -> SetLineColor(46);
-
-  diff_graph -> Draw();
-
-  directory -> WriteObject( diff_graph, Form("f90%s_diff_v_charge_total_%s", param_name.c_str(), (ERorNR == 0)?"er":"nr"), "OverWrite" );
-
-  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).pdf", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
-  //canvas -> SaveAs( Form("plots/%d/Study of Monte Carlo/Parameters/ Relative f90 %s Diff. v Charge (%s).png", run, param_title.c_str(), (ERorNR == 0)?"ER":"NR") );
-}
-
-// **************************************************** PlotRMS() MACRO **************************************************** //
-void PlotF90Parameters( int run, Double_t charge_min = 0. ){
-
-  TString file_name = Form("hist_%d.root", run);
-  TFile* hist_file = CheckFile(file_name);
-
-  // ---------------------- CREATING NECESSARY DIRECTORIES ----------------------- //
-  hist_file -> cd();
-  TDirectory* RMS_analysis_dir   = MakeDirectory("RMS_analysis", "RMS_analysis");
-  TDirectory* histograms_dir     = MakeDirectory("histograms", "histograms");
-
-  RMS_analysis_dir -> cd();
-  TDirectory* graphs_dir         = MakeDirectory("graphs", "graphs");
-
-  histograms_dir -> cd();
-  TDirectory* f90_histograms_dir = MakeDirectory("f90", "f90");
-
-  f90_histograms_dir -> cd();
-  TDirectory* data_dir           = MakeDirectory("data", "data");
-  TDirectory* monte_carlo_dir    = MakeDirectory("monte_carlo", "monte_carlo");
-
-  data_dir -> cd();
-  TDirectory* da_both_dir         = MakeDirectory("both","both");
-  TDirectory* da_er_dir           = MakeDirectory("ER","ER");
-  TDirectory* da_nr_dir           = MakeDirectory("NR","NR");
-
-  monte_carlo_dir -> cd();
-  TDirectory* mc_er_dir           = MakeDirectory("ER","ER");
-  TDirectory* mc_nr_dir           = MakeDirectory("NR","NR");
-  // ----------------------------------------------------------------------------- //
-
-  Int_t number_of_histograms = NumberOfHistograms(da_both_dir);
-
-  Double_t RMS_da_er     [number_of_histograms];      Double_t RMS_da_nr     [number_of_histograms];
-  Double_t RMSerr_da_er  [number_of_histograms];      Double_t RMSerr_da_nr  [number_of_histograms];
-  Double_t MEAN_da_er    [number_of_histograms];      Double_t MEAN_da_nr    [number_of_histograms];
-  Double_t MEANerr_da_er [number_of_histograms];      Double_t MEANerr_da_nr [number_of_histograms];
-  Double_t PEAK_da_er    [number_of_histograms];      Double_t PEAK_da_nr    [number_of_histograms];
-  Double_t PEAKerr_da_er [number_of_histograms];      Double_t PEAKerr_da_nr [number_of_histograms];
-
-
-  Double_t RMS_mc_er     [number_of_histograms];      Double_t RMS_mc_nr     [number_of_histograms];
-  Double_t RMSerr_mc_er  [number_of_histograms];      Double_t RMSerr_mc_nr  [number_of_histograms];
-  Double_t MEAN_mc_er    [number_of_histograms];      Double_t MEAN_mc_nr    [number_of_histograms];
-  Double_t MEANerr_mc_er [number_of_histograms];      Double_t MEANerr_mc_nr [number_of_histograms];
-  Double_t PEAK_mc_er    [number_of_histograms];      Double_t PEAK_mc_nr    [number_of_histograms];
-  Double_t PEAKerr_mc_er [number_of_histograms];      Double_t PEAKerr_mc_nr [number_of_histograms];
-
-  Double_t charge_total[number_of_histograms];
-
-  TH1F* htemp = 0;
-
-  for ( int i = 0; i < number_of_histograms; i++ ){
-
-    htemp = (TH1F *)da_er_dir -> Get( Form("f90_histogram_er_%d", i+1) );
-    RMS_da_er[i]  = htemp -> GetRMS();   RMSerr_da_er[i]  = htemp -> GetRMSError();
-    MEAN_da_er[i] = htemp -> GetMean();  MEANerr_da_er[i] = htemp -> GetMeanError();
-    PEAK_da_er[i] = GetPeak(htemp);      PEAKerr_da_er[i] = GetPeakError(htemp);
-
-    htemp = (TH1F *)da_nr_dir -> Get( Form("f90_histogram_nr_%d", i+1) );
-    RMS_da_nr[i]  = htemp -> GetRMS();   RMSerr_da_nr[i]  = htemp -> GetRMSError();
-    MEAN_da_nr[i] = htemp -> GetMean();  MEANerr_da_nr[i] = htemp -> GetMeanError();
-    PEAK_da_nr[i] = GetPeak(htemp);      PEAKerr_da_nr[i] = GetPeakError(htemp);
-
-    htemp = (TH1F *)mc_er_dir -> Get( Form("f90_histogram_mcer_%d", i+1) );
-    RMS_mc_er[i]  = htemp -> GetRMS();   RMSerr_mc_er[i]  = htemp -> GetRMSError();
-    MEAN_mc_er[i] = htemp -> GetMean();  MEANerr_mc_er[i] = htemp -> GetMeanError();
-    PEAK_mc_er[i] = GetPeak(htemp);      PEAKerr_mc_er[i] = GetPeakError(htemp);
-
-    htemp = (TH1F *)mc_nr_dir -> Get( Form("f90_histogram_mcnr_%d", i+1) );
-    RMS_mc_nr[i]  = htemp -> GetRMS();   RMSerr_mc_nr[i]  = htemp -> GetRMSError();
-    MEAN_mc_nr[i] = htemp -> GetMean();  MEANerr_mc_nr[i] = htemp -> GetMeanError();
-    PEAK_mc_nr[i] = GetPeak(htemp);      PEAKerr_mc_nr[i] = GetPeakError(htemp);
-
-    charge_total[i] = (20*i + 10) + charge_min;
-  }
-
-  TGraphErrors* da_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_er,  0, RMSerr_da_er,
-                                              "RMS of f90 Histograms (ER); Charge (PE); F90 RMS",      "f90RMSxCharge_total_er",    22, 40 );
-  TGraphErrors* da_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_da_er, 0, MEANerr_da_er,
-                                              "Mean of f90 Histograms (ER); Charge (PE); F90 Mean",    "f90MeanxCharge_total_er",   22, 40 );
-  TGraphErrors* da_er_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_da_er, 0, PEAKerr_da_er,
-                                              "Peak of f90 Histograms (ER); Charge (PE); F90 Peak",    "f90PeakxCharge_total_er",   22, 40 );
-
-  TGraphErrors* da_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_da_nr,  0, RMSerr_da_nr,
-                                              "RMS of f90 Histograms (NR); Charge (PE); F90 RMS",      "f90RMSxCharge_total_nr",    23, 40 );
-  TGraphErrors* da_nr_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_da_nr, 0, MEANerr_da_nr,
-                                              "Mean of f90 Histograms (NR); Charge (PE); F90 Mean",    "f90MeanxCharge_total_nr",   23, 40 );
-  TGraphErrors* da_nr_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_da_nr, 0, PEAKerr_da_nr,
-                                              "Peak of f90 Histograms (NR); Charge (PE); F90 Peak",    "f90PeakxCharge_total_nr",   23, 40 );
-
-  TGraphErrors* mc_er_rms_graph  = WriteGraph( graphs_dir, number_of_histograms, charge_total, RMS_mc_er,  0, RMSerr_mc_er,
-                                              "RMS of f90 Histograms (MC ER); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcer",  22, 30 );
-  TGraphErrors* mc_er_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_er, 0, MEANerr_mc_er,
-                                              "Mean of f90 Histograms (MC ER); Charge (PE); F90 Mean", "f90MeanxCharge_total_mcer", 22, 30 );
-  TGraphErrors* mc_er_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_mc_er, 0, PEAKerr_mc_er,
-                                              "Peak of f90 Histograms (MC ER); Charge (PE); F90 Peak", "f90PeakxCharge_total_mcer", 22, 30 );
-
-  TGraphErrors* mc_nr_rms_graph  = WriteGraph( graphs_dir, number_of_histograms,  charge_total, RMS_mc_nr, 0, RMSerr_mc_nr,
-                                              "RMS of f90 Histograms (MC NR); Charge (PE); F90 RMS",   "f90RMSxCharge_total_mcnr",  23, 30 );
-  TGraphErrors* mc_nr_mean_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, MEAN_mc_nr, 0, MEANerr_mc_nr,
-                                              "Mean of f90 Histograms (MC NR); Charge (PE); F90 Mean", "f90MeanxCharge_total_mcnr", 23, 30 );
-  TGraphErrors* mc_nr_peak_graph = WriteGraph( graphs_dir, number_of_histograms, charge_total, PEAK_mc_nr, 0, PEAKerr_mc_nr,
-                                              "Peak of f90 Histograms (MC NR); Charge (PE); F90 Peak", "f90PeakxCharge_total_mcnr", 23, 30 );
-
-  // *************************************************** CONSTRUCTING THE DESIRED PLOTS *************************************************** //
-
-  Double_t y_size = 1000.;    Double_t x_size = 1.61803398875 * y_size;
-
-  GenerateF90vChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
-  GenerateF90vChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
-
-  GenerateF90DiffvChargePlot( run, da_er_mean_graph, mc_er_mean_graph, 0, graphs_dir, x_size, y_size, "mean" );
-  GenerateF90DiffvChargePlot( run, da_nr_mean_graph, mc_nr_mean_graph, 1, graphs_dir, x_size, y_size, "mean" );
-
-  GenerateF90vChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
-  GenerateF90vChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
-
-  GenerateF90DiffvChargePlot( run, da_er_peak_graph, mc_er_peak_graph, 0, graphs_dir, x_size, y_size, "peak" );
-  GenerateF90DiffvChargePlot( run, da_nr_peak_graph, mc_nr_peak_graph, 1, graphs_dir, x_size, y_size, "peak" );
-
-  GenerateF90vChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms" );
-  GenerateF90vChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms" );
-
-  GenerateF90DiffvChargePlot( run, da_er_rms_graph, mc_er_rms_graph, 0, graphs_dir, x_size, y_size, "rms"  );
-  GenerateF90DiffvChargePlot( run, da_nr_rms_graph, mc_nr_rms_graph, 1, graphs_dir, x_size, y_size, "rms"  );
 }

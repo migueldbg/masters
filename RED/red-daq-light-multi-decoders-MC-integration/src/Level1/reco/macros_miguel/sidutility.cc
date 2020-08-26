@@ -118,71 +118,71 @@ TFile* MergeRuns( std::vector<int> runs ){
 }
 
 
-TCut DefineF90Range( Double_t f90_low, Double_t f90_up ){
+TCut DefineF90Range( Double_t f90Low, Double_t f90Upp ){
 
-  TCut f90_range;
+  TCut f90Range;
 
-  if ( f90_low > f90_up ) {
+  if ( f90Low > f90Upp ) {
     std::cout << "Invalid f90 range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
-  } else if ( f90_low == f90_up ) {
-    f90_range = "";
+  } else if ( f90Low == f90Upp ) {
+    f90Range = "";
   } else {
-    f90_range = Form( "clusters[0].f90 >= %f && clusters[0].f90 <= %f", f90_low, f90_up );
+    f90Range = Form( "clusters[0].f90 >= %f && clusters[0].f90 <= %f", f90Low, f90Upp );
   }
 
-  return f90_range;
+  return f90Range;
 }
 
 
-TCut DefineS1Range( Double_t s1_low, Double_t s1_up ){
+TCut DefineS1Range( Double_t s1Low, Double_t s1Upp ){
 
-  TCut s1_range;
+  TCut s1Range;
 
-  if ( s1_low > s1_up ) {
+  if ( s1Low > s1Upp ) {
     std::cout << "Invalid S1 charge range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
-  } else if ( s1_low == s1_up ) {
-    s1_range = "";
+  } else if ( s1Low == s1Upp ) {
+    s1Range = "";
   } else {
-    s1_range = Form( "clusters[0].charge >= %f && clusters[0].charge <= %f", s1_low, s1_up );
+    s1Range = Form( "clusters[0].charge >= %f && clusters[0].charge <= %f", s1Low, s1Upp );
   }
 
-  return s1_range;
+  return s1Range;
 }
 
 
-TCut DefineS2Range( Double_t s2_low, Double_t s2_up ){
+TCut DefineS2Range( Double_t s2Low, Double_t s2Upp ){
 
-  TCut s2_range;
+  TCut s2Range;
 
-  if ( s2_low > s2_up ) {
+  if ( s2Low > s2Upp ) {
     std::cout << "Invalid S2 charge range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
-  } else if ( s2_low == s2_up ) {
-    s2_range = "";
+  } else if ( s2Low == s2Upp ) {
+    s2Range = "";
   } else {
-    s2_range = Form( "clusters[1].charge >= %f && clusters[1].charge <= %f", s2_low, s2_up );
+    s2Range = Form( "clusters[1].charge >= %f && clusters[1].charge <= %f", s2Low, s2Upp );
   }
 
-  return s2_range;
+  return s2Range;
 }
 
 
-TCut DefineSiTelTPCToFRange( Double_t tof_low, Double_t tof_up ){
+TCut DefineSiTelTPCToFRange( Double_t tofLow, Double_t tofUpp ){
 
-  TCut tof_range;
+  TCut tofRange;
 
-  if ( tof_low > tof_up ) {
+  if ( tofLow > tofUpp ) {
     std::cout << "Invalid time of flight range: lower boundary is greater than upper boundary." << std::endl;
     exit(EXIT_FAILURE);
-  } else if ( tof_low == tof_up ) {
-    tof_range = "";
+  } else if ( tofLow == tofUpp ) {
+    tofRange = "";
   } else {
-    tof_range = Form( "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) >= %f && 2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) <= %f", tof_low, tof_up );
+    tofRange = Form( "2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) >= %f && 2*(0.5*(start_time[30] + start_time[31] - 7.45) - clusters[0].cdf_time) <= %f", tofLow, tofUpp );
   }
 
-  return tof_range;
+  return tofRange;
 }
 
 
@@ -214,28 +214,28 @@ TCut DefineQualityCuts( Int_t experiment_cfg ){
  *    all cuts. The function then return the TCut.
  *
  *  Parameters   : cfg     >> indicates if the data set is from a single phase (1) or dual phase (2) run.
- *                 f90_low >> lower boundary for the f90 parameter.
- *                 f90_up  >> upper boundary fo the f90 parameter.
- *                 s1_low  >> lower boundary for the S1 charge.
- *                 s1_up   >> upper boundary for the S1 charge.
- *                 s2_low  >> lower boundary for the S2 charge.
- *                 s2_up   >> upper boundary for the S2 charge.
- *                 tof_low >> lower boundary for the time of flight parameter.
- *                 tof_up  >> upper boundary for the time of flight parameter.
+ *                 f90Low >> lower boundary for the f90 parameter.
+ *                 f90Upp  >> upper boundary fo the f90 parameter.
+ *                 s1Low  >> lower boundary for the S1 charge.
+ *                 s1Upp   >> upper boundary for the S1 charge.
+ *                 s2Low  >> lower boundary for the S2 charge.
+ *                 s2Upp   >> upper boundary for the S2 charge.
+ *                 tofLow >> lower boundary for the time of flight parameter.
+ *                 tofUpp  >> upper boundary for the time of flight parameter.
  *
  *  Return Value : TCut final_cut.
  */
-TCut DefineCuts( Int_t cfg, Double_t f90_low, Double_t f90_up, Double_t s1_low, Double_t s1_up, Double_t s2_low = 0, Double_t s2_up = 0, Double_t tof_low = 0., Double_t tof_up = 0. ){
+TCut DefineCuts( Int_t cfg, Double_t f90Low = 0, Double_t f90Upp = 0, Double_t s1Low = 0, Double_t s1Upp = 0, Double_t s2Low = 0, Double_t s2Upp = 0, Double_t tofLow = 0., Double_t tofUpp = 0. ){
 
-  TCut quality_cuts = DefineQualityCuts( cfg );
-  TCut s1_range     = DefineS1Range( s1_low, s1_up );
-  TCut s2_range     = DefineS2Range( s2_low, s2_up );
-  TCut f90_range    = DefineF90Range( f90_low, f90_up );
-  TCut tof_range    = DefineSiTelTPCToFRange( tof_low, tof_up );
+  TCut qualityCut = DefineQualityCuts( cfg );
+  TCut s1Range     = DefineS1Range( s1Low, s1Upp );
+  TCut s2Range     = DefineS2Range( s2Low, s2Upp );
+  TCut f90Range    = DefineF90Range( f90Low, f90Upp );
+  TCut tofRange    = DefineSiTelTPCToFRange( tofLow, tofUpp );
 
-  TCut total_cut = quality_cuts && s1_range && s2_range && f90_range && tof_range;
+  TCut cut = qualityCut && s1Range && s2Range && f90Range && tofRange;
 
-  return total_cut;
+  return cut;
 }
 
 

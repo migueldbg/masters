@@ -4,8 +4,11 @@
 #include "TH2.h"
 #include "TString.h"
 #include "TStyle.h"
-#include "TSystem."
+#include "TSystem.h"
 #include "TTree.h"
+
+#include <vector>
+#include <iostream>
 
 /* ************************************************************************************************************************* *
  * File: TimeOfFlight_SiTelTPC.C (ROOT macro).                                                                               *
@@ -32,6 +35,7 @@
  *    > LSci CHANNEL MAPPING >                                                                                               *
  *      LSci:       0    1    3 & 7    4 & 6    5    8                                                                       *
  *      Channel:    0    1      3        4      5    8                                                                       *
+ *                                                                                                                           *
  * ************************************************************************************************************************* */
 
 using namespace std;
@@ -83,6 +87,11 @@ void tempF90vS1( Int_t run ){
 
   f90vS1Hist -> Draw("COLZ");
 }
+
+//TODO: Define better NR event selection.
+//TGraph* F90vS1NRSelection( Int_t run ){}
+
+
 
 /* void F90vS1IndependentCuts( Int_t run )
  *
@@ -313,6 +322,8 @@ void IndependentCutsEventAnalysis( Int_t run, bool total = true, bool fraction =
   }
 }
 
+
+
 void F90vS1LSciCuts( Int_t run ){
 
   TStyle* sidStyle = SetSidStyle();
@@ -377,6 +388,8 @@ void F90vS1LSciCuts( Int_t run ){
   cout << "Count of events after LSci timing cut: " << lsciEventTotal << endl;
 
 }
+
+
 
 /* void F90vS1ProgressiveCuts( Int_t run, bool write = false, bool draw = true )
  *
@@ -484,7 +497,6 @@ void ProgressiveCutsF90vS1( Int_t run, bool write = false, bool draw = true ){
 
 }
 
-//TODO: Define better NR event selection.
 
 /* void ProgressiveCutsGraphs( Int_t run, Double_t s1BinSize = 20 )
  *

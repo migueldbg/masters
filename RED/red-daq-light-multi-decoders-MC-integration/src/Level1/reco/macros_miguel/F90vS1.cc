@@ -11,7 +11,7 @@
 #include <iostream>
 
 /* ************************************************************************************************************************* *
- * File: TimeOfFlight_SiTelTPC.C (ROOT macro).                                                                               *
+ * File: F90vsS1.cc (ROOT macro).                                                                               *
  *                                                                                                                           *
  * Author: Miguel Del Ben Galdiano (miguel.galdiano@gmail.com).                                                              *
  * Date of creation : June 29 2020.                                                                                          *

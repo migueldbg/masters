@@ -8,6 +8,8 @@
 using namespace std;
 using namespace RooFit;
 
+
+
 TCut SiTelTPCToFCut(Double_t tofMin, Double_t tofMax);
 
 // GOAL: Learning the basics of RooFit and how to apply it.
@@ -149,7 +151,7 @@ void Analysis( Int_t run, Double_t s1Bin = 10, Double_t s1Min = 0., Double_t s1M
 
   Double_t height = 350; Double_t width = gdRatio*height;
   TCanvas* canvas1 = new TCanvas("c1", "f90 Distribution (1/2)", 3*width, 3*height);
-  TCanvas* canvas2 = new TCanvas("c2", "f90 Distribution (2/2)", 3*width, 3*height);
+  TCanvas* canvas2 = new TCanvas("c2", "f90 Distribution/ (2/2)", 3*width, 3*height);
   canvas1 -> Divide(3,3);
   canvas2 -> Divide(3,3);
 
